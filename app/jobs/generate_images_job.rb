@@ -1,31 +1,29 @@
 class GenerateImagesJob < ApplicationJob
   queue_as :default
 
-  def perform(conversation_id, character_state_id)
-    conversation = Conversation.find(conversation_id)
-    character_state = CharacterState.find(character_state_id)
-    
+  def perform(conversation, character_state)
+    # Set generating flags to true (this will touch the conversation and trigger refresh)
+    character_state.update!(
+      character_image_generating: true,
+      background_image_generating: true,
+    )
+
     image_service = ImageGenerationService.new(conversation)
-    
-    # Generate images in parallel if possible
+
+    # Generate images
     images = image_service.generate_all_images(character_state)
-    
-    # Broadcast updates to the conversation view
-    if images[:character_image] || images[:background_image]
-      broadcast_image_updates(conversation, character_state)
-    end
+
+    # Clear generating flags (this will touch the conversation and trigger refresh)
+    character_state.update!(
+      character_image_generating: false,
+      background_image_generating: false,
+    )
   rescue => e
     Rails.logger.error "Failed to generate images: #{e.message}"
-  end
-
-  private
-
-  def broadcast_image_updates(conversation, character_state)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "conversation_#{conversation.id}",
-      target: "character-display",
-      partial: "conversations/character_display",
-      locals: { conversation: conversation, current_state: character_state }
+    # Clear generating flags even on error
+    character_state.update!(
+      character_image_generating: false,
+      background_image_generating: false,
     )
   end
 end

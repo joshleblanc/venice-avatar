@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_30_163654) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_30_181501) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -54,6 +54,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_163654) do
     t.string "triggered_by_role"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "base_character_prompt"
+    t.json "physical_features"
+    t.json "hair_details"
+    t.json "eye_details"
+    t.string "body_type"
+    t.string "skin_tone"
+    t.json "distinctive_features"
+    t.json "default_outfit"
+    t.string "pose_style"
+    t.text "art_style_notes"
+    t.boolean "character_image_generating"
+    t.boolean "background_image_generating"
+    t.text "ai_analysis_summary"
+    t.integer "mood_intensity"
+    t.integer "context_significance"
     t.index ["conversation_id"], name: "index_character_states_on_conversation_id"
     t.index ["created_at"], name: "index_character_states_on_created_at"
   end

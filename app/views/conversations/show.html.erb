@@ -1,4 +1,4 @@
-<%= turbo_stream_from "conversation_#{@conversation.id}" %>
+<%= turbo_stream_from @conversation %>
 
 <div class="h-screen flex bg-gray-100">
   <!-- Chat Panel (Left Side) -->
@@ -10,8 +10,8 @@
           <h1 class="text-xl font-semibold"><%= @conversation.character.name %></h1>
           <p class="text-gray-600 text-sm"><%= @conversation.character.description %></p>
         </div>
-        <%= link_to "← Back to Conversations", conversations_path, 
-            class: "text-blue-600 hover:text-blue-800" %>
+        <%= link_to "← Back to Conversations", conversations_path,
+                    class: "text-blue-600 hover:text-blue-800" %>
       </div>
     </div>
 
@@ -24,18 +24,16 @@
 
     <!-- Message Input -->
     <div class="bg-white border-t p-4">
-      <%= form_with url: send_message_conversation_path(@conversation), 
-          method: :post, 
-          local: false,
-          data: { turbo: true },
-          class: "flex gap-2" do |form| %>
-        <%= form.text_area :message, 
-            placeholder: "Type your message...", 
-            rows: 2,
-            class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
-            required: true %>
-        <%= form.submit "Send", 
-            class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors self-end" %>
+      <%= form_with url: send_message_conversation_path(@conversation),
+                    method: :post,
+                    class: "flex gap-2" do |form| %>
+        <%= form.text_area :message,
+                           placeholder: "Type your message...",
+                           rows: 2,
+                           class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
+                           required: true %>
+        <%= form.submit "Send",
+                        class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors self-end" %>
       <% end %>
     </div>
   </div>
@@ -52,7 +50,12 @@
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
   
   // Auto-scroll on new messages
-  document.addEventListener('turbo:frame-load', () => {
+  document.addEventListener('turbo:morph', () => {
+    console.log("Turbo morph detected", messagesContainer.scrollHeight, messagesContainer.scrollTop);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  });
+
+  document.addEventListener('turbo:submit-start', () => {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   });
 </script>
