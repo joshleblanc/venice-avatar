@@ -1,5 +1,14 @@
 Rails.application.routes.draw do
-  resources :characters
+  resources :characters do
+    resources :conversations, only: [:create]
+  end
+  
+  resources :conversations, only: [:index, :show] do
+    member do
+      post :send_message
+    end
+  end
+  
   resource :session
   resources :passwords, param: :token
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -13,5 +22,5 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Defines the root path route ("/")
-  # root "posts#index"
+  root "conversations#index"
 end

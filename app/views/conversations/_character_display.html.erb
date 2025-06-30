@@ -1,0 +1,97 @@
+<div class="h-full flex flex-col">
+  <!-- Character Image Area -->
+  <div class="flex-1 relative bg-gradient-to-b from-blue-50 to-blue-100">
+    <!-- Background Image -->
+    <% if current_state&.background_image&.attached? %>
+      <div class="absolute inset-0 z-0">
+        <%= image_tag current_state.background_image, 
+            alt: "Background", 
+            class: "w-full h-full object-cover rounded-lg" %>
+      </div>
+    <% else %>
+      <div class="absolute inset-0 bg-gradient-to-b from-purple-200 to-blue-200">
+        <div class="flex items-center justify-center h-full text-gray-500">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p class="text-sm">Generating background...</p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Character Image -->
+    <div class="absolute inset-0 flex items-end justify-center pb-4">
+      <% if current_state&.character_image&.attached? %>
+        <div class="absolute bottom-0 right-0 z-10 w-1/2 h-full">
+          <%= image_tag current_state.character_image, 
+              alt: conversation.character.name, 
+              class: "w-full h-full object-contain" %>
+        </div>
+      <% else %>
+        <div class="bg-white bg-opacity-90 rounded-lg p-6 shadow-lg">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-700 font-medium"><%= conversation.character.name %></p>
+            <p class="text-gray-500 text-sm">Generating character...</p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Character Status Panel -->
+  <div class="bg-white border-t p-4 space-y-3">
+    <div class="text-center">
+      <h3 class="font-semibold text-lg"><%= conversation.character.name %></h3>
+      <% if current_state&.expression.present? %>
+        <p class="text-sm text-gray-600 capitalize">
+          <span class="inline-block w-2 h-2 bg-green-400 rounded-full mr-1"></span>
+          <%= current_state.expression %>
+        </p>
+      <% end %>
+    </div>
+
+    <% if current_state&.location.present? %>
+      <div class="bg-gray-50 rounded-lg p-3">
+        <div class="flex items-center text-sm">
+          <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="text-gray-700"><%= current_state.location %></span>
+        </div>
+      </div>
+    <% end %>
+
+    <% if current_state&.clothing_details.present? && current_state.clothing_details["latest_change"] %>
+      <div class="bg-blue-50 rounded-lg p-3">
+        <div class="flex items-center text-sm">
+          <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+          <span class="text-blue-700"><%= current_state.clothing_details["latest_change"] %></span>
+        </div>
+      </div>
+    <% end %>
+
+    <% if current_state&.injury_details.present? && current_state.injury_details["latest_injury"] %>
+      <div class="bg-red-50 rounded-lg p-3">
+        <div class="flex items-center text-sm">
+          <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <span class="text-red-700"><%= current_state.injury_details["latest_injury"] %></span>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Character Tags -->
+    <% if conversation.character.tag_list.any? %>
+      <div class="flex flex-wrap gap-1">
+        <% conversation.character.tag_list.first(3).each do |tag| %>
+          <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"><%= tag %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

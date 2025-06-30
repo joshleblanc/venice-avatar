@@ -1,0 +1,46 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">Character Conversations</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% Character.all.each do |character| %>
+      <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+        <h3 class="text-xl font-semibold mb-2"><%= character.name %></h3>
+        <p class="text-gray-600 mb-4"><%= truncate(character.description, length: 100) %></p>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          <% character.tag_list.each do |tag| %>
+            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"><%= tag %></span>
+          <% end %>
+        </div>
+        
+        <%= link_to "Start Conversation", character_conversations_path(character), 
+            method: :post, 
+            data: { turbo_method: :post },
+            class: "w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block" %>
+      </div>
+    <% end %>
+  </div>
+  
+  <% if @conversations.any? %>
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold mb-6">Recent Conversations</h2>
+      <div class="space-y-4">
+        <% @conversations.each do |conversation| %>
+          <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-semibold"><%= conversation.character.name %></h3>
+                <p class="text-gray-600 text-sm">
+                  <%= pluralize(conversation.messages.count, 'message') %> • 
+                  Last updated <%= time_ago_in_words(conversation.updated_at) %> ago
+                </p>
+              </div>
+              <%= link_to "Continue", conversation_path(conversation), 
+                  class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,18 @@
+<div class="flex <%= message.role == 'user' ? 'justify-end' : 'justify-start' %> mb-4">
+  <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg <%= message.role == 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 shadow-sm border' %>">
+    <% if message.role == 'assistant' %>
+      <div class="flex items-center mb-1">
+        <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-2">
+          <span class="text-purple-600 text-xs font-bold"><%= message.conversation.character.name.first %></span>
+        </div>
+        <span class="text-xs text-gray-500"><%= message.conversation.character.name %></span>
+      </div>
+    <% end %>
+    
+    <p class="text-sm whitespace-pre-wrap"><%= message.content %></p>
+    
+    <div class="text-xs <%= message.role == 'user' ? 'text-blue-200' : 'text-gray-400' %> mt-1">
+      <%= time_ago_in_words(message.created_at) %> ago
+    </div>
+  </div>
+</div>

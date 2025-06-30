@@ -10,7 +10,54 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_29_214430) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_30_163654) do
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "character_states", force: :cascade do |t|
+    t.integer "conversation_id", null: false
+    t.string "location"
+    t.text "appearance_description"
+    t.string "expression"
+    t.json "clothing_details"
+    t.json "injury_details"
+    t.json "appearance_details"
+    t.text "background_prompt"
+    t.string "background_image_url"
+    t.string "character_image_url"
+    t.text "message_context"
+    t.string "triggered_by_role"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_character_states_on_conversation_id"
+    t.index ["created_at"], name: "index_character_states_on_created_at"
+  end
+
   create_table "characters", force: :cascade do |t|
     t.boolean "adult"
     t.datetime "external_created_at"
@@ -24,6 +71,28 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_29_214430) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_characters_on_slug", unique: true
+  end
+
+  create_table "conversations", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.string "title"
+    t.text "summary"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id"], name: "index_conversations_on_character_id"
+    t.index ["updated_at"], name: "index_conversations_on_updated_at"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.integer "conversation_id", null: false
+    t.text "content", null: false
+    t.string "role", null: false
+    t.json "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["created_at"], name: "index_messages_on_created_at"
+    t.index ["role"], name: "index_messages_on_role"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -74,6 +143,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_29_214430) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "character_states", "conversations"
+  add_foreign_key "conversations", "characters"
+  add_foreign_key "messages", "conversations"
   add_foreign_key "sessions", "users"
   add_foreign_key "taggings", "tags"
 end
