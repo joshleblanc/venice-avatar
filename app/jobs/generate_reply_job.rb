@@ -21,9 +21,9 @@ class GenerateReplyJob < ApplicationJob
       context_analysis = assistant_analysis[:context_analysis]
 
       # Check if the assistant's message implies a follow-up
-      if context_analysis[:follow_up_intent]&.dig(:has_intent)
-        schedule_followup_message(assistant_msg, context_analysis[:follow_up_intent])
-      end
+      # if context_analysis[:follow_up_intent]&.dig(:has_intent)
+      #   schedule_followup_message(assistant_msg, context_analysis[:follow_up_intent])
+      # end
 
       # Generate images for the latest state
       current_state = conversation.current_character_state

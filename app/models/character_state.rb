@@ -50,55 +50,74 @@ class CharacterState < ApplicationRecord
   end
 
   def build_detailed_character_prompt
-    prompt_parts = []
+    sections = []
 
-    # Start with base character description
-    prompt_parts << base_character_prompt if base_character_prompt.present?
+    # Base character description
+    if base_character_prompt.present?
+      sections << "base_description: #{base_character_prompt}"
+    end
 
-    # Add physical features
+    # Physical features section
     if physical_features.present?
-      prompt_parts << format_physical_features
+      physical_parts = []
+      physical_parts << physical_features["age_appearance"] if physical_features["age_appearance"]
+      physical_parts << physical_features["height"] if physical_features["height"]
+      sections << "physical_features: #{physical_parts.join(", ")}" if physical_parts.any?
     end
 
-    # Add hair details
+    # Hair details section
     if hair_details.present?
-      prompt_parts << format_hair_details
+      hair_parts = []
+      hair_parts << hair_details["length"] if hair_details["length"]
+      hair_parts << hair_details["color"] if hair_details["color"]
+      hair_parts << hair_details["style"] if hair_details["style"]
+      sections << "hair_details: #{hair_parts.join(" ")} hair" if hair_parts.any?
     end
 
-    # Add eye details
-    if eye_details.present?
-      prompt_parts << format_eye_details
+    # Eye details section
+    if eye_details.present? && eye_details["color"]
+      sections << "eye_details: #{eye_details["color"]} eyes"
     end
 
-    # Add body type and skin tone
-    prompt_parts << body_type if body_type.present?
-    prompt_parts << "#{skin_tone} skin" if skin_tone.present?
+    # Body type and skin tone section
+    body_parts = []
+    body_parts << body_type if body_type.present?
+    body_parts << "#{skin_tone} skin" if skin_tone.present?
+    sections << "body_details: #{body_parts.join(", ")}" if body_parts.any?
 
-    # Add distinctive features
-    if distinctive_features.present?
-      prompt_parts << format_distinctive_features
+    # Distinctive features section
+    if distinctive_features.present? && distinctive_features["features"] && distinctive_features["features"].any?
+      sections << "distinctive_features: #{distinctive_features["features"].join(", ")}"
     end
 
-    # Add current expression (this is what changes)
-    prompt_parts << "with #{expression} expression" if expression.present?
+    # Current expression section
+    if expression.present?
+      sections << "current_expression: #{expression}"
+    end
 
-    # Add current clothing (this can change)
+    # Clothing section
     if clothing_details.present? && clothing_details["latest_change"]
-      prompt_parts << "wearing #{clothing_details["latest_change"]}"
-    elsif default_outfit.present?
-      prompt_parts << format_default_outfit
+      sections << "clothing: #{clothing_details["latest_change"]}"
+    elsif default_outfit.present? && default_outfit["type"]
+      sections << "clothing: #{default_outfit["type"]}"
     end
 
-    # Add injury details if present
+    # Injury details section
     if injury_details.present? && injury_details["latest_injury"]
-      prompt_parts << "showing #{injury_details["latest_injury"]}"
+      sections << "injuries: #{injury_details["latest_injury"]}"
     end
 
-    # Add pose and art style
-    prompt_parts << pose_style if pose_style.present?
-    prompt_parts << art_style_notes if art_style_notes.present?
+    # Pose section
+    if pose_style.present?
+      sections << "pose: #{pose_style}"
+    end
 
-    prompt_parts.compact.join(", ")
+    # Art style section
+    if art_style_notes.present?
+      sections << "art_style: #{art_style_notes}"
+    end
+
+    sections.compact.join("\n")
   end
 
   def appearance_changed?(previous_state)
@@ -338,50 +357,50 @@ class CharacterState < ApplicationRecord
   end
 
   def build_detailed_background_prompt
-    return "a cozy indoor setting" unless detailed_background_info.present?
+    return "environment: a cozy indoor setting" unless detailed_background_info.present?
 
-    prompt_parts = []
+    sections = []
 
-    # Base environment
+    # Base environment section
     if detailed_background_info["base_environment"]
-      prompt_parts << detailed_background_info["base_environment"]
+      sections << "environment: #{detailed_background_info["base_environment"]}"
     end
 
-    # Architectural details
+    # Architectural details section
     if detailed_background_info["architectural_details"]
-      prompt_parts << "with #{detailed_background_info["architectural_details"]}"
+      sections << "architecture: #{detailed_background_info["architectural_details"]}"
     end
 
-    # Furniture and objects
+    # Furniture and objects section
     if detailed_background_info["furniture_objects"]
-      prompt_parts << "featuring #{detailed_background_info["furniture_objects"]}"
+      sections << "furniture_objects: #{detailed_background_info["furniture_objects"]}"
     end
 
-    # Lighting conditions
+    # Lighting conditions section
     if detailed_background_info["lighting_conditions"]
-      prompt_parts << "#{detailed_background_info["lighting_conditions"]}"
+      sections << "lighting: #{detailed_background_info["lighting_conditions"]}"
     end
 
-    # Atmospheric elements
+    # Atmospheric elements section
     if detailed_background_info["atmospheric_elements"]
-      prompt_parts << "#{detailed_background_info["atmospheric_elements"]}"
+      sections << "atmosphere: #{detailed_background_info["atmospheric_elements"]}"
     end
 
-    # Time and weather context
+    # Time and weather context section
     time_weather = []
     time_weather << detailed_background_info["time_of_day"] if detailed_background_info["time_of_day"]
     time_weather << detailed_background_info["weather_conditions"] if detailed_background_info["weather_conditions"]
 
     if time_weather.any?
-      prompt_parts << "during #{time_weather.join(", ")}"
+      sections << "time_weather: #{time_weather.join(", ")}"
     end
 
-    # Color palette
+    # Color palette section
     if detailed_background_info["color_palette"]
-      prompt_parts << "with #{detailed_background_info["color_palette"]} color scheme"
+      sections << "color_scheme: #{detailed_background_info["color_palette"]}"
     end
 
-    prompt_parts.compact.join(", ")
+    sections.compact.join("\n")
   end
 
   def background_needs_update?(previous_state)

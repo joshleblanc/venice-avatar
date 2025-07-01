@@ -11,6 +11,17 @@ class ImageGenerationService
 
     prompt = build_unified_scene_prompt(character_state)
 
+    models = [
+      "venice-sd35",
+      "hidream",
+      "fluently-xl",
+      "flux-dev", # higher prompt length
+      "flux-dev-uncensored-11", # higher prompt length
+      "flux-dev-uncensored", # higher prompt length
+      "lustify-sdxl",
+      "pony-realism",
+      "stable-diffusion-3.5",
+    ]
     begin
       Rails.logger.info "Generating unified scene image with prompt: #{prompt}"
       response = @venice_client.generate_image({
@@ -18,7 +29,7 @@ class ImageGenerationService
           prompt: prompt,
           style_preset: "Anime",
           negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
-          model: "hidream",
+          model: models[4],
           width: 640,  # 16:10 ratio for visual novel scenes
           height: 1024,
           safe_mode: false,
@@ -73,11 +84,41 @@ class ImageGenerationService
     # Build background portion with consistency
     background_prompt = character_state.build_detailed_background_prompt
 
-    # Combine into unified scene prompt
-    unified_prompt = "Visual novel scene: #{character_prompt} in #{background_prompt}"
+    # Build system prompt explaining the structure
+    system_prompt = build_system_prompt_for_structured_generation
 
-    # Add technical specifications
-    "#{unified_prompt}, anime art style, high quality, detailed illustration, visual novel style, cinematic composition"
+    # Combine into unified scene prompt with explicit structure
+    unified_prompt = <<~PROMPT
+      #{system_prompt}
+
+      CHARACTER DETAILS:
+      #{character_prompt}
+
+      SCENE BACKGROUND:
+      #{background_prompt}
+
+      TECHNICAL_SPECIFICATIONS:
+      art_style: anime art style, high quality, detailed illustration, visual novel style
+      composition: cinematic composition, professional lighting
+      quality: masterpiece, best quality, ultra detailed
+    PROMPT
+
+    unified_prompt.strip
+  end
+
+  private
+
+  def build_system_prompt_for_structured_generation
+    <<~SYSTEM
+      Generate a visual novel scene image based on the following structured prompt.
+      Each section provides explicit details that should be incorporated into the final image:
+      
+      - CHARACTER DETAILS: Contains structured character information including physical features, clothing, expression, and pose
+      - SCENE BACKGROUND: Contains structured environment information including setting, lighting, and atmosphere
+      - TECHNICAL_SPECIFICATIONS: Contains art style and quality requirements
+      
+      Please interpret each labeled section (e.g., "physical_features:", "hair_details:", "environment:") as specific visual elements to include in the generated image.
+    SYSTEM
   end
 
   private
