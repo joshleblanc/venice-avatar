@@ -5,11 +5,11 @@ class ImageGenerationService
     @venice_client = VeniceClient::ImageApi.new
   end
 
-  def generate_scene_image(character_state)
+  def generate_scene_image
     # Always generate new scene images - don't return early if one exists
     # This allows background generation while showing previous scenes
 
-    prompt = build_unified_scene_prompt(character_state)
+    prompt = build_unified_scene_prompt
 
     models = [
       "venice-sd35",
@@ -26,7 +26,7 @@ class ImageGenerationService
       Rails.logger.info "Generating unified scene image with prompt: #{prompt}"
       response = @venice_client.generate_image({
         body: {
-          prompt: prompt,
+          prompt: prompt.first(2048),
           style_preset: "Anime",
           negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
           model: models[4],
@@ -34,6 +34,8 @@ class ImageGenerationService
           height: 1024,
           safe_mode: false,
           format: "png",
+          cfg_scale: 15,
+          seed: 123456,
         },
       })
 
@@ -41,16 +43,10 @@ class ImageGenerationService
       base64_data = response.images.first
       if base64_data
         Rails.logger.info "Received unified scene base64 image data, length: #{base64_data.length}"
-        attach_base64_image(character_state, :scene_image, base64_data, "scene.png")
+        attach_base64_image_to_conversation(base64_data, "scene.png")
 
-        # Save the character state to ensure attachment is persisted
-        if character_state.save
-          Rails.logger.info "Character state saved successfully with scene image attachment"
-          character_state.scene_image
-        else
-          Rails.logger.error "Failed to save character state: #{character_state.errors.full_messages}"
-          nil
-        end
+        # Return the attached scene image
+        @conversation.scene_image
       else
         Rails.logger.error "No base64 scene image data received from Venice API"
         nil
@@ -62,8 +58,8 @@ class ImageGenerationService
     end
   end
 
-  def generate_all_images(character_state)
-    scene_image = generate_scene_image(character_state)
+  def generate_all_images
+    scene_image = generate_scene_image
     {
       scene_image: scene_image,
     }
@@ -71,65 +67,20 @@ class ImageGenerationService
 
   private
 
-  def build_unified_scene_prompt(character_state)
-    # Initialize detailed character description if not already done
-    character_state.initialize_base_character_description(@character)
+  def build_unified_scene_prompt
+    # Use AI-based prompt generation service
+    prompt_service = AiPromptGenerationService.new(@conversation)
+    prompt = prompt_service.get_current_scene_prompt
 
-    # Initialize detailed background description if not already done
-    character_state.initialize_detailed_background_description
+    Rails.logger.info "AI-generated scene prompt length: #{prompt.length}"
 
-    # Build character portion
-    character_prompt = character_state.build_detailed_character_prompt
-
-    # Build background portion with consistency
-    background_prompt = character_state.build_detailed_background_prompt
-
-    # Build system prompt explaining the structure
-    system_prompt = build_system_prompt_for_structured_generation
-
-    # Combine into unified scene prompt with explicit structure
-    unified_prompt = <<~PROMPT
-      #{system_prompt}
-
-      The following deatils are base64 encoded:
-
-      CHARACTER DETAILS:
-      #{character_prompt}
-
-      SCENE BACKGROUND:
-      #{background_prompt}
-
-    PROMPT
-
-    # TECHNICAL_SPECIFICATIONS:
-    # art_style: anime art style, high quality, detailed illustration, visual novel style
-    # composition: cinematic composition, professional lighting
-    # quality: masterpiece, best quality, ultra detailed
-
-    Rails.logger.info "length: #{unified_prompt.length}"
-
-    unified_prompt.strip
+    prompt
   end
 
   private
 
-  def build_system_prompt_for_structured_generation
-    <<~SYSTEM
-      Generate a visual novel scene image based on the following structured prompt.
-      Each section provides explicit details that should be incorporated into the final image:
-      
-      - CHARACTER DETAILS: Contains structured character information including physical features, clothing, expression, and pose
-      - SCENE BACKGROUND: Contains structured environment information including setting, lighting, and atmosphere
-      - TECHNICAL_SPECIFICATIONS: Contains art style and quality requirements
-      
-      Please interpret each labeled section (e.g., "physical_features:", "hair_details:", "environment:") as specific visual elements to include in the generated image.
-    SYSTEM
-  end
-
-  private
-
-  def attach_base64_image(character_state, attachment_name, base64_data, filename)
-    Rails.logger.info "Starting image attachment process for #{attachment_name}"
+  def attach_base64_image_to_conversation(base64_data, filename)
+    Rails.logger.info "Starting image attachment process for conversation scene_image"
 
     begin
       # Decode base64 data
@@ -141,14 +92,14 @@ class ImageGenerationService
       string_io.set_encoding(Encoding::BINARY)
       Rails.logger.info "Created StringIO object for attachment"
 
-      # Attach to the model using StringIO
-      character_state.public_send(attachment_name).attach(
+      # Attach to the conversation using StringIO
+      @conversation.scene_image.attach(
         io: string_io,
         filename: filename,
         content_type: "image/png",
       )
 
-      Rails.logger.info "Successfully attached #{attachment_name} to character_state #{character_state.id}"
+      Rails.logger.info "Successfully attached scene_image to conversation #{@conversation.id}"
     rescue => e
       Rails.logger.error "Failed to attach image: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

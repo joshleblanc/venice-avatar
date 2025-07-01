@@ -175,24 +175,50 @@ class CharacterState < ApplicationRecord
     return if base_character_prompt.present?
 
     begin
+      # Use AI-powered parameter extraction instead of manual regex parsing
+      extraction_service = CharacterParameterExtractionService.new
+      extracted_params = extraction_service.extract_parameters_from_description(character.description)
+
       # Build comprehensive base description from character data
       self.base_character_prompt = build_comprehensive_character_description(character)
-      self.physical_features = extract_physical_features(character)
-      self.hair_details = extract_hair_details(character)
-      self.eye_details = extract_eye_details(character)
-      self.body_type = extract_body_type(character)
-      self.skin_tone = extract_skin_tone(character)
-      self.distinctive_features = extract_distinctive_features(character)
-      self.default_outfit = extract_default_outfit(character)
-      self.pose_style = "standing pose, full body portrait"
-      self.art_style_notes = "visual novel character art, anime art style, high quality, detailed"
 
-      Rails.logger.info "Successfully initialized detailed character attributes"
+      # Set parameters from AI extraction
+      self.physical_features = extracted_params[:physical_features]
+      self.hair_details = extracted_params[:hair_details]
+      self.eye_details = extracted_params[:eye_details]
+      self.body_type = extracted_params[:body_details]["body_type"]
+      self.skin_tone = extracted_params[:body_details]["skin_tone"]
+      self.distinctive_features = extracted_params[:distinctive_features]
+      self.default_outfit = extracted_params[:default_outfit]
+      self.pose_style = extracted_params[:personality_visual_cues]["pose_style"]
+      self.art_style_notes = extracted_params[:art_style_notes]["style"]
+
+      Rails.logger.info "Successfully initialized detailed character attributes using AI extraction"
+      Rails.logger.info "Extracted parameters: #{extracted_params.inspect}"
     rescue => e
       Rails.logger.error "Failed to initialize base character description: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      raise e
+
+      # Fallback to manual extraction if AI fails
+      Rails.logger.info "Falling back to manual parameter extraction"
+      fallback_to_manual_extraction(character)
     end
+  end
+
+  def fallback_to_manual_extraction(character)
+    # Fallback to original manual extraction methods
+    self.base_character_prompt = build_comprehensive_character_description(character)
+    self.physical_features = extract_physical_features(character)
+    self.hair_details = extract_hair_details(character)
+    self.eye_details = extract_eye_details(character)
+    self.body_type = extract_body_type(character)
+    self.skin_tone = extract_skin_tone(character)
+    self.distinctive_features = extract_distinctive_features(character)
+    self.default_outfit = extract_default_outfit(character)
+    self.pose_style = "standing pose, full body portrait"
+    self.art_style_notes = "visual novel character art, anime art style, high quality, detailed"
+
+    Rails.logger.info "Successfully initialized character attributes using manual extraction fallback"
   end
 
   def build_detailed_character_prompt
@@ -206,10 +232,16 @@ class CharacterState < ApplicationRecord
     state_data.each do |key, value|
       next if key == "base_character_prompt" || key == "changed" || key == "appearance_description"
       if value.is_a? Hash
-        sections << "#--#{key}--"
+        sections << "#{key}:"
         value.each do |k, v|
-          sections << "#{k}: #{v}"
+          if v.is_a? Array
+            sections << "#{k}: #{v.join(",")}"
+          else
+            sections << "#{k}: #{v}"
+          end
         end
+      elsif value.is_a? Array
+        sections << "#{key}: #{value.join(",")}"
       else
         sections << "#{key}: #{value}"
       end

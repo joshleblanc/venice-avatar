@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_01_143900) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_01_173843) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -39,43 +39,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_143900) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "character_states", force: :cascade do |t|
-    t.integer "conversation_id", null: false
-    t.string "location"
-    t.text "appearance_description"
-    t.string "expression"
-    t.json "clothing_details"
-    t.json "injury_details"
-    t.json "appearance_details"
-    t.text "background_prompt"
-    t.string "background_image_url"
-    t.string "character_image_url"
-    t.text "message_context"
-    t.string "triggered_by_role"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.text "base_character_prompt"
-    t.json "physical_features"
-    t.json "hair_details"
-    t.json "eye_details"
-    t.string "body_type"
-    t.string "skin_tone"
-    t.json "distinctive_features"
-    t.json "default_outfit"
-    t.string "pose_style"
-    t.text "art_style_notes"
-    t.boolean "character_image_generating"
-    t.boolean "background_image_generating"
-    t.text "ai_analysis_summary"
-    t.integer "mood_intensity"
-    t.integer "context_significance"
-    t.json "detailed_background_info"
-    t.json "unified_state_data"
-    t.index ["conversation_id"], name: "index_character_states_on_conversation_id"
-    t.index ["created_at"], name: "index_character_states_on_created_at"
-    t.index ["unified_state_data"], name: "index_character_states_on_unified_state_data"
-  end
-
   create_table "characters", force: :cascade do |t|
     t.boolean "adult"
     t.datetime "external_created_at"
@@ -99,6 +62,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_143900) do
     t.datetime "updated_at", null: false
     t.boolean "scene_generating"
     t.boolean "generating_reply"
+    t.json "metadata"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
   end
@@ -169,7 +133,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_143900) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "character_states", "conversations"
   add_foreign_key "conversations", "characters"
   add_foreign_key "messages", "conversations"
   add_foreign_key "sessions", "users"

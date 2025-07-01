@@ -1,0 +1,15 @@
+<div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+        <h3 class="text-xl font-semibold mb-2"><%= character.name %></h3>
+        <p class="text-gray-600 mb-4"><%= truncate(character.description, length: 100) %></p>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          <% character.tag_list.each do |tag| %>
+            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"><%= tag %></span>
+          <% end %>
+        </div>
+        
+        <%= link_to "Start Conversation", character_conversations_path(character),
+                    method: :post,
+                    data: { turbo_method: :post },
+                    class: "w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block" %>
+      </div>

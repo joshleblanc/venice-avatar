@@ -1,6 +1,6 @@
 <%= turbo_stream_from @conversation %>
 
-<div class="h-screen flex bg-gray-100" data-controller="messages" data-messages-container-target="container">
+<div class="h-screen flex flex-1 bg-gray-100" data-controller="messages" data-messages-container-target="container">
   <!-- Chat Panel (Left Side) -->
   <div class="flex-1 flex flex-col">
     <!-- Header -->
@@ -36,7 +36,7 @@
                            rows: 2,
                            class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
                            required: true,
-                           data: { messages_target: "input" } %>
+                           data: { messages_target: "input", turbo_permanent: true } %>
         <%= form.submit "Send",
                         class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors self-end" %>
       <% end %>

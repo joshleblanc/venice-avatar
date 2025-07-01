@@ -4,8 +4,8 @@ class Message < ApplicationRecord
   validates :content, presence: true
   validates :role, presence: true, inclusion: { in: %w[user assistant] }
 
-  scope :user_messages, -> { where(role: 'user') }
-  scope :assistant_messages, -> { where(role: 'assistant') }
+  scope :user_messages, -> { where(role: "user") }
+  scope :assistant_messages, -> { where(role: "assistant") }
   scope :recent, -> { order(created_at: :desc) }
 
   # Parse message content to separate clean text from action descriptions
@@ -43,28 +43,34 @@ class Message < ApplicationRecord
 
     # Extract parenthetical actions like (blushes furiously)
     clean_text.gsub!(/\(([^)]+)\)/) do |match|
-      actions_and_thoughts << { type: 'action', text: $1.strip }
-      '' # Remove from clean text
+      actions_and_thoughts << { type: "action", text: $1.strip }
+      "" # Remove from clean text
     end
 
     # Extract bold actions like **looks sternly**
     clean_text.gsub!(/\*\*([^*]+)\*\*/) do |match|
-      actions_and_thoughts << { type: 'action', text: $1.strip }
-      '' # Remove from clean text
+      actions_and_thoughts << { type: "action", text: $1.strip }
+      "" # Remove from clean text
     end
 
     # Extract italic thoughts like *thinks to themselves*
     clean_text.gsub!(/\*([^*]+)\*/) do |match|
-      actions_and_thoughts << { type: 'thought', text: $1.strip }
-      '' # Remove from clean text
+      actions_and_thoughts << { type: "thought", text: $1.strip }
+      "" # Remove from clean text
+    end
+
+    # Extracts square bracket actions like [blushes furiously]
+    clean_text.gsub!(/\[([^\]]+)\]/) do |match|
+      actions_and_thoughts << { type: "action", text: $1.strip }
+      "" # Remove from clean text
     end
 
     # Clean up extra whitespace
-    clean_text = clean_text.gsub(/\s+/, ' ').strip
+    clean_text = clean_text.gsub(/\s+/, " ").strip
 
     {
       clean_text: clean_text,
-      actions_and_thoughts: actions_and_thoughts
+      actions_and_thoughts: actions_and_thoughts,
     }
   end
 end

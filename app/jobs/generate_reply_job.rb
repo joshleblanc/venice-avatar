@@ -4,9 +4,18 @@ class GenerateReplyJob < ApplicationJob
   def perform(conversation, user_message)
     conversation.update(generating_reply: true)
     # Analyze context and update character state using AI
-    context_tracker = AiContextTrackerService.new(conversation)
-    user_analysis = context_tracker.analyze_message_context(user_message.content, "user")
-    new_state = user_analysis[:character_state]
+    # context_tracker = AiContextTrackerService.new(conversation)
+    # user_analysis = context_tracker.analyze_message_context(user_message.content, "user")
+    # new_state = user_analysis[:character_state]
+
+    # Evolve the scene prompt based on the user message
+    prompt_service = AiPromptGenerationService.new(conversation)
+    current_prompt = prompt_service.get_current_scene_prompt
+
+    first_prompt = current_prompt
+
+    evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, user_message.content)
+    Rails.logger.info "Scene prompt evolved after user message"
 
     # Send message to Venice API
     begin
@@ -16,19 +25,23 @@ class GenerateReplyJob < ApplicationJob
       assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant")
 
       # Analyze assistant response for context changes using AI
-      assistant_analysis = context_tracker.analyze_message_context(chat_response, "assistant")
-      assistant_state = assistant_analysis[:character_state]
-      context_analysis = assistant_analysis[:context_analysis]
+      # assistant_analysis = context_tracker.analyze_message_context(chat_response, "assistant")
+      # assistant_state = assistant_analysis[:character_state]
+      # context_analysis = assistant_analysis[:context_analysis]
 
+      # Evolve the scene prompt based on the new assistant message
+      prompt_service = AiPromptGenerationService.new(conversation)
+      current_prompt = prompt_service.get_current_scene_prompt
+      evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, chat_response)
+      Rails.logger.info "Scene prompt evolved after assistant message"
       # Check if the assistant's message implies a follow-up
       # if context_analysis[:follow_up_intent]&.dig(:has_intent)
       #   schedule_followup_message(assistant_msg, context_analysis[:follow_up_intent])
       # end
 
       # Generate images for the latest state
-      current_state = conversation.current_character_state
-      if current_state && current_state != new_state
-        GenerateImagesJob.perform_later(conversation, new_state)
+      if evolved_prompt != first_prompt
+        GenerateImagesJob.perform_later(conversation)
       end
     rescue => e
       Rails.logger.error "Venice API error in GenerateReplyJob: #{e.message}"
@@ -38,9 +51,6 @@ class GenerateReplyJob < ApplicationJob
         content: "I'm sorry, I couldn't respond right now. Please try again.",
         role: "assistant",
       )
-
-      # Still broadcast to update the UI
-      conversation.broadcast_refresh
     ensure
       conversation.update(generating_reply: false)
     end
@@ -62,6 +72,7 @@ class GenerateReplyJob < ApplicationJob
     # Add the new user message
     messages << { role: "user", content: message }
 
+    Rails.logger.info "Sending message to Venice API: #{messages}"
     response = chat_api.create_chat_completion({
       body: {
         model: "venice-uncensored",

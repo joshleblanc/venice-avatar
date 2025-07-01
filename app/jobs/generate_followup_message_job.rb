@@ -24,21 +24,18 @@ class GenerateFollowupMessageJob < ApplicationJob
         role: "assistant",
       )
 
-      # Analyze the follow-up response for context changes
-      context_tracker = AiContextTrackerService.new(conversation)
-      analysis = context_tracker.analyze_message_context(chat_response, "assistant")
-      new_state = analysis[:character_state]
+      # Evolve the scene prompt based on the follow-up message
+      prompt_service = AiPromptGenerationService.new(conversation)
+      first_prompt = prompt_service.get_current_scene_prompt
+      evolved_prompt = prompt_service.evolve_scene_prompt(chat_response, "assistant")
 
-      # Generate images if needed
-      current_state = conversation.current_character_state
-      if current_state && new_state
-        GenerateImagesJob.perform_later(conversation, new_state)
+      # Generate images if the scene prompt changed
+      if evolved_prompt != first_prompt
+        GenerateImagesJob.perform_later(conversation)
       end
 
-      # Check if this follow-up message also implies another follow-up
-      if new_state&.dig(:follow_up_intent, :has_intent)
-        schedule_followup_message(conversation, assistant_msg, new_state[:follow_up_intent])
-      end
+      # For now, we don't chain follow-ups from follow-up messages to keep it simple
+      # This prevents infinite follow-up loops
     rescue => e
       Rails.logger.error "Venice API error in GenerateFollowupMessageJob: #{e.message}"
 
