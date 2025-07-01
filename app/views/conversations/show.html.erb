@@ -4,14 +4,14 @@
   <!-- Chat Panel (Left Side) -->
   <div class="flex-1 flex flex-col">
     <!-- Header -->
+    <%= link_to "← Back to Conversations", conversations_path,
+                class: "text-blue-600 hover:text-blue-800" %>
     <div class="bg-white shadow-sm p-4 border-b">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-xl font-semibold"><%= @conversation.character.name %></h1>
           <p class="text-gray-600 text-sm"><%= @conversation.character.description %></p>
         </div>
-        <%= link_to "← Back to Conversations", conversations_path,
-                    class: "text-blue-600 hover:text-blue-800" %>
       </div>
     </div>
 
@@ -19,6 +19,9 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages">
       <% @messages.each do |message| %>
         <%= render "messages/message", message: message %>
+      <% end %>
+      <% if @conversation.generating_reply %>
+        <%= render "messages/typing_indicator", character: @conversation.character %>
       <% end %>
     </div>
 
@@ -40,7 +43,7 @@
 
   <!-- Character Display Panel (Right Side) -->
   <div class="w-96 bg-white shadow-lg" id="character-display">
-    <%= render "character_display", conversation: @conversation, current_state: @current_state %>
+    <%= render "character_display", conversation: @conversation %>
   </div>
 </div>
 

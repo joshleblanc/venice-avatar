@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_30_181501) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_30_232044) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -69,6 +69,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_181501) do
     t.text "ai_analysis_summary"
     t.integer "mood_intensity"
     t.integer "context_significance"
+    t.json "detailed_background_info"
     t.index ["conversation_id"], name: "index_character_states_on_conversation_id"
     t.index ["created_at"], name: "index_character_states_on_created_at"
   end
@@ -94,6 +95,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_30_181501) do
     t.text "summary"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "scene_generating"
+    t.boolean "generating_reply"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
   end

@@ -6,7 +6,7 @@
 
 <div id="characters">
   <% @characters.each do |character| %>
-    <%= render character %>
+    <%= render character, cached: true %>
     <p>
       <%= link_to "Show this character", character %>
     </p>

@@ -8,10 +8,10 @@ class ConversationsController < ApplicationController
 
   def show
     @messages = @conversation.messages.order(:created_at)
-    @current_state = @conversation.current_character_state
+    current_state = @conversation.current_character_state
 
     # Generate initial images if needed
-    if @current_state.nil?
+    if current_state.nil?
       initialize_conversation_state
     end
   end
@@ -42,9 +42,6 @@ class ConversationsController < ApplicationController
         render turbo_stream: [
           turbo_stream.append("messages", partial: "messages/message", locals: {
                                             message: user_msg,
-                                          }),
-          turbo_stream.append("messages", partial: "messages/typing_indicator", locals: {
-                                            character: @conversation.character,
                                           }),
         ]
       }

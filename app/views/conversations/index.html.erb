@@ -13,10 +13,10 @@
           <% end %>
         </div>
         
-        <%= link_to "Start Conversation", character_conversations_path(character), 
-            method: :post, 
-            data: { turbo_method: :post },
-            class: "w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block" %>
+        <%= link_to "Start Conversation", character_conversations_path(character),
+                    method: :post,
+                    data: { turbo_method: :post },
+                    class: "w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors text-center block" %>
       </div>
     <% end %>
   </div>
@@ -31,12 +31,12 @@
               <div>
                 <h3 class="text-lg font-semibold"><%= conversation.character.name %></h3>
                 <p class="text-gray-600 text-sm">
-                  <%= pluralize(conversation.messages.count, 'message') %> • 
+                  <%= pluralize(conversation.messages.count, "message") %> • 
                   Last updated <%= time_ago_in_words(conversation.updated_at) %> ago
                 </p>
               </div>
-              <%= link_to "Continue", conversation_path(conversation), 
-                  class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors" %>
+              <%= link_to "Continue", conversation_path(conversation),
+                          class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors" %>
             </div>
           </div>
         <% end %>

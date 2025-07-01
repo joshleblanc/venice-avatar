@@ -16,16 +16,12 @@ class Conversation < ApplicationRecord
     current_character_state&.appearance_description || generate_initial_appearance
   end
 
-  def last_character_image
-    character_states.joins(:character_image_attachment)
-                   .order(created_at: :desc)
-                   .first&.character_image
-  end
-
-  def last_background_image
-    character_states.joins(:background_image_attachment)
-                   .order(created_at: :desc)
-                   .first&.background_image
+  def last_scene_image
+    # Try to get the most recent scene image first
+    scene_state = character_states.joins(:scene_image_attachment)
+      .order(created_at: :desc)
+      .first
+    return scene_state.scene_image if scene_state
   end
 
   private

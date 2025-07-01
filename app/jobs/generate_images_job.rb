@@ -3,27 +3,23 @@ class GenerateImagesJob < ApplicationJob
 
   def perform(conversation, character_state)
     # Set generating flags to true (this will touch the conversation and trigger refresh)
-    character_state.update!(
-      character_image_generating: true,
-      background_image_generating: true,
+    # Keep both flags for backward compatibility with frontend
+    conversation.update!(
+      scene_generating: true,
     )
 
     image_service = ImageGenerationService.new(conversation)
 
-    # Generate images
-    images = image_service.generate_all_images(character_state)
+    # Generate unified scene image
+    scene_image = image_service.generate_scene_image(character_state)
 
-    # Clear generating flags (this will touch the conversation and trigger refresh)
-    character_state.update!(
-      character_image_generating: false,
-      background_image_generating: false,
-    )
+    Rails.logger.info "Generated unified scene image: #{scene_image ? "success" : "failed"}"
   rescue => e
-    Rails.logger.error "Failed to generate images: #{e.message}"
-    # Clear generating flags even on error
-    character_state.update!(
-      character_image_generating: false,
-      background_image_generating: false,
+    Rails.logger.error "Failed to generate scene image: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+  ensure
+    conversation.update!(
+      scene_generating: false,
     )
   end
 end

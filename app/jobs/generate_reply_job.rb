@@ -2,7 +2,7 @@ class GenerateReplyJob < ApplicationJob
   queue_as :default
 
   def perform(conversation, user_message)
-
+    conversation.update(generating_reply: true)
     # Analyze context and update character state using AI
     context_tracker = AiContextTrackerService.new(conversation)
     new_state = context_tracker.analyze_message_context(user_message.content, "user")
@@ -19,8 +19,8 @@ class GenerateReplyJob < ApplicationJob
 
       # Generate images for the latest state
       current_state = conversation.current_character_state
-      if current_state
-        GenerateImagesJob.perform_later(conversation, current_state)
+      if current_state && current_state != new_state
+        GenerateImagesJob.perform_later(conversation, new_state)
       end
     rescue => e
       Rails.logger.error "Venice API error in GenerateReplyJob: #{e.message}"
@@ -33,6 +33,8 @@ class GenerateReplyJob < ApplicationJob
 
       # Still broadcast to update the UI
       conversation.broadcast_refresh
+    ensure
+      conversation.update(generating_reply: false)
     end
   end
 

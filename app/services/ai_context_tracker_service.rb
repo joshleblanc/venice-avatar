@@ -315,11 +315,19 @@ class AiContextTrackerService
     # Initialize detailed character description for consistent image generation
     new_state.initialize_base_character_description(@conversation.character)
 
-    # Save the new state
-    new_state.save!
+    # Initialize detailed background description for consistent scene generation
+    new_state.initialize_detailed_background_description
 
-    # Copy images from previous state if no visual change is needed for specific aspects
-    copy_images_if_unchanged(new_state, previous_state, context_changes)
+    # Save the new state
+    new_state.save
+
+    Rails.logger.info "Scene regeneration needed due to: #{[
+                        context_changes[:appearance_change] ? "appearance #{context_changes[:appearance_change]}" : nil,
+                        context_changes[:clothing_change] ? "clothing #{context_changes[:clothing_change]}" : nil,
+                        context_changes[:expression_change] ? "expression #{context_changes[:expression_change]}" : nil,
+                        context_changes[:location_change] ? "location #{context_changes[:location_change]}" : nil,
+                        (context_changes[:context_significance] && context_changes[:context_significance] >= 7) ? "high_significance #{context_changes[:context_significance]}" : nil,
+                      ].compact.join(", ")}"
 
     new_state
   end
@@ -387,23 +395,6 @@ class AiContextTrackerService
       "Visual novel style background of #{context_changes[:location_change]}, detailed and atmospheric"
     else
       previous_state&.background_prompt || "A cozy indoor setting with warm lighting"
-    end
-  end
-
-  def copy_images_if_unchanged(new_state, previous_state, context_changes)
-    return unless previous_state
-
-    # Copy character image if appearance and clothing haven't changed significantly
-    if previous_state.character_image.attached? &&
-       !context_changes[:appearance_change] &&
-       !context_changes[:clothing_change] &&
-       !context_changes[:expression_change]
-      new_state.character_image.attach(previous_state.character_image.blob)
-    end
-
-    # Copy background image if location hasn't changed
-    if previous_state.background_image.attached? && !context_changes[:location_change]
-      new_state.background_image.attach(previous_state.background_image.blob)
     end
   end
 end
