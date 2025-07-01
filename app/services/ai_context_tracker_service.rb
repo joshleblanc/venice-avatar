@@ -543,6 +543,47 @@ class AiContextTrackerService
     end
   end
 
+  # Build unified state data from AI analysis with change detection
+  def build_unified_state_data(context_changes, previous_state, is_initial_state)
+    previous_data = previous_state&.state_data || {}
+    
+    {
+      # Basic state fields
+      'location' => extract_location_from_comprehensive_data(context_changes) || 
+                    (is_initial_state ? get_complete_location_data(context_changes) : previous_data['location']),
+      'expression' => extract_expression_from_comprehensive_data(context_changes) || 
+                      (is_initial_state ? get_complete_expression_data(context_changes) : previous_data['expression']),
+      
+      # Comprehensive appearance data
+      'appearance_description' => build_comprehensive_appearance_description(context_changes, previous_state, is_initial_state),
+      'clothing_details' => build_comprehensive_clothing_details(context_changes, previous_state, is_initial_state),
+      'injury_details' => build_comprehensive_injury_details(context_changes, previous_state, is_initial_state),
+      'background_prompt' => build_comprehensive_background_prompt(context_changes, previous_state, is_initial_state),
+      
+      # Detailed character features with change detection
+      'physical_features' => get_changed_or_complete_data(context_changes[:physical_features], previous_data['physical_features'], is_initial_state),
+      'hair_details' => get_changed_or_complete_data(context_changes[:hair_details], previous_data['hair_details'], is_initial_state),
+      'eye_details' => get_changed_or_complete_data(context_changes[:eye_details], previous_data['eye_details'], is_initial_state),
+      'distinctive_features' => get_changed_or_complete_data(context_changes[:distinctive_features], previous_data['distinctive_features'], is_initial_state),
+      'default_outfit' => get_changed_or_complete_data(context_changes[:clothing], previous_data['default_outfit'], is_initial_state),
+      
+      # Extracted single-value fields
+      'body_type' => extract_body_type_from_comprehensive_data(context_changes) || 
+                     (is_initial_state ? extract_body_type_from_complete_data(context_changes) : previous_data['body_type']),
+      'skin_tone' => extract_skin_tone_from_comprehensive_data(context_changes) || 
+                     (is_initial_state ? extract_skin_tone_from_complete_data(context_changes) : previous_data['skin_tone']),
+      'pose_style' => extract_pose_from_comprehensive_data(context_changes) || 
+                      (is_initial_state ? extract_pose_from_complete_data(context_changes) : previous_data['pose_style']),
+      
+      # Background and environment details
+      'detailed_background_info' => get_changed_or_complete_data(context_changes[:location_environment], previous_data['detailed_background_info'], is_initial_state),
+      
+      # Character prompt data
+      'base_character_prompt' => previous_data['base_character_prompt'], # Preserve existing prompt
+      'art_style_notes' => previous_data['art_style_notes'] # Preserve existing style notes
+    }.compact # Remove nil values
+  end
+
   # Methods to extract data from complete format (ignoring changed flag)
   def extract_body_type_from_complete_data(context_changes)
     body = context_changes[:body_details] || context_changes[:physical_features]
@@ -568,7 +609,7 @@ class AiContextTrackerService
     parts.any? ? parts.join(", ") : nil
   end
 
-  # Comprehensive builder methods with change detection
+  # Simplified builder methods for unified state data
   def build_comprehensive_appearance_description(context_changes, previous_state, is_initial_state = false)
     # Combine all appearance elements into a cohesive description
     parts = []
@@ -701,39 +742,13 @@ class AiContextTrackerService
     # Determine if this is the first state (no previous state exists)
     is_initial_state = previous_state.nil?
     
+    # Build unified state data from AI analysis with change detection
+    unified_data = build_unified_state_data(context_changes, previous_state, is_initial_state)
+  
     new_state = @conversation.character_states.build(
-      # Location: use changed data or preserve previous
-      location: extract_location_from_comprehensive_data(context_changes) || 
-                (is_initial_state ? get_complete_location_data(context_changes) : previous_state&.location),
-      
-      # Expression: use changed data or preserve previous
-      expression: extract_expression_from_comprehensive_data(context_changes) || 
-                  (is_initial_state ? get_complete_expression_data(context_changes) : previous_state&.expression),
-      
-      # Build comprehensive details using change-aware logic
-      appearance_description: build_comprehensive_appearance_description(context_changes, previous_state, is_initial_state),
-      clothing_details: build_comprehensive_clothing_details(context_changes, previous_state, is_initial_state),
-      injury_details: build_comprehensive_injury_details(context_changes, previous_state, is_initial_state),
-      background_prompt: build_comprehensive_background_prompt(context_changes, previous_state, is_initial_state),
-      
-      # Store comprehensive character details in JSON fields with change detection
-      physical_features: get_changed_or_complete_data(context_changes[:physical_features], previous_state&.physical_features, is_initial_state),
-      hair_details: get_changed_or_complete_data(context_changes[:hair_details], previous_state&.hair_details, is_initial_state),
-      eye_details: get_changed_or_complete_data(context_changes[:eye_details], previous_state&.eye_details, is_initial_state),
-      body_type: extract_body_type_from_comprehensive_data(context_changes) || 
-                 (is_initial_state ? extract_body_type_from_complete_data(context_changes) : previous_state&.body_type),
-      skin_tone: extract_skin_tone_from_comprehensive_data(context_changes) || 
-                 (is_initial_state ? extract_skin_tone_from_complete_data(context_changes) : previous_state&.skin_tone),
-      distinctive_features: get_changed_or_complete_data(context_changes[:distinctive_features], previous_state&.distinctive_features, is_initial_state),
-      default_outfit: get_changed_or_complete_data(context_changes[:clothing], previous_state&.default_outfit, is_initial_state),
-      pose_style: extract_pose_from_comprehensive_data(context_changes) || 
-                  (is_initial_state ? extract_pose_from_complete_data(context_changes) : previous_state&.pose_style),
-      
-      # Context and metadata
+      unified_state_data: unified_data,
       message_context: message_content,
       triggered_by_role: role,
-      
-      # Store AI analysis metadata
       ai_analysis_summary: context_changes[:consistency_notes] || context_changes[:summary] || "",
       mood_intensity: context_changes[:mood_intensity],
       context_significance: context_changes[:context_significance],

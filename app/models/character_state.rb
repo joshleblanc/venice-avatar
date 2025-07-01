@@ -6,10 +6,156 @@ class CharacterState < ApplicationRecord
   has_one_attached :background_image
   has_one_attached :scene_image  # Unified character + background image
 
-  validates :conversation_id, presence: true
+  # Initialize unified_state_data as empty hash if nil
+  after_initialize :ensure_unified_state_data
 
-  # Character appearance tracking
-  # JSON columns handle serialization automatically
+  private
+
+  def ensure_unified_state_data
+    self.unified_state_data ||= {}
+  end
+
+  public
+
+  # Accessor methods for unified state data
+  def state_data
+    unified_state_data || {}
+  end
+
+  def update_state_data(new_data)
+    self.unified_state_data = (state_data || {}).merge(new_data)
+  end
+
+  # Legacy accessor methods for backward compatibility
+  def location
+    state_data["location"]
+  end
+
+  def location=(value)
+    update_state_data("location" => value)
+  end
+
+  def expression
+    state_data["expression"]
+  end
+
+  def expression=(value)
+    update_state_data("expression" => value)
+  end
+
+  def appearance_description
+    state_data["appearance_description"]
+  end
+
+  def appearance_description=(value)
+    update_state_data("appearance_description" => value)
+  end
+
+  def clothing_details
+    state_data["clothing_details"] || {}
+  end
+
+  def clothing_details=(value)
+    update_state_data("clothing_details" => value)
+  end
+
+  def injury_details
+    state_data["injury_details"] || {}
+  end
+
+  def injury_details=(value)
+    update_state_data("injury_details" => value)
+  end
+
+  def background_prompt
+    state_data["background_prompt"]
+  end
+
+  def background_prompt=(value)
+    update_state_data("background_prompt" => value)
+  end
+
+  def physical_features
+    state_data["physical_features"] || {}
+  end
+
+  def physical_features=(value)
+    update_state_data("physical_features" => value)
+  end
+
+  def hair_details
+    state_data["hair_details"] || {}
+  end
+
+  def hair_details=(value)
+    update_state_data("hair_details" => value)
+  end
+
+  def eye_details
+    state_data["eye_details"] || {}
+  end
+
+  def eye_details=(value)
+    update_state_data("eye_details" => value)
+  end
+
+  def body_type
+    state_data["body_type"]
+  end
+
+  def body_type=(value)
+    update_state_data("body_type" => value)
+  end
+
+  def skin_tone
+    state_data["skin_tone"]
+  end
+
+  def skin_tone=(value)
+    update_state_data("skin_tone" => value)
+  end
+
+  def distinctive_features
+    state_data["distinctive_features"] || {}
+  end
+
+  def distinctive_features=(value)
+    update_state_data("distinctive_features" => value)
+  end
+
+  def default_outfit
+    state_data["default_outfit"] || {}
+  end
+
+  def default_outfit=(value)
+    update_state_data("default_outfit" => value)
+  end
+
+  def pose_style
+    state_data["pose_style"]
+  end
+
+  def pose_style=(value)
+    update_state_data("pose_style" => value)
+  end
+
+  def art_style_notes
+    state_data["art_style_notes"]
+  end
+
+  def art_style_notes=(value)
+    update_state_data("art_style_notes" => value)
+  end
+
+  def base_character_prompt
+    state_data["base_character_prompt"]
+  end
+
+  def base_character_prompt=(value)
+    update_state_data("base_character_prompt" => value)
+  end
+
+  validates :conversation_id, presence: true
 
   # Image URLs for generated content
   validates :background_image_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), allow_blank: true }

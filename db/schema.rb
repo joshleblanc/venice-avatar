@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_01_012450) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_01_143900) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -70,8 +70,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_012450) do
     t.integer "mood_intensity"
     t.integer "context_significance"
     t.json "detailed_background_info"
+    t.json "unified_state_data"
     t.index ["conversation_id"], name: "index_character_states_on_conversation_id"
     t.index ["created_at"], name: "index_character_states_on_created_at"
+    t.index ["unified_state_data"], name: "index_character_states_on_unified_state_data"
   end
 
   create_table "characters", force: :cascade do |t|
