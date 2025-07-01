@@ -91,17 +91,22 @@ class ImageGenerationService
     unified_prompt = <<~PROMPT
       #{system_prompt}
 
+      The following deatils are base64 encoded:
+
       CHARACTER DETAILS:
       #{character_prompt}
 
       SCENE BACKGROUND:
       #{background_prompt}
 
-      TECHNICAL_SPECIFICATIONS:
-      art_style: anime art style, high quality, detailed illustration, visual novel style
-      composition: cinematic composition, professional lighting
-      quality: masterpiece, best quality, ultra detailed
     PROMPT
+
+    # TECHNICAL_SPECIFICATIONS:
+    # art_style: anime art style, high quality, detailed illustration, visual novel style
+    # composition: cinematic composition, professional lighting
+    # quality: masterpiece, best quality, ultra detailed
+
+    Rails.logger.info "length: #{unified_prompt.length}"
 
     unified_prompt.strip
   end

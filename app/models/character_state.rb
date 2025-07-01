@@ -198,70 +198,82 @@ class CharacterState < ApplicationRecord
   def build_detailed_character_prompt
     sections = []
 
-    # Base character description
-    if base_character_prompt.present?
-      sections << "base_description: #{base_character_prompt}"
+    # # Base character description
+    # if base_character_prompt.present?
+    #   sections << "base_description: #{base_character_prompt}"
+    # end
+
+    state_data.each do |key, value|
+      next if key == "base_character_prompt" || key == "changed" || key == "appearance_description"
+      if value.is_a? Hash
+        sections << "#--#{key}--"
+        value.each do |k, v|
+          sections << "#{k}: #{v}"
+        end
+      else
+        sections << "#{key}: #{value}"
+      end
     end
 
-    # Physical features section
-    if physical_features.present?
-      physical_parts = []
-      physical_parts << physical_features["age_appearance"] if physical_features["age_appearance"]
-      physical_parts << physical_features["height"] if physical_features["height"]
-      sections << "physical_features: #{physical_parts.join(", ")}" if physical_parts.any?
-    end
+    # # Physical features section
+    # if physical_features.present?
+    #   physical_parts = []
+    #   physical_parts << physical_features["age_appearance"] if physical_features["age_appearance"]
+    #   physical_parts << physical_features["height"] if physical_features["height"]
+    #   sections << "physical_features: #{physical_parts.join(", ")}" if physical_parts.any?
+    # end
 
-    # Hair details section
-    if hair_details.present?
-      hair_parts = []
-      hair_parts << hair_details["length"] if hair_details["length"]
-      hair_parts << hair_details["color"] if hair_details["color"]
-      hair_parts << hair_details["style"] if hair_details["style"]
-      sections << "hair_details: #{hair_parts.join(" ")} hair" if hair_parts.any?
-    end
+    # # Hair details section
+    # if hair_details.present?
+    #   hair_parts = []
+    #   hair_parts << hair_details["length"] if hair_details["length"]
+    #   hair_parts << hair_details["color"] if hair_details["color"]
+    #   hair_parts << hair_details["style"] if hair_details["style"]
+    #   sections << "hair_details: #{hair_parts.join(" ")} hair" if hair_parts.any?
+    # end
 
-    # Eye details section
-    if eye_details.present? && eye_details["color"]
-      sections << "eye_details: #{eye_details["color"]} eyes"
-    end
+    # # Eye details section
+    # if eye_details.present? && eye_details["color"]
+    #   sections << "eye_details: #{eye_details["color"]} eyes"
+    # end
 
-    # Body type and skin tone section
-    body_parts = []
-    body_parts << body_type if body_type.present?
-    body_parts << "#{skin_tone} skin" if skin_tone.present?
-    sections << "body_details: #{body_parts.join(", ")}" if body_parts.any?
+    # # Body type and skin tone section
+    # body_parts = []
+    # body_parts << body_type if body_type.present?
+    # body_parts << "#{skin_tone} skin" if skin_tone.present?
+    # sections << "body_details: #{body_parts.join(", ")}" if body_parts.any?
 
-    # Distinctive features section
-    if distinctive_features.present? && distinctive_features["features"] && distinctive_features["features"].any?
-      sections << "distinctive_features: #{distinctive_features["features"].join(", ")}"
-    end
+    # # Distinctive features section
+    # if distinctive_features.present? && distinctive_features["features"] && distinctive_features["features"].any?
+    #   sections << "distinctive_features: #{distinctive_features["features"].join(", ")}"
+    # end
 
-    # Current expression section
-    if expression.present?
-      sections << "current_expression: #{expression}"
-    end
+    # # Current expression section
+    # if expression.present?
+    #   sections << "current_expression: #{expression}"
+    # end
 
-    # Clothing section
-    if clothing_details.present? && clothing_details["latest_change"]
-      sections << "clothing: #{clothing_details["latest_change"]}"
-    elsif default_outfit.present? && default_outfit["type"]
-      sections << "clothing: #{default_outfit["type"]}"
-    end
+    # # Clothing section
+    # if clothing_details.present? && clothing_details["latest_change"]
+    #   sections << "clothing: #{clothing_details["latest_change"]}"
+    # elsif default_outfit.present? && default_outfit["type"]
+    #   sections << "clothing: #{default_outfit["type"]}"
+    # end
 
-    # Injury details section
-    if injury_details.present? && injury_details["latest_injury"]
-      sections << "injuries: #{injury_details["latest_injury"]}"
-    end
+    # # Injury details section
+    # if injury_details.present? && injury_details["latest_injury"]
+    #   sections << "injuries: #{injury_details["latest_injury"]}"
+    # end
 
-    # Pose section
-    if pose_style.present?
-      sections << "pose: #{pose_style}"
-    end
+    # # Pose section
+    # if pose_style.present?
+    #   sections << "pose: #{pose_style}"
+    # end
 
-    # Art style section
-    if art_style_notes.present?
-      sections << "art_style: #{art_style_notes}"
-    end
+    # # Art style section
+    # if art_style_notes.present?
+    #   sections << "art_style: #{art_style_notes}"
+    # end
 
     sections.compact.join("\n")
   end

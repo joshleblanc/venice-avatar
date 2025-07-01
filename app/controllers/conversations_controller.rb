@@ -3,7 +3,7 @@ class ConversationsController < ApplicationController
   before_action :set_character, only: [:create]
 
   def index
-    @conversations = Conversation.includes(:character).order(updated_at: :desc)
+    @conversations = Conversation.includes(:character, :messages).order(updated_at: :desc)
   end
 
   def show
