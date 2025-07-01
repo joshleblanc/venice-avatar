@@ -1,0 +1,106 @@
+class GenerateFollowupMessageJob < ApplicationJob
+  queue_as :default
+
+  def perform(conversation, followup_context)
+    # Check if conversation still exists and is valid
+    return unless conversation&.persisted?
+
+    # Check if there's already a more recent message (user might have sent something)
+    last_message = conversation.messages.order(:created_at).last
+    return if last_message&.role == "user" && last_message.created_at > 1.minute.ago
+
+    # Mark any pending follow-ups as completed
+    conversation.messages.where(has_pending_followup: true).update_all(has_pending_followup: false)
+
+    conversation.update(generating_reply: true)
+
+    begin
+      # Generate follow-up message using Venice API
+      chat_response = send_followup_to_venice_chat(conversation, followup_context)
+
+      # Save assistant follow-up message
+      assistant_msg = conversation.messages.create!(
+        content: chat_response,
+        role: "assistant",
+      )
+
+      # Analyze the follow-up response for context changes
+      context_tracker = AiContextTrackerService.new(conversation)
+      analysis = context_tracker.analyze_message_context(chat_response, "assistant")
+      new_state = analysis[:character_state]
+
+      # Generate images if needed
+      current_state = conversation.current_character_state
+      if current_state && new_state
+        GenerateImagesJob.perform_later(conversation, new_state)
+      end
+
+      # Check if this follow-up message also implies another follow-up
+      if new_state&.dig(:follow_up_intent, :has_intent)
+        schedule_followup_message(conversation, assistant_msg, new_state[:follow_up_intent])
+      end
+    rescue => e
+      Rails.logger.error "Venice API error in GenerateFollowupMessageJob: #{e.message}"
+
+      # Create a simple follow-up message as fallback
+      conversation.messages.create!(
+        content: "I'm back! Sorry for the delay.",
+        role: "assistant",
+      )
+    ensure
+      conversation.update(generating_reply: false)
+    end
+  end
+
+  private
+
+  def send_followup_to_venice_chat(conversation, followup_context)
+    chat_api = VeniceClient::ChatApi.new
+
+    # Build conversation history for context
+    messages = conversation.messages.order(:created_at).map do |msg|
+      {
+        role: msg.role,
+        content: msg.full_content_for_ai,
+      }
+    end
+
+    # Add context about the follow-up
+    system_message = {
+      role: "system",
+      content: "The character previously indicated they would return after: #{followup_context[:context]}. " \
+               "Generate a natural follow-up message showing the character returning or continuing the conversation. " \
+               "Reason for follow-up: #{followup_context[:reason]}",
+    }
+
+    response = chat_api.create_chat_completion({
+      body: {
+        model: "venice-uncensored",
+        messages: [system_message] + messages,
+        venice_parameters: {
+          character_slug: conversation.character.slug,
+        },
+      },
+    })
+
+    response.choices.first[:message][:content] || "I'm back!"
+  end
+
+  def schedule_followup_message(conversation, message, followup_intent)
+    delay_minutes = followup_intent[:estimated_delay_minutes] || 5
+    scheduled_time = delay_minutes.minutes.from_now
+
+    message.update!(
+      has_pending_followup: true,
+      followup_scheduled_at: scheduled_time,
+      followup_context: followup_intent[:context],
+      followup_reason: followup_intent[:reason],
+    )
+
+    # Schedule the next follow-up job
+    GenerateFollowupMessageJob.set(wait_until: scheduled_time)
+                              .perform_later(conversation, followup_intent)
+
+    Rails.logger.info "Scheduled follow-up message for conversation #{conversation.id} at #{scheduled_time}"
+  end
+end

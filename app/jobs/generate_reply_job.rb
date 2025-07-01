@@ -5,7 +5,8 @@ class GenerateReplyJob < ApplicationJob
     conversation.update(generating_reply: true)
     # Analyze context and update character state using AI
     context_tracker = AiContextTrackerService.new(conversation)
-    new_state = context_tracker.analyze_message_context(user_message.content, "user")
+    user_analysis = context_tracker.analyze_message_context(user_message.content, "user")
+    new_state = user_analysis[:character_state]
 
     # Send message to Venice API
     begin
@@ -15,7 +16,14 @@ class GenerateReplyJob < ApplicationJob
       assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant")
 
       # Analyze assistant response for context changes using AI
-      assistant_state = context_tracker.analyze_message_context(chat_response, "assistant")
+      assistant_analysis = context_tracker.analyze_message_context(chat_response, "assistant")
+      assistant_state = assistant_analysis[:character_state]
+      context_analysis = assistant_analysis[:context_analysis]
+
+      # Check if the assistant's message implies a follow-up
+      if context_analysis[:follow_up_intent]&.dig(:has_intent)
+        schedule_followup_message(assistant_msg, context_analysis[:follow_up_intent])
+      end
 
       # Generate images for the latest state
       current_state = conversation.current_character_state
@@ -65,5 +73,23 @@ class GenerateReplyJob < ApplicationJob
     })
 
     response.choices.first[:message][:content] || "I'm sorry, I couldn't respond right now."
+  end
+
+  def schedule_followup_message(message, followup_intent)
+    delay_minutes = followup_intent[:estimated_delay_minutes] || 5
+    scheduled_time = delay_minutes.minutes.from_now
+
+    message.update!(
+      has_pending_followup: true,
+      followup_scheduled_at: scheduled_time,
+      followup_context: followup_intent[:context],
+      followup_reason: followup_intent[:reason],
+    )
+
+    # Schedule the follow-up job
+    GenerateFollowupMessageJob.set(wait_until: scheduled_time)
+                              .perform_later(message.conversation, followup_intent)
+
+    Rails.logger.info "Scheduled follow-up message for conversation #{message.conversation.id} at #{scheduled_time}"
   end
 end

@@ -51,22 +51,10 @@ class ImageGenerationService
     end
   end
 
-  # Legacy method - kept for backward compatibility but now generates unified scenes
-  def generate_character_image(character_state)
-    generate_scene_image(character_state)
-  end
-
-  # Legacy method - kept for backward compatibility but now generates unified scenes
-  def generate_background_image(character_state)
-    generate_scene_image(character_state)
-  end
-
   def generate_all_images(character_state)
     scene_image = generate_scene_image(character_state)
     {
       scene_image: scene_image,
-      character_image: scene_image,  # For backward compatibility
-      background_image: scene_image, # For backward compatibility
     }
   end
 
@@ -90,15 +78,6 @@ class ImageGenerationService
 
     # Add technical specifications
     "#{unified_prompt}, anime art style, high quality, detailed illustration, visual novel style, cinematic composition"
-  end
-
-  # Legacy methods for backward compatibility
-  def build_character_prompt(character_state)
-    build_unified_scene_prompt(character_state)
-  end
-
-  def build_background_prompt(character_state)
-    build_unified_scene_prompt(character_state)
   end
 
   private

@@ -22,7 +22,13 @@ class AiContextTrackerService
     context_changes = parse_ai_response(ai_response)
 
     # Create new character state if significant changes detected
-    create_character_state_if_needed(context_changes, message_content, role, ai_response)
+    new_state = create_character_state_if_needed(context_changes, message_content, role, ai_response)
+
+    # Return both the character state and the context analysis
+    {
+      character_state: new_state,
+      context_analysis: context_changes
+    }
   end
 
   private
@@ -50,6 +56,7 @@ class AiContextTrackerService
       5. POSE/ACTIVITY: What is the character doing or how are they positioned?
       6. MOOD_INTENSITY: Rate the emotional intensity from 1-10
       7. CONTEXT_SIGNIFICANCE: Rate how visually significant these changes are from 1-10
+      8. FOLLOW_UP_INTENT: Does this message imply the character will send a follow-up message later?
 
       RESPONSE FORMAT (JSON):
       {
@@ -78,6 +85,12 @@ class AiContextTrackerService
           "changed": true/false,
           "description": "pose/activity description",
           "body_language": "body language notes"
+        },
+        "follow_up": {
+          "has_intent": true/false,
+          "reason": "why a follow-up is expected",
+          "estimated_delay_minutes": 1-30,
+          "context": "what the character said they would do"
         },
         "overall": {
           "mood_intensity": 1-10,
@@ -187,6 +200,7 @@ class AiContextTrackerService
       context_significance: parsed.dig("overall", "context_significance") || 1,
       visual_update_needed: parsed.dig("overall", "visual_update_needed") || false,
       summary: parsed.dig("overall", "summary") || "",
+      follow_up_intent: extract_follow_up_intent(parsed),
       raw_analysis: parsed,
     }
   end
@@ -243,6 +257,18 @@ class AiContextTrackerService
     body_language = pose_data["body_language"]
 
     [description, body_language].compact.join(", ")
+  end
+
+  def extract_follow_up_intent(parsed)
+    follow_up_data = parsed["follow_up"]
+    return nil unless follow_up_data&.dig("has_intent")
+
+    {
+      has_intent: true,
+      reason: follow_up_data["reason"],
+      estimated_delay_minutes: follow_up_data["estimated_delay_minutes"] || 5,
+      context: follow_up_data["context"]
+    }
   end
 
   def default_empty_response
