@@ -32,8 +32,14 @@ class ConversationsController < ApplicationController
 
     user_msg = @conversation.messages.create!(content: user_message, role: "user")
 
-    # Enqueue background job to generate reply
-    GenerateReplyJob.perform_later(@conversation, user_msg)
+    # Check if character is away - if so, queue the user message but don't generate reply yet
+    if @conversation.character_away?
+      Rails.logger.info "Character is away, queuing user message for conversation #{@conversation.id}"
+      # Don't generate a reply - character will process all queued messages when they return
+    else
+      # Normal message flow - generate reply immediately
+      GenerateReplyJob.perform_later(@conversation, user_msg)
+    end
 
     respond_to do |format|
       format.html { redirect_to @conversation }
@@ -58,13 +64,6 @@ class ConversationsController < ApplicationController
   end
 
   def initialize_conversation_scene
-    # Initialize scene prompt in conversation metadata if not present
-    if @conversation.metadata.blank? || @conversation.metadata["current_scene_prompt"].blank?
-      prompt_service = AiPromptGenerationService.new(@conversation)
-      prompt_service.get_current_scene_prompt # This will generate initial prompt
-    end
-
-    # Generate initial scene image
-    GenerateImagesJob.perform_later(@conversation)
+    InitializeSceneJob.perform_later(@conversation)
   end
 end

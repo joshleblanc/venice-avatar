@@ -2,45 +2,67 @@ class GenerateReplyJob < ApplicationJob
   queue_as :default
 
   def perform(conversation, user_message)
-    conversation.update(generating_reply: true)
-    # Analyze context and update character state using AI
-    # context_tracker = AiContextTrackerService.new(conversation)
-    # user_analysis = context_tracker.analyze_message_context(user_message.content, "user")
-    # new_state = user_analysis[:character_state]
+    # Don't generate replies if character is away (this shouldn't happen, but safety check)
+    if conversation.character_away?
+      Rails.logger.info "Character is away, skipping reply generation for conversation #{conversation.id}"
+      return
+    end
 
-    # Evolve the scene prompt based on the user message
+    conversation.update(generating_reply: true)
+    
+    # Check if this is the character "returning" from being away
+    # In this case, we need to process all queued user messages since the character went away
+    messages_to_process = if character_should_return?(conversation)
+      get_queued_user_messages_since_character_away(conversation)
+    else
+      [user_message]
+    end
+
+    # Evolve the scene prompt based on all messages to process
     prompt_service = AiPromptGenerationService.new(conversation)
     current_prompt = prompt_service.get_current_scene_prompt
-
     first_prompt = current_prompt
 
-    evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, user_message.content)
-    Rails.logger.info "Scene prompt evolved after user message"
+    # Process all queued messages to evolve the prompt
+    messages_to_process.each do |msg|
+      current_prompt = prompt_service.evolve_scene_prompt(current_prompt, msg.content)
+      Rails.logger.info "Scene prompt evolved after processing message: #{msg.content[0..50]}..."
+    end
 
-    # Send message to Venice API
+    # Send message to Venice API with contextual awareness of all processed messages
     begin
+      # Use the most recent user message for the chat, but the context includes all queued messages
       chat_response = send_to_venice_chat(conversation, user_message.content)
 
       # Save assistant response
       assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant")
 
-      # Analyze assistant response for context changes using AI
-      # assistant_analysis = context_tracker.analyze_message_context(chat_response, "assistant")
-      # assistant_state = assistant_analysis[:character_state]
-      # context_analysis = assistant_analysis[:context_analysis]
+      # Check if the character wants to step away after this message
+      followup_detector = FollowupIntentDetectorService.new(conversation)
+      followup_intent = followup_detector.detect_character_followup_intent(chat_response)
+      
+      if followup_intent[:has_intent]
+        # Character wants to step away - mark as away and send "brb" message
+        conversation.update!(character_away: true)
+        brb_msg = conversation.messages.create!(
+          content: "I'll be right back!", 
+          role: "assistant",
+          metadata: { auto_generated: true, reason: followup_intent[:reason] }
+        )
+        Rails.logger.info "Character stepping away for conversation #{conversation.id}: #{followup_intent[:reason]}"
+        
+        # Schedule the character to return after a brief delay
+        CharacterReturnJob.set(wait: 30.seconds).perform_later(conversation)
+      end
 
       # Evolve the scene prompt based on the new assistant message
       prompt_service = AiPromptGenerationService.new(conversation)
       current_prompt = prompt_service.get_current_scene_prompt
       evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, chat_response)
       Rails.logger.info "Scene prompt evolved after assistant message"
-      # Check if the assistant's message implies a follow-up
-      # if context_analysis[:follow_up_intent]&.dig(:has_intent)
-      #   schedule_followup_message(assistant_msg, context_analysis[:follow_up_intent])
-      # end
 
-      # Generate images for the latest state
-      if evolved_prompt != first_prompt
+      # Generate images for the latest state if prompt changed
+      if current_prompt != first_prompt
         GenerateImagesJob.perform_later(conversation)
       end
     rescue => e
@@ -86,21 +108,51 @@ class GenerateReplyJob < ApplicationJob
     response.choices.first[:message][:content] || "I'm sorry, I couldn't respond right now."
   end
 
+  # Check if the character should return from being away
+  def character_should_return?(conversation)
+    # This method is called when processing a new user message
+    # The character should "return" if there are queued user messages waiting
+    conversation.character_away? && has_queued_user_messages?(conversation)
+  end
+
+  # Check if there are user messages queued while character was away
+  def has_queued_user_messages?(conversation)
+    return false unless conversation.character_away?
+    
+    # Find the last character "brb" message
+    brb_message = conversation.messages.where(role: "assistant")
+                              .where("metadata LIKE ?", "%auto_generated%")
+                              .order(:created_at).last
+    
+    return false unless brb_message
+    
+    # Check if there are user messages after the brb
+    conversation.messages.where(role: "user")
+                        .where("created_at > ?", brb_message.created_at)
+                        .exists?
+  end
+
+  # Get all user messages that were sent while character was away
+  def get_queued_user_messages_since_character_away(conversation)
+    # Find the last character "brb" message to determine when character went away
+    brb_message = conversation.messages.where(role: "assistant")
+                              .where("metadata LIKE ?", "%auto_generated%")
+                              .order(:created_at).last
+    
+    if brb_message
+      # Get all user messages since the character's "brb" message
+      conversation.messages.where(role: "user")
+                          .where("created_at > ?", brb_message.created_at)
+                          .order(:created_at)
+    else
+      # Fallback: just return the current message if no brb found
+      [conversation.messages.where(role: "user").order(:created_at).last].compact
+    end
+  end
+
+  # Legacy method - kept for backward compatibility but no longer used
   def schedule_followup_message(message, followup_intent)
-    delay_minutes = followup_intent[:estimated_delay_minutes] || 5
-    scheduled_time = delay_minutes.minutes.from_now
-
-    message.update!(
-      has_pending_followup: true,
-      followup_scheduled_at: scheduled_time,
-      followup_context: followup_intent[:context],
-      followup_reason: followup_intent[:reason],
-    )
-
-    # Schedule the follow-up job
-    GenerateFollowupMessageJob.set(wait_until: scheduled_time)
-                              .perform_later(message.conversation, followup_intent)
-
-    Rails.logger.info "Scheduled follow-up message for conversation #{message.conversation.id} at #{scheduled_time}"
+    # This method is deprecated in favor of the new "brb" system
+    Rails.logger.info "schedule_followup_message called but is deprecated - using brb system instead"
   end
 end

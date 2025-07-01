@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_01_173843) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_01_211914) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -63,6 +63,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_173843) do
     t.boolean "scene_generating"
     t.boolean "generating_reply"
     t.json "metadata"
+    t.boolean "character_away", default: false, null: false
+    t.index ["character_away"], name: "index_conversations_on_character_away"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
   end

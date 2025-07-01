@@ -9,7 +9,12 @@ class ImageGenerationService
     # Always generate new scene images - don't return early if one exists
     # This allows background generation while showing previous scenes
 
-    prompt = build_unified_scene_prompt
+    # Check if character is away and generate appropriate prompt
+    prompt = if @conversation.character_away?
+      build_background_only_prompt
+    else
+      build_unified_scene_prompt
+    end
 
     models = [
       "venice-sd35",
@@ -75,6 +80,26 @@ class ImageGenerationService
     Rails.logger.info "AI-generated scene prompt length: #{prompt.length}"
 
     prompt
+  end
+
+  def build_background_only_prompt
+    # Generate background-only scene when character is away
+    prompt_service = AiPromptGenerationService.new(@conversation)
+    current_prompt = prompt_service.get_current_scene_prompt
+    
+    # Extract background elements from the current scene prompt and remove character
+    background_prompt = current_prompt.gsub(/\b(?:girl|boy|woman|man|character|person|figure|she|he|her|him|they|them)\b[^.]*?(?:\.|$)/i, '')
+                                    .gsub(/\b(?:wearing|dressed in|outfit|clothing|clothes)[^.]*?(?:\.|$)/i, '')
+                                    .gsub(/\b(?:expression|face|eyes|hair|skin)[^.]*?(?:\.|$)/i, '')
+                                    .gsub(/\s+/, ' ')
+                                    .strip
+    
+    # Add explicit background-only instructions
+    enhanced_prompt = "Empty room scene, no people, no characters. #{background_prompt}. Detailed interior background, ambient lighting, peaceful atmosphere, visual novel style background art."
+    
+    Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
+    
+    enhanced_prompt
   end
 
   private

@@ -33,6 +33,16 @@ class Message < ApplicationRecord
     content
   end
 
+  # Check if this is an auto-generated message (like "brb")
+  def auto_generated?
+    metadata.is_a?(Hash) && metadata["auto_generated"] == true
+  end
+
+  # Get the reason for auto-generation if available
+  def auto_generation_reason
+    metadata.is_a?(Hash) ? metadata["reason"] : nil
+  end
+
   private
 
   def parse_message_content
