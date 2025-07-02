@@ -33,13 +33,13 @@ class ImageGenerationService
         body: {
           prompt: prompt.first(2048),
           style_preset: "Anime",
-          negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
-          model: models[1],
+          # negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
+          model: models[4],
           width: 640,  # 16:10 ratio for visual novel scenes
           height: 1024,
           safe_mode: false,
           format: "png",
-          cfg_scale: 15,
+          # cfg_scale: 15,
           seed: 123456,
         },
       })

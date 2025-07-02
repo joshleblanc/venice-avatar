@@ -11,7 +11,7 @@ class AiPromptGenerationService
 
     # First, get character's appearance details
     character_appearance = get_character_appearance_details
-    
+
     # Then generate the scene prompt using the appearance details
     prompt = build_initial_prompt_generation_request(character_appearance)
 
@@ -95,12 +95,12 @@ class AiPromptGenerationService
   def build_initial_prompt_generation_request(character_appearance = nil)
     character_description = @character.description || "A character"
     character_name = @character.name || "Character"
-    
+
     appearance_context = if character_appearance
-      "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
-    else
-      ""
-    end
+        "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
+      else
+        ""
+      end
 
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
@@ -125,7 +125,9 @@ class AiPromptGenerationService
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
       10. Don't include tendencies. Only the current state of the character should be described.
-      11. The characters are all observably adults
+      11. State the character is an adult
+      12. Do not describe actions or sounds.
+      13. Do not use poetic language. Use simple, direct language.
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
@@ -164,7 +166,10 @@ class AiPromptGenerationService
         Instead, lean on:
         - Physical cues ("red eyes", "wet cheeks", "slumped posture")
         - Static elements of the environment
-
+      9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor")
+      10. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
+      11. Do not describe actions or sounds.
+      12. Do not use poetic language. Use simple, direct language.
       Return the updated prompt as a single, detailed image generation prompt in under 1500 characters.
     PROMPT
   end
@@ -181,9 +186,9 @@ class AiPromptGenerationService
   # Get character's appearance details by asking them directly
   def get_character_appearance_details
     Rails.logger.info "Asking character about their appearance for scene generation"
-    
+
     appearance_prompt = build_character_appearance_prompt
-    
+
     begin
       response = @venice_client.create_chat_completion({
         body: {
@@ -204,10 +209,10 @@ class AiPromptGenerationService
 
       appearance_details = response.choices.first[:message][:content].strip
       Rails.logger.info "Character appearance details: #{appearance_details}"
-      
+
       # Store the appearance details in conversation metadata for future reference
       store_character_appearance(appearance_details)
-      
+
       appearance_details
     rescue => e
       Rails.logger.error "Failed to get character appearance details: #{e.message}"
@@ -215,7 +220,7 @@ class AiPromptGenerationService
       nil
     end
   end
-  
+
   def build_character_appearance_prompt
     <<~PROMPT
       Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
@@ -230,13 +235,13 @@ class AiPromptGenerationService
       Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
     PROMPT
   end
-  
+
   def store_character_appearance(appearance_details)
     # Store in conversation metadata alongside scene prompt
     metadata = @conversation.metadata || {}
     metadata["character_appearance_details"] = appearance_details
     metadata["appearance_captured_at"] = Time.current.iso8601
-    
+
     @conversation.update!(metadata: metadata)
   end
 
