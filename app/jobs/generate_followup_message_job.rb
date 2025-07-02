@@ -62,10 +62,14 @@ class GenerateFollowupMessageJob < ApplicationJob
       }
     end
 
-    # Add context about the follow-up
+    # Add context about the follow-up with text messaging context
     system_message = {
       role: "system",
-      content: "The character previously indicated they would return after: #{followup_context[:context]}. " \
+      content: "You are texting with the user remotely via text messages on their phone. " \
+               "The user can see you through their phone camera, but you are not physically in the same room. " \
+               "Respond as if you're sending text messages - keep responses conversational and natural for texting. " \
+               "The user is looking at you through their phone screen while you text back and forth. " \
+               "The character previously indicated they would return after: #{followup_context[:context]}. " \
                "Generate a natural follow-up message showing the character returning or continuing the conversation. " \
                "Reason for follow-up: #{followup_context[:reason]}",
     }

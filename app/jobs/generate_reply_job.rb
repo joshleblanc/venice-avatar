@@ -81,6 +81,15 @@ class GenerateReplyJob < ApplicationJob
   def send_to_venice_chat(conversation, message)
     chat_api = VeniceClient::ChatApi.new
 
+    # Add system message to establish text messaging context
+    system_message = {
+      role: "system",
+      content: "You are texting with the user remotely via text messages on their phone. " \
+               "The user can see you through their phone camera, but you are not physically in the same room. " \
+               "Respond as if you're sending text messages - keep responses conversational and natural for texting. " \
+               "The user is looking at you through their phone screen while you text back and forth."
+    }
+
     # Build conversation history for context
     messages = conversation.messages.order(:created_at).map do |msg|
       {
@@ -96,7 +105,7 @@ class GenerateReplyJob < ApplicationJob
     response = chat_api.create_chat_completion({
       body: {
         model: "venice-uncensored",
-        messages: messages,
+        messages: [system_message] + messages,
         venice_parameters: {
           character_slug: conversation.character.slug,
         },
