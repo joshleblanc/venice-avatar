@@ -50,7 +50,7 @@ class GenerateReplyJob < ApplicationJob
         Rails.logger.info "Character stepping away for conversation #{conversation.id}: #{followup_intent[:reason]}"
 
         # Schedule the character to return after a brief delay
-        CharacterReturnJob.set(wait: 30.seconds).perform_later(conversation)
+        CharacterReturnJob.set(wait: followup_intent[:duration].to_i.seconds).perform_later(conversation)
       end
 
       # Evolve the scene prompt based on the new assistant message
@@ -97,9 +97,6 @@ class GenerateReplyJob < ApplicationJob
         content: msg.content,
       }
     end
-
-    # Add the new user message
-    messages << { role: "user", content: message }
 
     Rails.logger.info "Sending message to Venice API: #{messages}"
     response = chat_api.create_chat_completion({

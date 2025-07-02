@@ -6,22 +6,23 @@ class FollowupIntentDetectorService
 
   def detect_character_followup_intent(assistant_message)
     prompt = build_character_followup_detection_prompt(assistant_message)
-    
+
     begin
       response = @venice_client.create_chat_completion({
         body: {
           model: "venice-uncensored",
           messages: [{ role: "user", content: prompt }],
           max_tokens: 200,
-          temperature: 0.3
-        }
+          temperature: 0.3,
+        },
       })
 
       content = response.choices.first[:message][:content]
+      Rails.logger.info "Followup intent detection response: #{content}"
       parse_followup_response(content)
     rescue => e
       Rails.logger.error "Error detecting character followup intent: #{e.message}"
-      { has_intent: false, reason: nil }
+      { has_intent: false, reason: nil, duration: 30 }
     end
   end
 
@@ -48,7 +49,8 @@ class FollowupIntentDetectorService
       Respond with JSON only:
       {
         "has_intent": true/false,
-        "reason": "brief explanation if true, null if false"
+        "reason": "brief explanation if true, null if false",
+        "duration": how long they're away, in seconds
       }
     PROMPT
   end
@@ -56,17 +58,18 @@ class FollowupIntentDetectorService
   def parse_followup_response(content)
     # Try to extract JSON from the response
     json_match = content.match(/\{.*\}/m)
-    return { has_intent: false, reason: nil } unless json_match
+    return { has_intent: false, reason: nil, duration: 30 } unless json_match
 
     begin
       parsed = JSON.parse(json_match[0])
       {
         has_intent: parsed["has_intent"] || false,
-        reason: parsed["reason"]
+        reason: parsed["reason"],
+        duration: parsed["duration"] || 30,
       }
     rescue JSON::ParserError
       Rails.logger.error "Failed to parse followup intent JSON: #{content}"
-      { has_intent: false, reason: nil }
+      { has_intent: false, reason: nil, duration: 30 }
     end
   end
 end
