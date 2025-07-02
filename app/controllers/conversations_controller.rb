@@ -10,9 +10,9 @@ class ConversationsController < ApplicationController
     @messages = @conversation.messages.order(:created_at)
 
     # Generate initial scene image if needed
-    if @conversation.scene_image.blank?
-      initialize_conversation_scene
-    end
+    # if @conversation.scene_image.blank?
+    #   initialize_conversation_scene
+    # end
   end
 
   def create

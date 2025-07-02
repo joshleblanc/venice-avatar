@@ -40,7 +40,7 @@ class ImageGenerationService
           safe_mode: false,
           format: "png",
           # cfg_scale: 15,
-          seed: 123456,
+          seed: 123871273,
         },
       })
 
