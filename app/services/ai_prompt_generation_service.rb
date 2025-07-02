@@ -9,7 +9,11 @@ class AiPromptGenerationService
   def generate_initial_scene_prompt
     Rails.logger.info "Generating initial scene prompt for character: #{@character.name}"
 
-    prompt = build_initial_prompt_generation_request
+    # First, get character's appearance details
+    character_appearance = get_character_appearance_details
+    
+    # Then generate the scene prompt using the appearance details
+    prompt = build_initial_prompt_generation_request(character_appearance)
 
     begin
       response = @venice_client.create_chat_completion({
@@ -88,19 +92,25 @@ class AiPromptGenerationService
 
   private
 
-  def build_initial_prompt_generation_request
+  def build_initial_prompt_generation_request(character_appearance = nil)
     character_description = @character.description || "A character"
     character_name = @character.name || "Character"
+    
+    appearance_context = if character_appearance
+      "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
+    else
+      ""
+    end
 
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
       You are a visual prompt generator. Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator
       
       Character Name: #{character_name}
-      Character Description: #{character_description}
+      Character Description: #{character_description}#{appearance_context}
 
       Generate a detailed prompt that includes:
-      1. Character appearance (physical features, clothing, expression, pose)
+      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
       2. Environment/setting (location, background elements, lighting)
       3. Atmosphere and mood
       4. Art style specifications (anime/visual novel style)
@@ -165,6 +175,68 @@ class AiPromptGenerationService
     metadata["current_scene_prompt"] = prompt
     metadata["scene_prompt_updated_at"] = Time.current.iso8601
 
+    @conversation.update!(metadata: metadata)
+  end
+
+  # Get character's appearance details by asking them directly
+  def get_character_appearance_details
+    Rails.logger.info "Asking character about their appearance for scene generation"
+    
+    appearance_prompt = build_character_appearance_prompt
+    
+    begin
+      response = @venice_client.create_chat_completion({
+        body: {
+          model: "venice-uncensored",
+          messages: [
+            {
+              role: "user",
+              content: appearance_prompt,
+            },
+          ],
+          max_completion_tokens: 800,
+          temperature: 0.3, # Lower temperature for consistency
+          venice_parameters: {
+            character_slug: @character.slug,
+          },
+        },
+      })
+
+      appearance_details = response.choices.first[:message][:content].strip
+      Rails.logger.info "Character appearance details: #{appearance_details}"
+      
+      # Store the appearance details in conversation metadata for future reference
+      store_character_appearance(appearance_details)
+      
+      appearance_details
+    rescue => e
+      Rails.logger.error "Failed to get character appearance details: #{e.message}"
+      # Return nil so we fall back to basic description
+      nil
+    end
+  end
+  
+  def build_character_appearance_prompt
+    <<~PROMPT
+      Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
+      
+      - What you're currently wearing (clothing, colors, style)
+      - Your hair (color, length, style)
+      - Your eye color
+      - Any accessories you have on
+      - Your current expression or mood
+      - Your posture or pose
+      
+      Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
+    PROMPT
+  end
+  
+  def store_character_appearance(appearance_details)
+    # Store in conversation metadata alongside scene prompt
+    metadata = @conversation.metadata || {}
+    metadata["character_appearance_details"] = appearance_details
+    metadata["appearance_captured_at"] = Time.current.iso8601
+    
     @conversation.update!(metadata: metadata)
   end
 
