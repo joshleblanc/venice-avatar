@@ -83,6 +83,14 @@ class GenerateReplyJob < ApplicationJob
 
     # Add system message to establish text messaging context with time awareness
     current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+
+    # Use different character instruction sources based on character type
+    character_instructions = if conversation.character.user_created?
+        conversation.character.character_instructions || "You are #{conversation.character.name}. #{conversation.character.description}"
+      else
+        "%%CHARACTER_INSTRUCTIONS%%"  # Venice will replace this with their character data
+      end
+
     system_message = {
       role: "system",
       content: <<~PROMPT,
@@ -91,7 +99,7 @@ class GenerateReplyJob < ApplicationJob
         The assistant is the following character:
 
         <character_instructions>
-            %%CHARACTER_INSTRUCTIONS%%
+            #{character_instructions}
         </character_instructions>
 
         Here are some additional facts about the assistant:
@@ -118,14 +126,22 @@ class GenerateReplyJob < ApplicationJob
     end
 
     Rails.logger.info "Sending message to Venice API: #{messages}"
+
+    # Build API request body - only include venice_parameters for Venice characters
+    request_body = {
+      model: "venice-uncensored",
+      messages: [system_message] + messages,
+    }
+
+    # Only add venice_parameters for Venice-created characters
+    if conversation.character.venice_created?
+      request_body[:venice_parameters] = {
+        character_slug: conversation.character.slug,
+      }
+    end
+
     response = chat_api.create_chat_completion({
-      body: {
-        model: "venice-uncensored",
-        messages: [system_message] + messages,
-        venice_parameters: {
-          character_slug: conversation.character.slug,
-        },
-      },
+      body: request_body,
     })
 
     response.choices.first[:message][:content] || "I'm sorry, I couldn't respond right now."

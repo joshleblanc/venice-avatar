@@ -3,7 +3,8 @@ class CharactersController < ApplicationController
 
   # GET /characters or /characters.json
   def index
-    @characters = Character.all
+    @user_characters = Character.where(user_created: true).order(:name)
+    @venice_characters = Character.where(user_created: false).order(:name)
   end
 
   # GET /characters/1 or /characters/1.json
@@ -22,9 +23,13 @@ class CharactersController < ApplicationController
   # POST /characters or /characters.json
   def create
     @character = Character.new(character_params)
+    @character.user_created = true
+    @character.slug = generate_unique_slug(@character.name)
 
     respond_to do |format|
       if @character.save
+        CharacterInstructionGeneratorJob.perform_later(@character)
+
         format.html { redirect_to @character, notice: "Character was successfully created." }
         format.json { render :show, status: :created, location: @character }
       else
@@ -58,13 +63,27 @@ class CharactersController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_character
-      @character = Character.find(params.expect(:id))
+
+  # Use callbacks to share common setup or constraints between actions.
+  def set_character
+    @character = Character.find(params.expect(:id))
+  end
+
+  # Only allow a list of trusted parameters through.
+  def character_params
+    params.expect(character: [:adult, :external_created_at, :description, :name, :share_url, :slug, :stats, :external_updated_at, :web_enabled])
+  end
+
+  def generate_unique_slug(name)
+    base_slug = name.parameterize
+    slug = base_slug
+    counter = 1
+
+    while Character.exists?(slug: slug)
+      slug = "#{base_slug}-#{counter}"
+      counter += 1
     end
 
-    # Only allow a list of trusted parameters through.
-    def character_params
-      params.expect(character: [ :adult, :external_created_at, :description, :name, :share_url, :slug, :stats, :external_updated_at, :web_enabled ])
-    end
+    slug
+  end
 end

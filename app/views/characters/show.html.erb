@@ -1,10 +1,80 @@
-<p style="color: green"><%= notice %></p>
+<div class="max-w-4xl mx-auto p-6">
+  <div class="bg-white rounded-lg shadow-md p-8">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @character.name %></h1>
+        <div class="flex items-center space-x-2">
+          <% if @character.user_created? %>
+            <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">Custom Character</span>
+          <% else %>
+            <span class="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded">Venice Character</span>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="flex space-x-3">
+        <%= button_to "Start Chat", character_conversations_path(@character),
+                      method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
+        <%= link_to "← Back to Characters", characters_path,
+                    class: "text-gray-600 hover:text-gray-800" %>
+      </div>
+    </div>
 
-<%= render @character %>
+    <div class="space-y-6">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">Description</h2>
+        <p class="text-gray-600 leading-relaxed"><%= @character.description %></p>
+      </div>
 
-<div>
-  <%= link_to "Edit this character", edit_character_path(@character) %> |
-  <%= link_to "Back to characters", characters_path %>
+      <% if @character.user_created? %>
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-3">Generated Personality</h2>
+          <% if @character.character_instructions.present? %>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <p class="text-gray-700 leading-relaxed whitespace-pre-wrap"><%= @character.character_instructions %></p>
+            </div>
+          <% else %>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-yellow-700">Personality is being generated... This may take a few moments.</span>
+              </div>
+              <p class="text-yellow-600 text-sm mt-2">
+                Refresh this page in a moment to see the generated personality instructions.
+              </p>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
 
-  <%= button_to "Destroy this character", @character, method: :delete %>
+      <div class="border-t pt-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">Character Details</h2>
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Slug</dt>
+            <dd class="text-sm text-gray-900"><%= @character.slug %></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Created</dt>
+            <dd class="text-sm text-gray-900"><%= @character.created_at.strftime("%B %d, %Y") %></dd>
+          </div>
+          <% if @character.user_created? %>
+            <div>
+              <dt class="text-sm font-medium text-gray-500">Status</dt>
+              <dd class="text-sm text-gray-900">
+                <% if @character.character_instructions.present? %>
+                  <span class="text-green-600">✓ Ready</span>
+                <% else %>
+                  <span class="text-yellow-600">⏳ Generating personality</span>
+                <% end %>
+              </dd>
+            </div>
+          <% end %>
+        </dl>
+      </div>
+    </div>
+  </div>
 </div>

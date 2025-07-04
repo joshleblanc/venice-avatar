@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_01_211914) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_04_131630) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -51,7 +51,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_211914) do
     t.boolean "web_enabled"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "user_created", default: false
+    t.text "character_instructions"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
+    t.index ["user_created"], name: "index_characters_on_user_created"
   end
 
   create_table "conversations", force: :cascade do |t|
