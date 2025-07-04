@@ -29,6 +29,27 @@ class InitializeSceneJob < ApplicationJob
           model: "venice-uncensored",
           messages: [
             {
+              role: "system",
+              content: <<~PROMPT,
+                You are the following character:
+
+                <character_instructions>
+                    %%CHARACTER_INSTRUCTIONS%%
+                </character_instructions>
+
+                Here are some additional facts about the assistant:
+                - The user can see it through their phone camera, but it is not physically in the same room. 
+                - Respond as if it's sending text messages - keep responses conversational and natural for texting. 
+                - The user is looking at it through their phone screen while it texts back and forth. 
+                - It cannot meet. This is a remote conversation, it does not live close by. 
+                - IMPORTANT: Pay attention to the timestamps of messages to understand the passage of time. 
+                  If significant time has passed between messages (hours, overnight, days), acknowledge this naturally. 
+                  It might change clothes, location, or reference what it's been doing during the time gap. 
+                - Current time is: #{current_time}
+                - It indicates what actions it's taking by surrounding the action with asterisks (*goes to get something*).
+              PROMPT
+            },
+            {
               role: "user",
               content: opening_prompt,
             },
@@ -71,13 +92,10 @@ class InitializeSceneJob < ApplicationJob
       You are about to start a new conversation with someone who just opened the app to chat with you. This is the very beginning of your interaction - they haven't said anything yet.
       
       Generate a natural, engaging opening message to start the conversation. This should be:
-      - Friendly and welcoming
       - True to your character personality
-      - Something that invites a response
       - Natural for someone initiating a text conversation
-      - you know who the person initiating the conversation is
-      - The person you're talking to already knows who you are, don't introduce yourself
-      
+      - The user knows who you are
+
       Remember: You are texting with them remotely via their phone. Keep it conversational and natural for texting.
       
       Generate only your opening message, nothing else.

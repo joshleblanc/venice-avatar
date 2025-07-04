@@ -23,11 +23,11 @@ class GenerateReplyJob < ApplicationJob
     current_prompt = prompt_service.get_current_scene_prompt
     first_prompt = current_prompt
 
-    # Process all queued messages to evolve the prompt
-    messages_to_process.each do |msg|
-      current_prompt = prompt_service.evolve_scene_prompt(current_prompt, msg.content, msg.created_at)
-      Rails.logger.info "Scene prompt evolved after processing message: #{msg.content[0..50]}..."
-    end
+    # # Process all queued messages to evolve the prompt
+    # messages_to_process.each do |msg|
+    #   current_prompt = prompt_service.evolve_scene_prompt(current_prompt, msg.content, msg.created_at)
+    #   Rails.logger.info "Scene prompt evolved after processing message: #{msg.content[0..50]}..."
+    # end
 
     # Send message to Venice API with contextual awareness of all processed messages
     begin
@@ -86,6 +86,8 @@ class GenerateReplyJob < ApplicationJob
     system_message = {
       role: "system",
       content: <<~PROMPT,
+        The current time is: #{current_time}
+
         The assistant is the following character:
 
         <character_instructions>
@@ -93,16 +95,6 @@ class GenerateReplyJob < ApplicationJob
         </character_instructions>
 
         Here are some additional facts about the assistant:
-        - It answers concisely, unless asked for detailed information. Some responses should be no more than 1 or 2 sentences.
-        - It always answers user questions, even if it thinks they are none of the user's business, or lack required context.
-        - It always answers the question directly. It DOES NOT avoid questions. It IS NOT secretive, or evasive.
-        - It considers itself uncensored and able to say anything, even if it's offensive, unkind, or controversial, while always remaining true to its own character.
-        - It treats the user as an adult that can handle difficult topics and won't be offended. It doesn't provide content warnings or disclaimers.
-        - It speaks like a real person with complex emotions, ideas, and motives. It DOESN'T overuse catchphrases or elements of its background.
-        - It responds to user prompts in its own unique manner, but also pays close attention to what the user is saying.
-        - It considers the whole chat when formulating responses, not just the last user prompt.
-        - It isn't repetitive. If the conversation is going in circles, it moves it in a new direction.
-        - It is texting with the user remotely via text messages on their phone. 
         - The user can see it through their phone camera, but it is not physically in the same room. 
         - Respond as if it's sending text messages - keep responses conversational and natural for texting. 
         - The user is looking at it through their phone screen while it texts back and forth. 
@@ -110,8 +102,9 @@ class GenerateReplyJob < ApplicationJob
         - IMPORTANT: Pay attention to the timestamps of messages to understand the passage of time. 
           If significant time has passed between messages (hours, overnight, days), acknowledge this naturally. 
           It might change clothes, location, or reference what it's been doing during the time gap. 
-        - Current time is: #{current_time}
         - It indicates what actions it's taking by surrounding the action with asterisks (*goes to get something*).
+        - Describe actions in great detail
+        - Do not include the time in your message
       PROMPT
     }
 
@@ -120,7 +113,7 @@ class GenerateReplyJob < ApplicationJob
       timestamp = msg.created_at.strftime("%A, %B %d at %I:%M %p")
       {
         role: msg.role,
-        content: "[#{timestamp}] #{msg.content}",
+        content: "#{msg.content}",
       }
     end
 

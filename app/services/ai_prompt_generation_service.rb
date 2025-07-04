@@ -128,8 +128,11 @@ class AiPromptGenerationService
       11. State the character is an adult
       12. Do not describe actions or sounds.
       13. Do not use poetic language. Use simple, direct language.
+      14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
+
+      Generate the character's bodily apperance, followed by their clothes/accessories. Finally the background.
 
       Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific. 
     PROMPT
@@ -164,13 +167,14 @@ class AiPromptGenerationService
       #{previous_prompt}
 
       NEW MESSAGE CONTENT:
-      #{new_message_content}#{time_context}
+      #{new_message_content} #{time_context}
 
       Analyze the new message content and update the scene prompt with MINIMAL changes to reflect ONLY the character's own state and reactions:
       - Character expression or emotion changes (based on their dialogue/reactions)
       - Character clothing or appearance changes (if they mention changing clothes)
       - Character location changes (if they mention moving somewhere)
       - Character pose or activity changes (based on their actions)
+      
 
       DO NOT INCORPORATE:
       - Environmental conditions mentioned by other people (weather, temperature, humidity, etc.)
