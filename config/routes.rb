@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
 
   resources :characters do
+    collection do
+      post :auto_generate
+    end
     resources :conversations, only: [:create]
   end
 

@@ -1,8 +1,14 @@
 <div class="max-w-6xl mx-auto p-6">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900">Characters</h1>
-    <%= link_to "Create New Character", new_character_path,
-                class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
+    <div class="flex space-x-3">
+      <%= button_to "Auto Generate Character", auto_generate_characters_path,
+                    method: :post,
+                    class: "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors",
+                    title: "Generate a complete character automatically" %>
+      <%= link_to "Create New Character", new_character_path,
+                  class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
+    </div>
   </div>
 
   <!-- User Created Characters -->

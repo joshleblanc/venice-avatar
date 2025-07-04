@@ -16,6 +16,22 @@ class CharactersController < ApplicationController
     @character = Character.new
   end
 
+  # POST /characters/auto_generate
+  def auto_generate
+    generator = AutoCharacterGeneratorService.new(current_user)
+    @character = generator.generate_character
+    
+    respond_to do |format|
+      if @character
+        format.html { redirect_to @character, notice: "Character '#{@character.name}' was automatically generated!" }
+        format.json { render :show, status: :created, location: @character }
+      else
+        format.html { redirect_to characters_path, alert: "Failed to generate character. Please try again." }
+        format.json { render json: { error: "Failed to generate character" }, status: :unprocessable_entity }
+      end
+    end
+  end
+
   # GET /characters/1/edit
   def edit
   end
