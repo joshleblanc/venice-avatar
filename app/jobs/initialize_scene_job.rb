@@ -1,9 +1,12 @@
 class InitializeSceneJob < ApplicationJob
   def perform(conversation)
-    # Initialize scene prompt in conversation metadata if not present
+    # First, ask character about their appearance as a hidden message
+    appearance_details = ask_character_appearance(conversation)
+    
+    # Initialize scene prompt using the appearance details
     if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
       prompt_service = AiPromptGenerationService.new(conversation)
-      prompt_service.get_current_scene_prompt # This will generate initial prompt
+      prompt_service.generate_initial_scene_prompt_with_appearance(appearance_details)
     end
 
     # Generate character's opening message to initiate the conversation
@@ -14,6 +17,79 @@ class InitializeSceneJob < ApplicationJob
   end
 
   private
+
+  def ask_character_appearance(conversation)
+    Rails.logger.info "Asking character about appearance for conversation #{conversation.id}"
+
+    begin
+      chat_api = VeniceClient::ChatApi.new
+
+      # Create appearance question prompt
+      appearance_prompt = build_character_appearance_prompt(conversation)
+
+      response = chat_api.create_chat_completion({
+        body: {
+          model: "venice-uncensored",
+          messages: [
+            {
+              role: "system",
+              content: <<~PROMPT,
+                You are the following character:
+
+                <character_instructions>
+                    %%CHARACTER_INSTRUCTIONS%%
+                </character_instructions>
+
+                You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
+                
+                Be specific about:
+                - What you're currently wearing (clothing, colors, style)
+                - Your hair (color, length, style) 
+                - Your eye color
+                - Any accessories you have on
+                - Your current expression or mood
+                - Your posture or pose
+                
+                Focus only on your physical appearance that would be visible to someone looking at you right now.
+              PROMPT
+            },
+            {
+              role: "user",
+              content: appearance_prompt,
+            },
+          ],
+          max_completion_tokens: 800,
+          temperature: 0.3,
+          venice_parameters: {
+            character_slug: conversation.character.slug,
+          },
+        },
+      })
+
+      appearance_response = response.choices.first[:message][:content].strip
+
+      # Store this as a hidden message in the conversation history
+      # This allows the character to reference their appearance later if asked
+      conversation.messages.create!(
+        content: appearance_prompt,
+        role: "user",
+        metadata: { "hidden" => true, "type" => "appearance_question" }
+      )
+      
+      conversation.messages.create!(
+        content: appearance_response,
+        role: "assistant", 
+        metadata: { "hidden" => true, "type" => "appearance_response" }
+      )
+
+      Rails.logger.info "Character appearance captured: #{appearance_response[0..100]}..."
+      appearance_response
+    rescue => e
+      Rails.logger.error "Failed to get character appearance: #{e.message}"
+      # Return nil so we fall back to basic description
+      nil
+    end
+  end
 
   def generate_character_opening_message(conversation)
     Rails.logger.info "Generating character's opening message for conversation #{conversation.id}"
@@ -80,6 +156,16 @@ class InitializeSceneJob < ApplicationJob
         role: "assistant",
       )
     end
+  end
+
+  def build_character_appearance_prompt(conversation)
+    character_name = conversation.character.name || "Character"
+    
+    <<~PROMPT
+      Please describe your current appearance in detail. This will help create an accurate visual representation of you for the person you're about to chat with.
+      
+      Include specific details about what you look like right now - your clothing, hair, expression, and overall appearance.
+    PROMPT
   end
 
   def build_opening_message_prompt(conversation)

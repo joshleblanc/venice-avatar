@@ -13,6 +13,13 @@ class AiPromptGenerationService
     character_appearance = get_character_appearance_details
 
     # Then generate the scene prompt using the appearance details
+    generate_initial_scene_prompt_with_appearance(character_appearance)
+  end
+
+  # Generate initial scene prompt with provided appearance details
+  def generate_initial_scene_prompt_with_appearance(character_appearance)
+    Rails.logger.info "Generating initial scene prompt with appearance for character: #{@character.name}"
+
     prompt = build_initial_prompt_generation_request(character_appearance)
 
     begin

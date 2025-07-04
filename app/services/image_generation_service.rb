@@ -32,7 +32,7 @@ class ImageGenerationService
       response = @venice_client.generate_image({
         body: {
           prompt: prompt.first(2048),
-          style_preset: "Anime",
+          # style_preset: "Anime",
           # negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
           model: models[4],
           width: 640,  # 16:10 ratio for visual novel scenes

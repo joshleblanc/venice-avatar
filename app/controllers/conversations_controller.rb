@@ -7,7 +7,10 @@ class ConversationsController < ApplicationController
   end
 
   def show
-    @messages = @conversation.messages.order(:created_at)
+    # Filter out hidden messages (like appearance questions/responses) from user view
+    @messages = @conversation.messages.where(
+      "metadata IS NULL OR metadata->>'hidden' IS NULL OR metadata->>'hidden' != 'true'"
+    ).order(:created_at)
 
     # Generate initial scene image if needed
     # if @conversation.scene_image.blank?
