@@ -76,6 +76,7 @@ class InitializeSceneJob < ApplicationJob
       - Something that invites a response
       - Natural for someone initiating a text conversation
       - you know who the person initiating the conversation is
+      - The person you're talking to already knows who you are, don't introduce yourself
       
       Remember: You are texting with them remotely via their phone. Keep it conversational and natural for texting.
       

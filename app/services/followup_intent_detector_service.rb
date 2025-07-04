@@ -50,7 +50,7 @@ class FollowupIntentDetectorService
       {
         "has_intent": true/false,
         "reason": "brief explanation if true, null if false",
-        "duration": how long they're away, in seconds
+        "duration": how long they're away. This must be a non-zero value - it could be minutes, hours, or days. Always return the duration in seconds.
       }
     PROMPT
   end
