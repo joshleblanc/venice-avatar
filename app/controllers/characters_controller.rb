@@ -25,6 +25,7 @@ class CharactersController < ApplicationController
     @character = Character.new(character_params)
     @character.user_created = true
     @character.slug = generate_unique_slug(@character.name)
+    @character.user = current_user
 
     respond_to do |format|
       if @character.save

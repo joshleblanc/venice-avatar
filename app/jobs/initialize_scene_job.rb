@@ -2,7 +2,7 @@ class InitializeSceneJob < ApplicationJob
   def perform(conversation)
     # First, ask character about their appearance as a hidden message
     appearance_details = ask_character_appearance(conversation)
-    
+
     # Initialize scene prompt using the appearance details
     if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
       prompt_service = AiPromptGenerationService.new(conversation)
@@ -73,13 +73,15 @@ class InitializeSceneJob < ApplicationJob
       conversation.messages.create!(
         content: appearance_prompt,
         role: "user",
-        metadata: { "hidden" => true, "type" => "appearance_question" }
+        metadata: { "hidden" => true, "type" => "appearance_question" },
+        user: conversation.user,
       )
-      
+
       conversation.messages.create!(
         content: appearance_response,
-        role: "assistant", 
-        metadata: { "hidden" => true, "type" => "appearance_response" }
+        role: "assistant",
+        metadata: { "hidden" => true, "type" => "appearance_response" },
+        user: conversation.user,
       )
 
       Rails.logger.info "Character appearance captured: #{appearance_response[0..100]}..."
@@ -144,6 +146,7 @@ class InitializeSceneJob < ApplicationJob
       conversation.messages.create!(
         content: opening_message,
         role: "assistant",
+        user: conversation.user,
       )
 
       Rails.logger.info "Character opening message created: #{opening_message[0..100]}..."
@@ -154,13 +157,14 @@ class InitializeSceneJob < ApplicationJob
       conversation.messages.create!(
         content: fallback_message,
         role: "assistant",
+        user: conversation.user,
       )
     end
   end
 
   def build_character_appearance_prompt(conversation)
     character_name = conversation.character.name || "Character"
-    
+
     <<~PROMPT
       Please describe your current appearance in detail. This will help create an accurate visual representation of you for the person you're about to chat with.
       

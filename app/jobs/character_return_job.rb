@@ -35,6 +35,7 @@ class CharacterReturnJob < ApplicationJob
         content: return_message,
         role: "assistant",
         metadata: { auto_generated: true, return_message: true },
+        user: conversation.user,
       )
       # Mark character as no longer away
       conversation.update!(character_away: false)
@@ -83,7 +84,7 @@ class CharacterReturnJob < ApplicationJob
 
       response = venice_client.create_chat_completion({
         body: {
-          model: "venice-uncensored",
+          model: conversation.user.preferred_text_model || "venice-uncensored",
           messages: [{
             role: "user",
             content: prompt,

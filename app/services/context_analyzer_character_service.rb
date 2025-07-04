@@ -1,6 +1,6 @@
 class ContextAnalyzerCharacterService
   CONTEXT_ANALYZER_SLUG = "visual-novel-context-analyzer"
-  
+
   def self.ensure_context_analyzer_exists
     # Check if the context analyzer character already exists
     existing_character = Character.find_by(slug: CONTEXT_ANALYZER_SLUG)

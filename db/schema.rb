@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_04_183559) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_04_190011) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -53,8 +53,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_04_183559) do
     t.datetime "updated_at", null: false
     t.boolean "user_created", default: false
     t.text "character_instructions"
+    t.integer "user_id"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
     t.index ["user_created"], name: "index_characters_on_user_created"
+    t.index ["user_id"], name: "index_characters_on_user_id"
   end
 
   create_table "conversations", force: :cascade do |t|
@@ -67,9 +69,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_04_183559) do
     t.boolean "generating_reply"
     t.json "metadata"
     t.boolean "character_away", default: false, null: false
+    t.integer "user_id", null: false
     t.index ["character_away"], name: "index_conversations_on_character_away"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
+    t.index ["user_id"], name: "index_conversations_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -83,9 +87,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_04_183559) do
     t.datetime "followup_scheduled_at"
     t.text "followup_context"
     t.string "followup_reason"
+    t.integer "user_id", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["role"], name: "index_messages_on_role"
+    t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -141,8 +147,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_04_183559) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "characters", "users"
   add_foreign_key "conversations", "characters"
+  add_foreign_key "conversations", "users"
   add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "taggings", "tags"
 end

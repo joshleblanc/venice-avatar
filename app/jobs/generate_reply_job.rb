@@ -35,7 +35,7 @@ class GenerateReplyJob < ApplicationJob
       chat_response = send_to_venice_chat(conversation, user_message.content)
 
       # Save assistant response
-      assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant")
+      assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant", user: conversation.user)
 
       # Check if the character wants to step away after this message
       followup_detector = FollowupIntentDetectorService.new(conversation)
@@ -70,6 +70,7 @@ class GenerateReplyJob < ApplicationJob
       conversation.messages.create!(
         content: "I'm sorry, I couldn't respond right now. Please try again.",
         role: "assistant",
+        user: conversation.user,
       )
     ensure
       conversation.update(generating_reply: false)

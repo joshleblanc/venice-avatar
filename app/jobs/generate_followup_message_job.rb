@@ -22,6 +22,7 @@ class GenerateFollowupMessageJob < ApplicationJob
       assistant_msg = conversation.messages.create!(
         content: chat_response,
         role: "assistant",
+        user: conversation.user,
       )
 
       # Evolve the scene prompt based on the follow-up message
@@ -43,6 +44,7 @@ class GenerateFollowupMessageJob < ApplicationJob
       conversation.messages.create!(
         content: "I'm back! Sorry for the delay.",
         role: "assistant",
+        user: conversation.user,
       )
     ensure
       conversation.update(generating_reply: false)
@@ -76,7 +78,7 @@ class GenerateFollowupMessageJob < ApplicationJob
 
     response = chat_api.create_chat_completion({
       body: {
-        model: "venice-uncensored",
+        model: conversation.user.preferred_text_model || "venice-uncensored",
         messages: [system_message] + messages,
         venice_parameters: {
           character_slug: conversation.character.slug,

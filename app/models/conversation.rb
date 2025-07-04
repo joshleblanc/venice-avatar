@@ -2,8 +2,9 @@ class Conversation < ApplicationRecord
   broadcasts_refreshes
 
   belongs_to :character
+  belongs_to :user
   has_many :messages, dependent: :destroy
-  
+
   # Scene images are now stored directly on conversations
   has_one_attached :scene_image
 

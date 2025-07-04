@@ -20,6 +20,7 @@ class ConversationsController < ApplicationController
 
   def create
     @conversation = Conversation.new(character: @character)
+    @conversation.user = current_user
 
     if @conversation.save
       initialize_conversation_scene
@@ -33,7 +34,7 @@ class ConversationsController < ApplicationController
     user_message = params[:message]
     return redirect_to @conversation, alert: "Message cannot be blank" if user_message.blank?
 
-    user_msg = @conversation.messages.create!(content: user_message, role: "user")
+    user_msg = @conversation.messages.create!(content: user_message, role: "user", user: current_user)
 
     # Check if character is away - if so, queue the user message but don't generate reply yet
     if @conversation.character_away?
