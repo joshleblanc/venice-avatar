@@ -87,19 +87,46 @@ class ImageGenerationService
     prompt_service = AiPromptGenerationService.new(@conversation)
     current_prompt = prompt_service.get_current_scene_prompt
 
-    # Extract background elements from the current scene prompt and remove character
-    background_prompt = current_prompt.gsub(/\b(?:girl|boy|woman|man|character|person|figure|she|he|her|him|they|them)\b[^.]*?(?:\.|$)/i, "")
-      .gsub(/\b(?:wearing|dressed in|outfit|clothing|clothes)[^.]*?(?:\.|$)/i, "")
-      .gsub(/\b(?:expression|face|eyes|hair|skin)[^.]*?(?:\.|$)/i, "")
-      .gsub(/\s+/, " ")
-      .strip
+    # Request Venice to generate just the background description
+    venice_client = VeniceClient::ChatApi.new
 
-    # Add explicit background-only instructions
-    enhanced_prompt = "Empty room scene, no people, no characters. #{background_prompt}. Detailed interior background, ambient lighting, peaceful atmosphere, visual novel style background art."
+    begin
+      response = venice_client.chat({
+        body: {
+          model: "venice_uncensored",
+          messages: [
+            {
+              role: "system",
+              content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation.",
+            },
+            {
+              role: "user",
+              content: "Extract the background-only description from this scene: #{current_prompt}",
+            },
+          ],
+          max_tokens: 500,
+          temperature: 0.3,
+        },
+      })
 
-    Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
+      background_description = response.choices.first[:message][:content].strip
 
-    enhanced_prompt
+      # Add explicit background-only instructions for image generation
+      enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere, visual novel style background art."
+
+      Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
+
+      enhanced_prompt
+    rescue => e
+      Rails.logger.error "Failed to generate background description via Venice: #{e.message}"
+
+      # Fallback to a simple default background
+      fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere, visual novel style background art."
+
+      Rails.logger.info "Using fallback background prompt: #{fallback_prompt}"
+
+      fallback_prompt
+    end
   end
 
   private
