@@ -22,7 +22,7 @@ class ProfilesController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:timezone, :preferred_image_model, :preferred_text_model)
+    params.require(:user).permit(:timezone, :preferred_image_style, :preferred_image_model, :preferred_text_model)
   end
 
   def load_available_models
@@ -48,10 +48,21 @@ class ProfilesController < ApplicationController
           [model[:model_spec][:name], model[:id]]
         end
       end
+
+      image_api = VeniceClient::ImageApi.new
+      image_styles_response = image_api.image_styles_get
+      @image_styles = image_styles_response.data.map do |style|
+        if style == "Anime"
+          ["#{style} (Default)", style]
+        else
+          [style, style]
+        end
+      end
     rescue => e
       Rails.logger.error "Failed to fetch models from Venice API: #{e.message}"
       @text_models = []
       @image_models = []
+      @image_styles = []
       flash.now[:alert] = "Unable to load available models. Please try again later."
     end
   end

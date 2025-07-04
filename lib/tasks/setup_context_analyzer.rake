@@ -2,9 +2,9 @@ namespace :context_analyzer do
   desc "Set up the AI context analyzer character for visual novel state tracking"
   task setup: :environment do
     puts "Setting up AI Context Analyzer character..."
-    
+
     character = ContextAnalyzerCharacterService.ensure_context_analyzer_exists
-    
+
     if character
       puts "✅ Context Analyzer character created successfully!"
       puts "   Name: #{character.name}"
@@ -19,7 +19,7 @@ namespace :context_analyzer do
   desc "Verify the context analyzer character exists and is properly configured"
   task verify: :environment do
     character = ContextAnalyzerCharacterService.get_context_analyzer_character
-    
+
     if character
       puts "✅ Context Analyzer character found:"
       puts "   Name: #{character.name}"

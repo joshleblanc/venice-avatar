@@ -34,11 +34,12 @@ class ImageGenerationService
           prompt: prompt.first(2048),
           # style_preset: "Anime",
           # negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
-          model: models[4],
+          model: @conversation.user.preferred_image_model || models[4],
           width: 640,  # 16:10 ratio for visual novel scenes
           height: 1024,
           safe_mode: false,
           format: "png",
+          style_preset: @conversation.user.preferred_image_style || "Anime",
           # cfg_scale: 15,
           seed: 123871273,
         },
@@ -91,9 +92,9 @@ class ImageGenerationService
     venice_client = VeniceClient::ChatApi.new
 
     begin
-      response = venice_client.chat({
+      response = venice_client.create_chat_completion({
         body: {
-          model: "venice_uncensored",
+          model: @conversation.user.preferred_image_model || "venice-uncensored",
           messages: [
             {
               role: "system",
@@ -112,7 +113,7 @@ class ImageGenerationService
       background_description = response.choices.first[:message][:content].strip
 
       # Add explicit background-only instructions for image generation
-      enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere, visual novel style background art."
+      enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"
 
       Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
 
@@ -121,7 +122,7 @@ class ImageGenerationService
       Rails.logger.error "Failed to generate background description via Venice: #{e.message}"
 
       # Fallback to a simple default background
-      fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere, visual novel style background art."
+      fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere"
 
       Rails.logger.info "Using fallback background prompt: #{fallback_prompt}"
 

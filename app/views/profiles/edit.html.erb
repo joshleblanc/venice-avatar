@@ -26,29 +26,38 @@
         
         <div>
           <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.select :timezone, 
-                options_for_select(ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }, @user.timezone),
-                { prompt: "Select your timezone" },
-                { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
+          <%= form.select :timezone,
+                          options_for_select(ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }, @user.timezone),
+                          { prompt: "Select your timezone" },
+                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">This helps us show you accurate timestamps in conversations.</p>
         </div>
         
         <div>
           <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_text_model,
-                options_for_select(@text_models, @user.preferred_text_model),
-                { prompt: "Use default text model" },
-                { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
+                          options_for_select(@text_models, @user.preferred_text_model),
+                          { prompt: "Use default text model" },
+                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">Choose your preferred model for character conversations.</p>
         </div>
         
         <div>
           <%= form.label :preferred_image_model, "Preferred Image Model", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_image_model,
-                options_for_select(@image_models, @user.preferred_image_model),
-                { prompt: "Use default image model" },
-                { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
+                          options_for_select(@image_models, @user.preferred_image_model),
+                          { prompt: "Use default image model" },
+                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">Choose your preferred model for scene image generation.</p>
+        </div>
+
+        <div>
+          <%= form.label :preferred_image_style, "Preferred Image Style", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.select :preferred_image_style,
+                          options_for_select(@image_styles, @user.preferred_image_style),
+                          { prompt: "Use default image style" },
+                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
+          <p class="mt-2 text-sm text-gray-500">Choose your preferred style for scene image generation.</p>
         </div>
       </div>
       

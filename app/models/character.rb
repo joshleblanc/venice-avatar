@@ -1,4 +1,6 @@
 class Character < ApplicationRecord
+  broadcasts_refreshes
+
   acts_as_taggable_on :tags
 
   validates :slug, presence: true, uniqueness: true

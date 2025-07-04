@@ -120,7 +120,7 @@ class AiPromptGenerationService
       1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
       2. Environment/setting (location, background elements, lighting)
       3. Atmosphere and mood
-      4. Art style specifications (anime/visual novel style)
+      4. NO Art style specifications
       5. No not include any superfluous, unimportant descriptions.
       6. Do not include the character name
       7. Do not state you're generating an image in the prompt
@@ -286,6 +286,6 @@ class AiPromptGenerationService
     character_name = @character.name || "character"
     character_desc = @character.description || "a person"
 
-    "Anime style illustration of #{character_name}, #{character_desc}, standing in a cozy indoor setting, soft lighting, high quality visual novel art style, detailed character design, warm atmosphere"
+    "Anime style illustration of #{character_name}, #{character_desc}, standing in a cozy indoor setting, soft lighting, detailed character design, warm atmosphere"
   end
 end
