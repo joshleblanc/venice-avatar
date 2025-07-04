@@ -44,7 +44,8 @@ class FollowupIntentDetectorService
       - Saying they need to do something quickly ("let me grab something", "I'll be right back", "hold on a moment")
       - Indicating they're going to change clothes, get something, check on something
       - Mentioning they need to step away briefly but will return
-      - Actions that suggest temporary departure ("*goes to get*", "*steps away to*")
+      - Actions that suggest temporary departure ("*goes to get*", "*steps away to*")\
+      - Ending the conversation ("Bye!", "Talk to you later!")
 
       Respond with JSON only:
       {
