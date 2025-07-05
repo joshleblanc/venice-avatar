@@ -32,6 +32,15 @@
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">This helps us show you accurate timestamps in conversations.</p>
         </div>
+
+        <div>
+          <%= form.label :venice_key, "Venice Key", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :venice_key, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
+          <p class="mt-2 text-sm text-gray-500">This is your Venice API key. You can get it from <a href="https://venice.ai" target="_blank">Venice.ai</a>.</p>
+          <% if @user.venice_key.present? %>
+            <p class="mt-2 text-xs text-gray-500">Your Venice API key is <%= @user.obfuscated_venice_key %></p>
+          <% end %>
+        </div>
         
         <div>
           <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-gray-700" %>

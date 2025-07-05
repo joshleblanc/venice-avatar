@@ -22,7 +22,7 @@ class ProfilesController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:timezone, :preferred_image_style, :preferred_image_model, :preferred_text_model)
+    params.require(:user).permit(:timezone, :preferred_image_style, :venice_key, :preferred_image_model, :preferred_text_model)
   end
 
   def load_available_models
