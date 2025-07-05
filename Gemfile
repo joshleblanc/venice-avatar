@@ -65,7 +65,7 @@ end
 gem "venice_client", "~> 1.0"
 
 gem "acts-as-taggable-on", "~> 12.0"
-gem "tailwindcss-rails", "~> 3.0"
+gem "tailwindcss-rails", "~> 4.2"
 
 gem "neighbor", "~> 0.6.0"
 
