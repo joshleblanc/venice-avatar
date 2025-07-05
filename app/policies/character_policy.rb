@@ -8,4 +8,8 @@ class CharacterPolicy < ApplicationPolicy
       end
     end
   end
+
+  def auto_generate?
+    user.present?
+  end
 end
