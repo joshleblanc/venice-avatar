@@ -18,7 +18,9 @@
     <!-- Messages Area -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages" data-messages-target="container">
       <% @messages.order(:created_at).each do |message| %>
-        <%= render "messages/message", message: message %>
+        <% unless message.metadata["hidden"] %>
+          <%= render "messages/message", message: message %>
+        <% end %>
       <% end %>
       <% if @conversation.generating_reply %>
         <%= render "messages/typing_indicator", character: @conversation.character %>
