@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   end
 
   resource :session
+  resources :registrations, only: [:new, :create]
   resources :passwords, param: :token
   resource :profile, only: [:show, :edit, :update]
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
