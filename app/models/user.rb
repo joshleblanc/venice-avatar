@@ -7,6 +7,9 @@ class User < ApplicationRecord
   validate :venice_key_must_be_valid
 
   def venice_key_must_be_valid
+    if venice_key.nil?
+      return # new user
+    end
     if balances.nil?
       self.venice_key_valid = false
       errors.add(:venice_key, "is invalid")

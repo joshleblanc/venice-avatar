@@ -70,3 +70,5 @@ gem "tailwindcss-rails", "~> 3.0"
 gem "neighbor", "~> 0.6.0"
 
 gem "sqlite-vec", "~> 0.1.6"
+
+gem "pundit", "~> 2.5"

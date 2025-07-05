@@ -3,14 +3,17 @@ class ProfilesController < ApplicationController
 
   def show
     @user = Current.user
+    authorize @user
   end
 
   def edit
     @user = Current.user
+    authorize @user
   end
 
   def update
     @user = Current.user
+    authorize @user
 
     if user_params[:venice_key].blank?
       user_params.delete(:venice_key)

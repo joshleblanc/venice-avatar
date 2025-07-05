@@ -3,7 +3,8 @@ class ConversationsController < ApplicationController
   before_action :set_character, only: [:create]
 
   def index
-    @conversations = Conversation.includes(:character).order(updated_at: :desc)
+    authorize Conversation
+    @conversations = policy_scope(Conversation).where(user: current_user).includes(:character).order(updated_at: :desc)
   end
 
   def show
@@ -19,6 +20,7 @@ class ConversationsController < ApplicationController
   end
 
   def create
+    authorize Conversation
     @conversation = Conversation.new(character: @character)
     @conversation.user = current_user
 
@@ -61,10 +63,12 @@ class ConversationsController < ApplicationController
 
   def set_conversation
     @conversation = Conversation.find(params[:id])
+    authorize @conversation
   end
 
   def set_character
     @character = Character.find(params[:character_id])
+    authorize @character
   end
 
   def initialize_conversation_scene

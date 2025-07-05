@@ -3,8 +3,9 @@ class CharactersController < ApplicationController
 
   # GET /characters or /characters.json
   def index
-    @user_characters = Character.where(user_created: true).order(:name)
-    @venice_characters = Character.where(user_created: false).order(:name)
+    authorize Character
+    @user_characters = policy_scope(Character.where(user_created: true).order(:name))
+    @venice_characters = policy_scope(Character.where(user_created: false).order(:name))
   end
 
   # GET /characters/1 or /characters/1.json
@@ -14,10 +15,12 @@ class CharactersController < ApplicationController
   # GET /characters/new
   def new
     @character = Character.new
+    authorize @character
   end
 
   # POST /characters/auto_generate
   def auto_generate
+    authorize Character
     @character = Character.create(
       user_created: true,
       user: current_user,
@@ -42,6 +45,7 @@ class CharactersController < ApplicationController
 
   # POST /characters or /characters.json
   def create
+    authorize Character
     @character = Character.new(character_params)
     @character.user_created = true
     @character.slug = generate_unique_slug(@character.name)
@@ -88,6 +92,7 @@ class CharactersController < ApplicationController
   # Use callbacks to share common setup or constraints between actions.
   def set_character
     @character = Character.find(params.expect(:id))
+    authorize @character
   end
 
   # Only allow a list of trusted parameters through.
