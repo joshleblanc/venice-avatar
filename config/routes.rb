@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-
   resources :characters do
     collection do
       post :auto_generate
@@ -8,9 +7,7 @@ Rails.application.routes.draw do
   end
 
   resources :conversations, only: [:index, :show] do
-    member do
-      post :send_message
-    end
+    resources :messages, only: [:create]
   end
 
   resource :session

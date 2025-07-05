@@ -27,11 +27,11 @@
 
     <!-- Message Input -->
     <div class="bg-white border-t p-4">
-      <%= form_with url: send_message_conversation_path(@conversation),
+      <%= form_with url: conversation_messages_path(@conversation),
                     method: :post,
                     class: "flex gap-2",
                     data: { messages_target: "form", action: "submit->messages#submitMessage" } do |form| %>
-        <%= form.text_area :message,
+        <%= form.text_area "message[content]",
                            placeholder: "Type your message...",
                            rows: 2,
                            class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
