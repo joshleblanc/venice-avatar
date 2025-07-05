@@ -2,7 +2,6 @@ class AiPromptGenerationService
   def initialize(conversation)
     @conversation = conversation
     @character = conversation.character
-    @venice_client = VeniceClient::ChatApi.new
   end
 
   # Generate initial detailed scene prompt when conversation starts
@@ -23,21 +22,15 @@ class AiPromptGenerationService
     prompt = build_initial_prompt_generation_request(character_appearance)
 
     begin
-      response = @venice_client.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          max_completion_tokens: 1500,
-          temperature: 0.7,
+      generated_prompt = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "user",
+          content: prompt,
         },
+      ], {
+        max_completion_tokens: 1500,
+        temperature: 0.7,
       })
-
-      generated_prompt = response.choices.first[:message][:content].strip
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
       # Store the prompt in the conversation or character state
@@ -58,21 +51,16 @@ class AiPromptGenerationService
     prompt = build_prompt_evolution_request(previous_prompt, new_message_content, message_timestamp)
 
     begin
-      response = @venice_client.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          max_completion_tokens: 1500,
-          temperature: 0.3,  # Lower temperature for consistency
+      evolved_prompt = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "user",
+          content: prompt,
         },
+      ], {
+        max_completion_tokens: 1500,
+        temperature: 0.3,  # Lower temperature for consistency
       })
 
-      evolved_prompt = response.choices.first[:message][:content].strip
       Rails.logger.info "Evolved scene prompt: #{evolved_prompt}"
 
       # Store the updated prompt
@@ -227,24 +215,24 @@ class AiPromptGenerationService
     appearance_prompt = build_character_appearance_prompt
 
     begin
-      response = @venice_client.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [
-            {
-              role: "user",
-              content: appearance_prompt,
-            },
-          ],
-          max_completion_tokens: 800,
-          temperature: 0.3, # Lower temperature for consistency
-          venice_parameters: {
-            character_slug: @character.slug,
-          },
-        },
-      })
+      options = {
+        max_completion_tokens: 800,
+        temperature: 0.3, # Lower temperature for consistency
+      }
 
-      appearance_details = response.choices.first[:message][:content].strip
+      if @character.venice_created?
+        options[:venice_parameters] = {
+          character_slug: @character.slug,
+        }
+      end
+
+      appearance_details = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "user",
+          content: appearance_prompt,
+        },
+      ], options)
+
       Rails.logger.info "Character appearance details: #{appearance_details}"
 
       # Store the appearance details in conversation metadata for future reference

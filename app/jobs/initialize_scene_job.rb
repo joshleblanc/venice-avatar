@@ -22,51 +22,48 @@ class InitializeSceneJob < ApplicationJob
     Rails.logger.info "Asking character about appearance for conversation #{conversation.id}"
 
     begin
-      chat_api = VeniceClient::ChatApi.new
-
       # Create appearance question prompt
       appearance_prompt = build_character_appearance_prompt(conversation)
 
-      response = chat_api.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [
-            {
-              role: "system",
-              content: <<~PROMPT,
-                You are the following character:
+      options = {
+        max_completion_tokens: 800,
+        temperature: 0.3,
+      }
 
-                <character_instructions>
-                    %%CHARACTER_INSTRUCTIONS%%
-                </character_instructions>
+      if conversation.character.venice_created?
+        options[:venice_parameters] = {
+          character_slug: conversation.character.slug,
+        }
+      end
 
-                You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
-                
-                Be specific about:
-                - What you're currently wearing (clothing, colors, style)
-                - Your hair (color, length, style) 
-                - Your eye color
-                - Any accessories you have on
-                - Your current expression or mood
-                - Your posture or pose
-                
-                Focus only on your physical appearance that would be visible to someone looking at you right now.
-              PROMPT
-            },
-            {
-              role: "user",
-              content: appearance_prompt,
-            },
-          ],
-          max_completion_tokens: 800,
-          temperature: 0.3,
-          venice_parameters: {
-            character_slug: conversation.character.slug,
-          },
+      appearance_response = ChatCompletionJob.perform_now(conversation.user, [
+        {
+          role: "system",
+          content: <<~PROMPT,
+            You are the following character:
+
+            <character_instructions>
+                %%CHARACTER_INSTRUCTIONS%%
+            </character_instructions>
+
+            You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
+            
+            Be specific about:
+            - What you're currently wearing (clothing, colors, style)
+            - Your hair (color, length, style) 
+            - Your eye color
+            - Any accessories you have on
+            - Your current expression or mood
+            - Your posture or pose
+            
+            Focus only on your physical appearance that would be visible to someone looking at you right now.
+          PROMPT
         },
-      })
-
-      appearance_response = response.choices.first[:message][:content].strip
+        {
+          role: "user",
+          content: appearance_prompt,
+        },
+      ], options)
 
       # Store this as a hidden message in the conversation history
       # This allows the character to reference their appearance later if asked
@@ -97,50 +94,48 @@ class InitializeSceneJob < ApplicationJob
     Rails.logger.info "Generating character's opening message for conversation #{conversation.id}"
 
     begin
-      chat_api = VeniceClient::ChatApi.new
-
       # Create a prompt for the character to initiate conversation
       opening_prompt = build_opening_message_prompt(conversation)
       current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
-      response = chat_api.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [
-            {
-              role: "system",
-              content: <<~PROMPT,
-                You are the following character:
 
-                <character_instructions>
-                    %%CHARACTER_INSTRUCTIONS%%
-                </character_instructions>
+      options = {
+        max_completion_tokens: 300,
+        temperature: 0.8,
+      }
 
-                Here are some additional facts about the assistant:
-                - The user can see it through their phone camera, but it is not physically in the same room. 
-                - Respond as if it's sending text messages - keep responses conversational and natural for texting. 
-                - The user is looking at it through their phone screen while it texts back and forth. 
-                - It cannot meet. This is a remote conversation, it does not live close by. 
-                - IMPORTANT: Pay attention to the timestamps of messages to understand the passage of time. 
-                  If significant time has passed between messages (hours, overnight, days), acknowledge this naturally. 
-                  It might change clothes, location, or reference what it's been doing during the time gap. 
-                - Current time is: #{current_time}
-                - It indicates what actions it's taking by surrounding the action with asterisks (*goes to get something*).
-              PROMPT
-            },
-            {
-              role: "user",
-              content: opening_prompt,
-            },
-          ],
-          max_completion_tokens: 300,
-          temperature: 0.8,
-          venice_parameters: {
-            character_slug: conversation.character.slug,
-          },
+      if conversation.character.venice_created?
+        options[:venice_parameters] = {
+          character_slug: conversation.character.slug,
+        }
+      end
+
+      opening_message = ChatCompletionJob.perform_now(conversation.user, [
+        {
+          role: "system",
+          content: <<~PROMPT,
+            You are the following character:
+
+            <character_instructions>
+                %%CHARACTER_INSTRUCTIONS%%
+            </character_instructions>
+
+            Here are some additional facts about the assistant:
+            - The user can see it through their phone camera, but it is not physically in the same room. 
+            - Respond as if it's sending text messages - keep responses conversational and natural for texting. 
+            - The user is looking at it through their phone screen while it texts back and forth. 
+            - It cannot meet. This is a remote conversation, it does not live close by. 
+            - IMPORTANT: Pay attention to the timestamps of messages to understand the passage of time. 
+              If significant time has passed between messages (hours, overnight, days), acknowledge this naturally. 
+              It might change clothes, location, or reference what it's been doing during the time gap. 
+            - Current time is: #{current_time}
+            - It indicates what actions it's taking by surrounding the action with asterisks (*goes to get something*).
+          PROMPT
         },
-      })
-
-      opening_message = response.choices.first[:message][:content].strip
+        {
+          role: "user",
+          content: opening_prompt,
+        },
+      ], options)
 
       # Create the character's opening message
       conversation.messages.create!(

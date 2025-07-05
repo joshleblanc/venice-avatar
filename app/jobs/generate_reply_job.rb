@@ -80,8 +80,6 @@ class GenerateReplyJob < ApplicationJob
   private
 
   def send_to_venice_chat(conversation, message)
-    chat_api = VeniceClient::ChatApi.new
-
     # Add system message to establish text messaging context with time awareness
     current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
@@ -129,23 +127,16 @@ class GenerateReplyJob < ApplicationJob
     Rails.logger.info "Sending message to Venice API: #{messages}"
 
     # Build API request body - only include venice_parameters for Venice characters
-    request_body = {
-      model: "venice-uncensored",
-      messages: [system_message] + messages,
-    }
+    options = {}
 
     # Only add venice_parameters for Venice-created characters
     if conversation.character.venice_created?
-      request_body[:venice_parameters] = {
+      options[:venice_parameters] = {
         character_slug: conversation.character.slug,
       }
     end
 
-    response = chat_api.create_chat_completion({
-      body: request_body,
-    })
-
-    response.choices.first[:message][:content] || "I'm sorry, I couldn't respond right now."
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options) || "I'm sorry, I couldn't respond right now."
   end
 
   # Check if the character should return from being away

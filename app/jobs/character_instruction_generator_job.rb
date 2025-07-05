@@ -3,7 +3,6 @@ class CharacterInstructionGeneratorJob < ApplicationJob
 
   def perform(character)
     @character = character
-    @venice_client = VeniceClient::ChatApi.new
     @user = character.user
 
     Rails.logger.info "Starting character instruction generation for: #{@character.name}"

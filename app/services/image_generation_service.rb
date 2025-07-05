@@ -2,7 +2,6 @@ class ImageGenerationService
   def initialize(conversation)
     @conversation = conversation
     @character = conversation.character
-    @venice_client = VeniceClient::ImageApi.new
   end
 
   def generate_scene_image
@@ -29,24 +28,11 @@ class ImageGenerationService
     ]
     begin
       Rails.logger.info "Generating unified scene image with prompt: #{prompt}"
-      response = @venice_client.generate_image({
-        body: {
-          prompt: prompt.first(2048),
-          # style_preset: "Anime",
-          # negative_prompt: "border, frame, text, watermark, signature, blurry, low quality",
-          model: @conversation.user.preferred_image_model || models[4],
-          width: 640,  # 16:10 ratio for visual novel scenes
-          height: 1024,
-          safe_mode: false,
-          format: "png",
-          style_preset: @conversation.user.preferred_image_style || "Anime",
-          # cfg_scale: 15,
-          seed: 123871273,
-        },
-      })
 
-      # Handle base64 response
-      base64_data = response.images.first
+      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt.first(2048), {
+        width: 640,
+        height: 1024,
+      })
       if base64_data
         Rails.logger.info "Received unified scene base64 image data, length: #{base64_data.length}"
         attach_base64_image_to_conversation(base64_data, "scene.png")
@@ -89,28 +75,20 @@ class ImageGenerationService
     current_prompt = prompt_service.get_current_scene_prompt
 
     # Request Venice to generate just the background description
-    venice_client = VeniceClient::ChatApi.new
-
     begin
-      response = venice_client.create_chat_completion({
-        body: {
-          model: @conversation.user.preferred_image_model || "venice-uncensored",
-          messages: [
-            {
-              role: "system",
-              content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation.",
-            },
-            {
-              role: "user",
-              content: "Extract the background-only description from this scene: #{current_prompt}",
-            },
-          ],
-          max_tokens: 500,
-          temperature: 0.3,
+      background_description = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "system",
+          content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation.",
         },
+        {
+          role: "user",
+          content: "Extract the background-only description from this scene: #{current_prompt}",
+        },
+      ], {
+        max_completion_tokens: 500,
+        temperature: 0.3,
       })
-
-      background_description = response.choices.first[:message][:content].strip
 
       # Add explicit background-only instructions for image generation
       enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"

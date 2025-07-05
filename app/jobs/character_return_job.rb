@@ -60,8 +60,6 @@ class CharacterReturnJob < ApplicationJob
 
     # Generate contextual return message using Venice API
     begin
-      venice_client = VeniceClient::ChatApi.new
-
       prompt = <<~PROMPT
         You are #{conversation.character.name} returning from stepping away. You left because: #{reason}
         
@@ -82,19 +80,8 @@ class CharacterReturnJob < ApplicationJob
         Generate ONLY the return message, no quotes or extra text:
       PROMPT
 
-      response = venice_client.create_chat_completion({
-        body: {
-          model: conversation.user.preferred_text_model || "venice-uncensored",
-          messages: [{
-            role: "user",
-            content: prompt,
-          }],
-          max_tokens: 100,
-          temperature: 0.8,
-        },
-      })
+      return_message = ChatCompletionJob.perform_now(conversation.user, [{ role: "user", content: prompt }], { max_completion_tokens: 100, temperature: 0.8 })
 
-      return_message = response.choices.first[:message][:content].strip
       Rails.logger.info "Generated contextual return message: #{return_message}"
 
       return_message

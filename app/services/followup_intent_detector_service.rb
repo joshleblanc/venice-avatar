@@ -1,23 +1,22 @@
 class FollowupIntentDetectorService
   def initialize(conversation)
     @conversation = conversation
-    @venice_client = VeniceClient::ChatApi.new
   end
 
   def detect_character_followup_intent(assistant_message)
     prompt = build_character_followup_detection_prompt(assistant_message)
 
     begin
-      response = @venice_client.create_chat_completion({
-        body: {
-          model: "venice-uncensored",
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 200,
-          temperature: 0.3,
+      content = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "user",
+          content: prompt,
         },
+      ], {
+        max_completion_tokens: 200,
+        temperature: 0.3,
       })
 
-      content = response.choices.first[:message][:content]
       Rails.logger.info "Followup intent detection response: #{content}"
       parse_followup_response(content)
     rescue => e

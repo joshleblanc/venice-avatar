@@ -12,6 +12,10 @@ class ProfilesController < ApplicationController
   def update
     @user = Current.user
 
+    if user_params[:venice_key].blank?
+      user_params.delete(:venice_key)
+    end
+
     if @user.update(user_params)
       redirect_to profile_path, notice: "Profile updated successfully."
     else
@@ -27,11 +31,9 @@ class ProfilesController < ApplicationController
 
   def load_available_models
     begin
-      models_api = VeniceClient::ModelsApi.new
-
       # Fetch text models
-      text_models_response = models_api.list_models(type: "text")
-      @text_models = text_models_response.data.map do |model|
+      text_models_response = FetchModelsJob.perform_now(Current.user, "text")
+      @text_models = text_models_response.map do |model|
         if model[:id] == "venice-uncensored"
           ["#{model[:model_spec][:name]} (Default)", model[:id]]
         else
@@ -40,18 +42,17 @@ class ProfilesController < ApplicationController
       end
 
       # Fetch image models
-      image_models_response = models_api.list_models(type: "image")
-      @image_models = image_models_response.data.map do |model|
-        if model[:id] == "flux-dev-uncensored-11"
+      image_models_response = FetchModelsJob.perform_now(Current.user, "image")
+      @image_models = image_models_response.map do |model|
+        if model[:id] == "hidream"
           ["#{model[:model_spec][:name]} (Default)", model[:id]]
         else
           [model[:model_spec][:name], model[:id]]
         end
       end
 
-      image_api = VeniceClient::ImageApi.new
-      image_styles_response = image_api.image_styles_get
-      @image_styles = image_styles_response.data.map do |style|
+      image_styles_response = FetchImageStylesJob.perform_now(Current.user)
+      @image_styles = image_styles_response.map do |style|
         if style == "Anime"
           ["#{style} (Default)", style]
         else

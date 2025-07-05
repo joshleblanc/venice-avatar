@@ -54,8 +54,6 @@ class GenerateFollowupMessageJob < ApplicationJob
   private
 
   def send_followup_to_venice_chat(conversation, followup_context)
-    chat_api = VeniceClient::ChatApi.new
-
     # Build conversation history for context
     messages = conversation.messages.order(:created_at).map do |msg|
       {
@@ -76,17 +74,12 @@ class GenerateFollowupMessageJob < ApplicationJob
                "Reason for follow-up: #{followup_context[:reason]}",
     }
 
-    response = chat_api.create_chat_completion({
-      body: {
-        model: conversation.user.preferred_text_model || "venice-uncensored",
-        messages: [system_message] + messages,
-        venice_parameters: {
-          character_slug: conversation.character.slug,
-        },
-      },
-    })
+    options = {}
+    if conversation.character.venice_created?
+      options[:venice_parameters] = { character_slug: conversation.character.slug }
+    end
 
-    response.choices.first[:message][:content] || "I'm back!"
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options) || "I'm back!"
   end
 
   def schedule_followup_message(conversation, message, followup_intent)
