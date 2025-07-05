@@ -1,4 +1,9 @@
 class GenerateCharacterJob < ApplicationJob
+  after_discard do |job, exception|
+    character = job.arguments.first
+    character&.destroy if character&.persisted?
+  end
+
   def perform(character, similar_characters = [])
     @character = character
     @user = character.user
@@ -15,7 +20,7 @@ class GenerateCharacterJob < ApplicationJob
       slug: generate_unique_slug(character_concept[:name]),
     })
 
-    embedding = GenerateEmbeddingJob.perform_now("#{character.name}: #{character.description}")
+    embedding = GenerateEmbeddingJob.perform_now(character.user, "#{character.name}: #{character.description}")
     character.embedding = embedding
     character.save!
 
