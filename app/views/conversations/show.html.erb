@@ -18,7 +18,7 @@
     <!-- Messages Area -->
     <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages" data-messages-target="container">
       <% @messages.order(:created_at).each do |message| %>
-        <% unless message.metadata["hidden"] %>
+        <% unless message.metadata&.dig("hidden") %>
           <%= render "messages/message", message: message %>
         <% end %>
       <% end %>
