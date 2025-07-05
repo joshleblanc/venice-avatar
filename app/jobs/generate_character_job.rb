@@ -22,12 +22,11 @@ class GenerateCharacterJob < ApplicationJob
     similar_character = Character.nearest_neighbors(:embedding, embedding, distance: "cosine").first
     if similar_character.present? && similar_character.neighbor_distance < 0.5 && similar_character != character
       @similar_characters << "#{similar_character.name}: #{similar_character.description}"
-      GenerateCharacterJob.perform_later(@character, @similar_characters)
-      return
+      return GenerateCharacterJob.perform_now(@character, @similar_characters)
     end
 
     # Generate detailed personality instructions
-    CharacterInstructionGeneratorJob.perform_later(character)
+    CharacterInstructionGeneratorJob.perform_now(character)
     Rails.logger.info "Auto-generated character: #{character.name}"
     character
   end
