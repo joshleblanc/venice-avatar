@@ -1,14 +1,16 @@
 <div class="max-w-6xl mx-auto p-6">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900">Characters</h1>
-    <div class="flex space-x-3">
-      <%= button_to "Auto Generate Character", auto_generate_characters_path,
-                    method: :post,
-                    class: "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors",
-                    title: "Generate a complete character automatically" %>
-      <%= link_to "Create New Character", new_character_path,
-                  class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
-    </div>
+    <% if Current.user.venice_key_valid? %>
+      <div class="flex space-x-3">
+        <%= button_to "Auto Generate Character", auto_generate_characters_path,
+                      method: :post,
+                      class: "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors",
+                      title: "Generate a complete character automatically" %>
+        <%= link_to "Create New Character", new_character_path,
+                    class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
+      </div>
+    <% end %>
   </div>
 
   <!-- User Created Characters -->
@@ -34,7 +36,7 @@
             
             <div class="flex justify-between items-center">
               <%= button_to "Chat", character_conversations_path(character),
-                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50", disabled: character.generating? %>
+                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50", disabled: character.generating? || !Current.user.venice_key_valid? %>
               
               <div class="flex space-x-2">
                 <%= link_to "View", character_path(character),
@@ -76,8 +78,8 @@
             </p>
             
             <div class="flex justify-between items-center">
-              <%= link_to "Chat", character_conversations_path(character),
-                          class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm" %>
+              <%= button_to "Chat", character_conversations_path(character),
+                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50", disabled: !Current.user.venice_key_valid? %>
             </div>
           </div>
         <% end %>

@@ -2,8 +2,7 @@ class GenerateImageJob < ApplicationJob
   def perform(user, prompt, opts = {})
     return unless user.venice_key.present?
 
-    venice_client = VeniceClient::ImageApi.new
-    venice_client.api_client.config.access_token = user.venice_key
+    venice_client = VeniceClient::ImageApi.new(user.api_client)
 
     response = venice_client.generate_image({
       body: {

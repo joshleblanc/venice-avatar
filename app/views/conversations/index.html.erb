@@ -14,8 +14,12 @@
                   Last updated <%= time_ago_in_words(conversation.updated_at) %> ago
                 </p>
               </div>
-              <%= link_to "Continue", conversation_path(conversation),
-                          class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors" %>
+              <% if conversation.user.venice_key_valid? %>
+                <%= link_to "Continue", conversation_path(conversation),
+                            class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors disabled:opacity-50", disabled: !conversation.user.venice_key_valid? %>
+              <% else %>
+                <span class="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors disabled:opacity-50">Invalid Venice Key</span>
+              <% end %>
             </div>
           </div>
         <% end %>

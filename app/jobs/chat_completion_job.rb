@@ -2,9 +2,7 @@ class ChatCompletionJob < ApplicationJob
   def perform(user, messages = [], opts = {})
     return unless user.venice_key.present?
 
-    venice_client = VeniceClient::ChatApi.new
-    venice_client.api_client.config.access_token = user.venice_key
-
+    venice_client = VeniceClient::ChatApi.new(user.api_client)
     response = venice_client.create_chat_completion({
       body: {
         model: user.preferred_text_model || "venice-uncensored",

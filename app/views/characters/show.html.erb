@@ -6,7 +6,7 @@
       <%= link_to "← Back to Characters", characters_path,
                   class: "text-gray-600 hover:text-gray-800" %>
       <%= button_to "Start Chat", character_conversations_path(@character),
-                    method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50", disabled: @character.generating? %>
+                    method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50", disabled: !Current.user.venice_key_valid? || @character.generating? %>
         
       </div>
       <div>

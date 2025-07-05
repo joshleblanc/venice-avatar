@@ -33,7 +33,11 @@
           <div>
             <dt class="text-sm font-medium text-gray-500">Venice Key</dt>
             <dd class="mt-1 text-xs text-gray-900">
-              <%= @user.obfuscated_venice_key %>
+              <% if @user.venice_key_valid %>
+                <%= @user.obfuscated_venice_key %>
+              <% else %>
+                Invalid venice key
+              <% end %>
             </dd>
           </div>
           
@@ -58,10 +62,38 @@
           </div>
         </dl>
       </div>
+        
     </div>
     
     <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
       <%= link_to "Edit Profile", edit_profile_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
     </div>
   </div>
+  <% if @user.balances %>
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mt-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h1 class="text-2xl font-semibold text-gray-900">Balances</h1>
+        <p class="mt-1 text-sm text-gray-600">This only updates once an hour</p>
+
+      </div>
+      <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 p-3">
+        <div>
+          <dt class="text-sm font-medium text-gray-500">USD</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @user.balances[:balances][:USD] %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">VCU</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @user.balances[:balances][:VCU] %></dd>
+        </div>
+        <div>
+          <dt class="text-sm font-medium text-gray-500">DIEM</dt>
+          <dd class="mt-1 text-sm text-gray-900"><%= @user.balances[:balances][:DIEM] %></dd>
+        </div>
+      </dl>
+      <div class="px-6 py-4 border-t border-gray-200">
+        <p class="mt-1 text-sm text-gray-600">Your API key will expire on <%= @user.balances[:keyExpiration] || "N/A" %></p>
+      </div>
+    </div>
+  <% end %>
+  
 </div>
