@@ -101,7 +101,7 @@ class InitializeSceneJob < ApplicationJob
 
       # Create a prompt for the character to initiate conversation
       opening_prompt = build_opening_message_prompt(conversation)
-
+      current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
       response = chat_api.create_chat_completion({
         body: {
           model: "venice-uncensored",

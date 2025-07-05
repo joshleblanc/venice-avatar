@@ -66,3 +66,7 @@ gem "venice_client", "~> 1.0"
 
 gem "acts-as-taggable-on", "~> 12.0"
 gem "tailwindcss-rails", "~> 3.0"
+
+gem "neighbor", "~> 0.6.0"
+
+gem "sqlite-vec", "~> 0.1.6"

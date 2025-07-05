@@ -1,9 +1,20 @@
 <%= turbo_stream_from @character %>
 <div class="max-w-4xl mx-auto p-6">
   <div class="bg-white rounded-lg shadow-md p-8">
-    <div class="flex justify-between items-start mb-6">
+    <div class="flex justify-between items-start mb-6 flex-wrap">
+    <div class="flex space-x-3 w-full justify-between">
+      <%= link_to "← Back to Characters", characters_path,
+                  class: "text-gray-600 hover:text-gray-800" %>
+      <%= button_to "Start Chat", character_conversations_path(@character),
+                    method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50", disabled: @character.generating? %>
+        
+      </div>
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @character.name %></h1>
+        <% if @character.generating? %>
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">What should we call you...</h1>
+        <% else %>
+          <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @character.name %></h1>
+        <% end %>
         <div class="flex items-center space-x-2">
           <% if @character.user_created? %>
             <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">Custom Character</span>
@@ -13,18 +24,19 @@
         </div>
       </div>
       
-      <div class="flex space-x-3">
-        <%= button_to "Start Chat", character_conversations_path(@character),
-                      method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" %>
-        <%= link_to "← Back to Characters", characters_path,
-                    class: "text-gray-600 hover:text-gray-800" %>
-      </div>
+      
     </div>
 
     <div class="space-y-6">
       <div>
         <h2 class="text-xl font-semibold text-gray-800 mb-3">Description</h2>
+        <% if @character.generating? %> 
+        <p class="text-gray-600 leading-relaxed">Generating...</p>
+
+        <% else %>
         <p class="text-gray-600 leading-relaxed"><%= @character.description %></p>
+
+        <% end %>
       </div>
 
       <% if @character.user_created? %>
@@ -44,7 +56,7 @@
                 <span class="text-yellow-700">Personality is being generated... This may take a few moments.</span>
               </div>
               <p class="text-yellow-600 text-sm mt-2">
-                Refresh this page in a moment to see the generated personality instructions.
+                This page will update in a moment to show the generated personality instructions.
               </p>
             </div>
           <% end %>

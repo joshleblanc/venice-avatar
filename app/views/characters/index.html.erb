@@ -19,8 +19,13 @@
         <% @user_characters.each do |character| %>
           <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div class="flex items-start justify-between mb-4">
-              <h3 class="text-xl font-semibold text-gray-900"><%= character.name %></h3>
+              <% if character.generating? %>
+                <h3 class="text-xl font-semibold text-gray-900">Generating Character...</h3>
+              <% else %>
+                <h3 class="text-xl font-semibold text-gray-900"><%= character.name %></h3>
+              <% end %>
               <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Custom</span>
+
             </div>
             
             <p class="text-gray-600 text-sm mb-4 line-clamp-3">
@@ -29,7 +34,7 @@
             
             <div class="flex justify-between items-center">
               <%= button_to "Chat", character_conversations_path(character),
-                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm" %>
+                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50", disabled: character.generating? %>
               
               <div class="flex space-x-2">
                 <%= link_to "View", character_path(character),

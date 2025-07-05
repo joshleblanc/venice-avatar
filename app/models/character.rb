@@ -1,11 +1,13 @@
 class Character < ApplicationRecord
   broadcasts_refreshes
 
+  has_neighbors :embedding
+
   acts_as_taggable_on :tags
 
-  validates :slug, presence: true, uniqueness: true
-  validates :name, presence: true
-  validates :description, presence: true
+  validates :slug, presence: true, uniqueness: true, unless: :generating?
+  validates :name, presence: true, unless: :generating?
+  validates :description, presence: true, unless: :generating?
 
   belongs_to :user, required: false
 
