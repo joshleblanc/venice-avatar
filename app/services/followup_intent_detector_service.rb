@@ -14,7 +14,7 @@ class FollowupIntentDetectorService
         },
       ], {
         temperature: 0.3,
-      })
+      }, "venice-uncensored")
 
       Rails.logger.info "Followup intent detection response: #{content}"
       parse_followup_response(content)

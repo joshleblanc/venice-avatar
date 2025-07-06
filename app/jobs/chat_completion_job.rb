@@ -1,5 +1,5 @@
 class ChatCompletionJob < ApplicationJob
-  def perform(user, messages = [], opts = {})
+  def perform(user, messages = [], opts = {}, model_override = nil)
     return unless user.venice_key.present?
 
     opts[:venice_parameters] ||= {}
@@ -8,7 +8,7 @@ class ChatCompletionJob < ApplicationJob
     venice_client = VeniceClient::ChatApi.new(user.api_client)
     response = venice_client.create_chat_completion({
       body: {
-        model: user.preferred_text_model || "venice-uncensored",
+        model: model_override || user.preferred_text_model || "venice-uncensored",
         messages: messages,
         **opts,
       },
