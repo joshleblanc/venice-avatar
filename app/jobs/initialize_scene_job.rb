@@ -142,6 +142,8 @@ class InitializeSceneJob < ApplicationJob
         user: conversation.user,
       )
 
+      conversation.update(generating_reply: false)
+
       Rails.logger.info "Character opening message created: #{opening_message[0..100]}..."
     rescue => e
       Rails.logger.error "Failed to generate character opening message: #{e.message}"
