@@ -79,7 +79,7 @@ class GenerateFollowupMessageJob < ApplicationJob
       options[:venice_parameters] = { character_slug: conversation.character.slug }
     end
 
-    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options) || "I'm back!"
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.preferred_text_model) || "I'm back!"
   end
 
   def schedule_followup_message(conversation, message, followup_intent)

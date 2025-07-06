@@ -137,7 +137,7 @@ class GenerateReplyJob < ApplicationJob
       }
     end
 
-    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options) || "I'm sorry, I couldn't respond right now."
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.preferred_text_model) || "I'm sorry, I couldn't respond right now."
   end
 
   # Check if the character should return from being away

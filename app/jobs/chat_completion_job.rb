@@ -8,7 +8,7 @@ class ChatCompletionJob < ApplicationJob
     venice_client = VeniceClient::ChatApi.new(user.api_client)
     response = venice_client.create_chat_completion({
       body: {
-        model: model_override || user.preferred_text_model || "venice-uncensored",
+        model: model_override || "venice-uncensored",
         messages: messages,
         **opts,
       },

@@ -80,7 +80,7 @@ class CharacterReturnJob < ApplicationJob
         Generate ONLY the return message, no quotes or extra text:
       PROMPT
 
-      return_message = ChatCompletionJob.perform_now(conversation.user, [{ role: "user", content: prompt }], { temperature: 0.8 })
+      return_message = ChatCompletionJob.perform_now(conversation.user, [{ role: "user", content: prompt }], { temperature: 0.8 }, conversation.user.preferred_text_model)
 
       Rails.logger.info "Generated contextual return message: #{return_message}"
 

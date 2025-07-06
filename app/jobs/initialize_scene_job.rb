@@ -133,7 +133,7 @@ class InitializeSceneJob < ApplicationJob
           role: "user",
           content: opening_prompt,
         },
-      ], options)
+      ], options, conversation.user.preferred_text_model)
 
       # Create the character's opening message
       conversation.messages.create!(
