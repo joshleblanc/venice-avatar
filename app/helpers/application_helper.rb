@@ -4,7 +4,7 @@ module ApplicationHelper
 
     # Convert text between single asterisks to italics
     # e.g., "Hello *waves* there!" becomes "Hello <em>waves</em> there!"
-    formatted_content = content.gsub(/\*([^*]+)\*/) do |match|
+    formatted_content = content.gsub(/\*+([^*]+)\*+/) do |match|
       "<em style='color: purple;'>#{$1.strip}</em>"
     end
 
