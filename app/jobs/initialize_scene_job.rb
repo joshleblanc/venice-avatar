@@ -3,14 +3,14 @@ class InitializeSceneJob < ApplicationJob
     # First, ask character about their appearance as a hidden message
     appearance_details = ask_character_appearance(conversation)
 
+    # Generate character's opening message to initiate the conversation
+    generate_character_opening_message(conversation)
+
     # Initialize scene prompt using the appearance details
     if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
       prompt_service = AiPromptGenerationService.new(conversation)
       prompt_service.generate_initial_scene_prompt_with_appearance(appearance_details)
     end
-
-    # Generate character's opening message to initiate the conversation
-    generate_character_opening_message(conversation)
 
     # Generate initial scene image
     GenerateImagesJob.perform_later(conversation)

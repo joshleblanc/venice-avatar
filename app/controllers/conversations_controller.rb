@@ -23,6 +23,7 @@ class ConversationsController < ApplicationController
     authorize Conversation
     @conversation = Conversation.new(character: @character)
     @conversation.user = current_user
+    @conversation.generating_reply = true
 
     if @conversation.save
       initialize_conversation_scene
