@@ -38,6 +38,17 @@ class GenerateReplyJob < ApplicationJob
       assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant", user: conversation.user)
       conversation.update(generating_reply: false)
 
+      # Evolve the scene prompt based on the new assistant message
+      prompt_service = AiPromptGenerationService.new(conversation)
+      current_prompt = prompt_service.get_current_scene_prompt
+      evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, chat_response, assistant_msg.created_at)
+      Rails.logger.info "Scene prompt evolved after assistant message"
+
+      # Generate images for the latest state if prompt changed
+      if evolved_prompt != first_prompt
+        GenerateImagesJob.perform_later(conversation)
+      end
+
       # Check if the character wants to step away after this message
       followup_detector = FollowupIntentDetectorService.new(conversation)
       followup_intent = followup_detector.detect_character_followup_intent(chat_response)
@@ -52,17 +63,6 @@ class GenerateReplyJob < ApplicationJob
 
         # Schedule the character to return after a brief delay
         CharacterReturnJob.set(wait: followup_intent[:duration].to_i.seconds).perform_later(conversation)
-      end
-
-      # Evolve the scene prompt based on the new assistant message
-      prompt_service = AiPromptGenerationService.new(conversation)
-      current_prompt = prompt_service.get_current_scene_prompt
-      evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, chat_response, assistant_msg.created_at)
-      Rails.logger.info "Scene prompt evolved after assistant message"
-
-      # Generate images for the latest state if prompt changed
-      if evolved_prompt != first_prompt
-        GenerateImagesJob.perform_later(conversation)
       end
     rescue => e
       Rails.logger.error "Venice API error in GenerateReplyJob: #{e.message}"
