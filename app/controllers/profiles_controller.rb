@@ -15,11 +15,13 @@ class ProfilesController < ApplicationController
     @user = Current.user
     authorize @user
 
-    if user_params[:venice_key].blank?
-      user_params.delete(:venice_key)
-    end
+    adj_params = if user_params[:venice_key].blank?
+        user_params.without(:venice_key)
+      else
+        user_params
+      end
 
-    if @user.update(user_params)
+    if @user.update(adj_params)
       redirect_to profile_path, notice: "Profile updated successfully."
     else
       render :edit, status: :unprocessable_entity
