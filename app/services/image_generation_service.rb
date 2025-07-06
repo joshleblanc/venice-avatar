@@ -29,7 +29,7 @@ class ImageGenerationService
     begin
       Rails.logger.info "Generating unified scene image with prompt: #{prompt}"
 
-      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt.first(2048), {
+      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, {
         width: 640,
         height: 1024,
       })

@@ -18,6 +18,14 @@ class User < ApplicationRecord
     end
   end
 
+  def prompt_limit
+    if preferred_image_model.include?("flux")
+      2048
+    else
+      1500
+    end
+  end
+
   def balances
     Rails.cache.fetch("user/#{id}/#{venice_key}/balances", expires_in: 1.hour) do
       balances = FetchBalancesJob.perform_now(self)

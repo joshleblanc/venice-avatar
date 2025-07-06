@@ -124,6 +124,7 @@ class AiPromptGenerationService
       12. Do not describe actions or sounds.
       13. Do not use poetic language. Use simple, direct language.
       14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      15. Keep the response within #{@conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
@@ -195,6 +196,8 @@ class AiPromptGenerationService
       11. Do not describe actions or sounds.
       12. Do not use poetic language. Use simple, direct language.
       13. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others.
+      14. Keep the response within #{@conversation.user.prompt_limit} characters
+
       Return the updated prompt as a single, detailed image generation prompt in under 1500 characters.
     PROMPT
   end
