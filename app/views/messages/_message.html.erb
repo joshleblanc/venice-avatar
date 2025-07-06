@@ -24,7 +24,7 @@
     <% end %>
     
     <!-- Clean text message content -->
-    <p class="text-sm whitespace-pre-wrap"><%= message.clean_text %></p>
+    <p class="text-sm whitespace-pre-wrap"><%= format_message_content(message.clean_text) %></p>
     
     <!-- Actions and thoughts (collapsible) -->
     <% if message.has_actions_or_thoughts? %>
