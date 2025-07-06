@@ -87,7 +87,7 @@ class ImageGenerationService
         },
       ], {
         temperature: 0.3,
-      })
+      }, "venice-uncensored")
 
       # Add explicit background-only instructions for image generation
       enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"

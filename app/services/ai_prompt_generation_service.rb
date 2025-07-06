@@ -57,7 +57,7 @@ class AiPromptGenerationService
         },
       ], {
         temperature: 0.3,  # Lower temperature for consistency
-      })
+      }, "venice-uncensored")
 
       Rails.logger.info "Evolved scene prompt: #{evolved_prompt}"
 
@@ -231,7 +231,7 @@ class AiPromptGenerationService
           role: "user",
           content: appearance_prompt,
         },
-      ], options)
+      ], options, "venice-uncensored")
 
       Rails.logger.info "Character appearance details: #{appearance_details}"
 
