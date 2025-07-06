@@ -47,7 +47,7 @@ class Message < ApplicationRecord
   private
 
   def parse_message_content
-    return { clean_text: content, actions_and_thoughts: [] } if content.blank?
+    return { clean_text: content, actions_and_thoughts: [] } #if content.blank?
 
     clean_text = content.dup
     actions_and_thoughts = []
