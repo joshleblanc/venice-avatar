@@ -60,6 +60,13 @@
               <%= @user.preferred_image_style.present? ? @user.preferred_image_style : "Default" %>
             </dd>
           </div>
+
+          <div>
+            <dt class="text-sm font-medium text-gray-500">Safe Mode</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <%= @user.safe_mode ? "Enabled" : "Disabled" %>
+            </dd>
+          </div>
         </dl>
       </div>
         

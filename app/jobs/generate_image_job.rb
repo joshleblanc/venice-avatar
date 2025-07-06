@@ -8,7 +8,7 @@ class GenerateImageJob < ApplicationJob
       body: {
         model: user.preferred_image_model || "venice-uncensored",
         prompt: prompt,
-        safe_mode: false,
+        safe_mode: user.safe_mode,
         format: "png",
         style_preset: user.preferred_image_style || "Anime",
         seed: 123871273,
