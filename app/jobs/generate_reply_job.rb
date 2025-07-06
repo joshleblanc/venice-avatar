@@ -36,6 +36,7 @@ class GenerateReplyJob < ApplicationJob
 
       # Save assistant response
       assistant_msg = conversation.messages.create!(content: chat_response, role: "assistant", user: conversation.user)
+      conversation.update(generating_reply: false)
 
       # Check if the character wants to step away after this message
       followup_detector = FollowupIntentDetectorService.new(conversation)
