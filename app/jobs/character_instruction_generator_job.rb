@@ -10,7 +10,7 @@ class CharacterInstructionGeneratorJob < ApplicationJob
     prompt = build_instruction_generation_prompt
 
     begin
-      response = ChatCompletionJob.perform_now(@user, [{ role: "user", content: prompt }], { max_completion_tokens: 2000, temperature: 0.7 })
+      response = ChatCompletionJob.perform_now(@user, [{ role: "user", content: prompt }], { temperature: 0.7 })
       @character.update!(character_instructions: response)
 
       Rails.logger.info "Generated instructions for character #{@character.name}: #{response[0..100]}..."

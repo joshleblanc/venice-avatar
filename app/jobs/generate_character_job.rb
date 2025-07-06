@@ -42,7 +42,7 @@ class GenerateCharacterJob < ApplicationJob
     prompt = build_character_concept_prompt
 
     begin
-      content = ChatCompletionJob.perform_now(@user, [{ role: "user", content: prompt }], { max_completion_tokens: 500, temperature: 0.9 })
+      content = ChatCompletionJob.perform_now(@user, [{ role: "user", content: prompt }], { temperature: 0.9 })
       parse_character_concept(content)
     rescue => e
       Rails.logger.error "Failed to generate character concept: #{e.message}"

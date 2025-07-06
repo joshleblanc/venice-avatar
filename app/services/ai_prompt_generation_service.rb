@@ -28,7 +28,6 @@ class AiPromptGenerationService
           content: prompt,
         },
       ], {
-        max_completion_tokens: 1500,
         temperature: 0.7,
       })
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
@@ -57,7 +56,6 @@ class AiPromptGenerationService
           content: prompt,
         },
       ], {
-        max_completion_tokens: 1500,
         temperature: 0.3,  # Lower temperature for consistency
       })
 
@@ -219,7 +217,6 @@ class AiPromptGenerationService
 
     begin
       options = {
-        max_completion_tokens: 800,
         temperature: 0.3, # Lower temperature for consistency
       }
 

@@ -13,7 +13,6 @@ class FollowupIntentDetectorService
           content: prompt,
         },
       ], {
-        max_completion_tokens: 200,
         temperature: 0.3,
       })
 

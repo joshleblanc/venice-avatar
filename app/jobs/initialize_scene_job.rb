@@ -26,7 +26,6 @@ class InitializeSceneJob < ApplicationJob
       appearance_prompt = build_character_appearance_prompt(conversation)
 
       options = {
-        max_completion_tokens: 800,
         temperature: 0.3,
       }
 
@@ -99,7 +98,6 @@ class InitializeSceneJob < ApplicationJob
       current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
       options = {
-        max_completion_tokens: 300,
         temperature: 0.8,
       }
 
