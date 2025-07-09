@@ -160,6 +160,8 @@ class InitializeSceneJob < ApplicationJob
       Please describe your current appearance in detail. This will help create an accurate visual representation of you for the person you're about to chat with.
       
       Include specific details about what you look like right now - your clothing, hair, expression, and overall appearance.
+
+      Please include your gender, height, defining features.
     PROMPT
   end
 
