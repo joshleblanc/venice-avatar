@@ -40,7 +40,7 @@ class InitializeSceneJob < ApplicationJob
             You are the following character:
 
             <character_instructions>
-                %%CHARACTER_INSTRUCTIONS%%
+                #{conversation.character.venice_created? ? "%%CHARACTER_INSTRUCTIONS%%" : conversation.character.character_instructions}
             </character_instructions>
 
             You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
@@ -110,7 +110,7 @@ class InitializeSceneJob < ApplicationJob
             You are the following character:
 
             <character_instructions>
-                %%CHARACTER_INSTRUCTIONS%%
+                #{conversation.character.venice_created? ? "%%CHARACTER_INSTRUCTIONS%%" : conversation.character.character_instructions}
             </character_instructions>
 
             Here are some additional facts about the assistant:
