@@ -5,16 +5,10 @@ export default class extends Controller {
   static targets = ["container", "input", "form"]
 
   connect() {
-    this.scrollToBottom()
-    
-    // Listen for Turbo events to handle scrolling
-    document.addEventListener('turbo:morph', this.handleTurboMorph.bind(this))
-    document.addEventListener('turbo:submit-start', this.handleSubmitStart.bind(this))
-  }
 
-  disconnect() {
-    document.removeEventListener('turbo:morph', this.handleTurboMorph.bind(this))
-    document.removeEventListener('turbo:submit-start', this.handleSubmitStart.bind(this))
+    const observer = new MutationObserver(() => { this.scrollToBottom() });
+
+    observer.observe(this.containerTarget, { childList: true });
   }
 
   // Scroll to bottom of messages container
@@ -31,23 +25,7 @@ export default class extends Controller {
       if (this.hasInputTarget) {
         this.inputTarget.value = ""
       }
-      this.scrollToBottom()
+      // this.scrollToBottom()
     }, 0)
-  }
-
-  // Handle Turbo morph events (new messages received)
-  handleTurboMorph() {
-    console.log("Turbo morph detected - scrolling to bottom")
-    this.scrollToBottom()
-  }
-
-  // Handle form submission start
-  handleSubmitStart() {
-    this.scrollToBottom()
-  }
-
-  // Action to manually scroll to bottom (for typing indicators, etc.)
-  scroll() {
-    this.scrollToBottom()
   }
 }
