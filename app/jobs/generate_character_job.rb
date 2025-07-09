@@ -53,7 +53,7 @@ class GenerateCharacterJob < ApplicationJob
 
   def build_character_concept_prompt
     # Get a diverse set of existing names to avoid repetition
-    existing_names = Character.pluck(:name).map { |name| name&.split&.first }.compact.uniq.last(20)
+    existing_names = Character.user_created.where(user: @user).pluck(:name).map { |name| name&.split&.first }.compact.uniq.last(20)
 
     <<~PROMPT
       Generate a unique and interesting character concept for a roleplay AI. Create someone with depth and personality that would be engaging to talk to.
