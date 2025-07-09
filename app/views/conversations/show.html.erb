@@ -10,7 +10,12 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-xl font-semibold"><%= @conversation.character.name %></h1>
-          <p class="text-gray-600 text-sm"><%= @conversation.character.description %></p>
+          <div data-controller="hider">
+            <p class="text-gray-600 text-sm" data-hider-target="short"><%= truncate(@conversation.character.description) %></p>
+            <p class="text-gray-600 text-sm hidden" data-hider-target="full"><%= @conversation.character.description %></p>
+            <button data-action="click->hider#toggle" class="text-blue-600 hover:text-blue-800 text-xs" data-hider-target="shortButton">Show More</button>
+            <button data-action="click->hider#toggle" class="text-blue-600 hover:text-blue-800 text-xs hidden" data-hider-target="fullButton">Show Less</button>
+          </div>
         </div>
       </div>
     </div>
