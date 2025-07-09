@@ -46,7 +46,7 @@ class GenerateReplyJob < ApplicationJob
 
       # Generate images for the latest state if prompt changed
       if evolved_prompt != first_prompt
-        GenerateImagesJob.perform_later(conversation)
+        GenerateImagesJob.perform_later(conversation, chat_response, assistant_msg.created_at)
       end
 
       # Check if the character wants to step away after this message
@@ -132,9 +132,7 @@ class GenerateReplyJob < ApplicationJob
 
     # Only add venice_parameters for Venice-created characters
     if conversation.character.venice_created?
-      options[:venice_parameters] = {
-        character_slug: conversation.character.slug,
-      }
+      options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
 
     ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.preferred_text_model) || "I'm sorry, I couldn't respond right now."

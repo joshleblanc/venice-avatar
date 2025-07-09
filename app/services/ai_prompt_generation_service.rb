@@ -221,9 +221,7 @@ class AiPromptGenerationService
       }
 
       if @character.venice_created?
-        options[:venice_parameters] = {
-          character_slug: @character.slug,
-        }
+        options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: @character.slug)
       end
 
       appearance_details = ChatCompletionJob.perform_now(@conversation.user, [

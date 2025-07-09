@@ -10,6 +10,6 @@ class GenerateEmbeddingJob < ApplicationJob
       encoding_format: "float",
     })
 
-    embedding.data.first[:embedding]
+    embedding.data.first.embedding
   end
 end

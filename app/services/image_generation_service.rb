@@ -4,9 +4,20 @@ class ImageGenerationService
     @character = conversation.character
   end
 
-  def generate_scene_image
-    # Always generate new scene images - don't return early if one exists
-    # This allows background generation while showing previous scenes
+  def generate_scene_image(new_message_content = nil, message_timestamp = nil)
+    # Check if we should use image editing instead of full generation
+    if should_use_image_editing? && new_message_content
+      Rails.logger.info "Using image editing for scene evolution"
+      edit_service = ImageEditService.new(@conversation)
+      return edit_service.edit_scene_image(new_message_content, message_timestamp)
+    end
+
+    # Fall back to full image generation
+    generate_full_scene_image
+  end
+
+  def generate_full_scene_image
+    Rails.logger.info "Generating full scene image from scratch"
 
     # Check if character is away and generate appropriate prompt
     prompt = if @conversation.character_away?
@@ -58,6 +69,17 @@ class ImageGenerationService
   end
 
   private
+
+  def should_use_image_editing?
+    # Use image editing if:
+    # 1. A scene image already exists
+    # 2. Character is not away (we can't edit background-only scenes effectively)
+    # 3. Conversation has messages (not the initial scene)
+    # @conversation.scene_image.attached? &&
+    #   !@conversation.character_away? &&
+    #   @conversation.messages.exists?
+    false # doesn't really work yet
+  end
 
   def build_unified_scene_prompt
     # Use AI-based prompt generation service

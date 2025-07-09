@@ -39,20 +39,20 @@ class ProfilesController < ApplicationController
       # Fetch text models
       text_models_response = FetchModelsJob.perform_now(Current.user, "text")
       @text_models = text_models_response.map do |model|
-        if model[:id] == "venice-uncensored"
-          ["#{model[:model_spec][:name]} (Default)", model[:id]]
+        if model.id == "venice-uncensored"
+          ["#{model.model_spec.name} (Default)", model.id]
         else
-          [model[:model_spec][:name], model[:id]]
+          [model.model_spec.name, model.id]
         end
       end
 
       # Fetch image models
       image_models_response = FetchModelsJob.perform_now(Current.user, "image")
       @image_models = image_models_response.map do |model|
-        if model[:id] == "hidream"
-          ["#{model[:model_spec][:name]} (Default)", model[:id]]
+        if model.id == "hidream"
+          ["#{model.model_spec.name} (Default)", model.id]
         else
-          [model[:model_spec][:name], model[:id]]
+          [model.model_spec.name, model.id]
         end
       end
 

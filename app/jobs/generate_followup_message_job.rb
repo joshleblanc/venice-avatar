@@ -76,7 +76,7 @@ class GenerateFollowupMessageJob < ApplicationJob
 
     options = {}
     if conversation.character.venice_created?
-      options[:venice_parameters] = { character_slug: conversation.character.slug }
+      options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
 
     ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.preferred_text_model) || "I'm back!"

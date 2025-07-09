@@ -5,8 +5,8 @@ class GenerateImageJob < ApplicationJob
     venice_client = VeniceClient::ImageApi.new(user.api_client)
 
     response = venice_client.generate_image({
-      body: {
-        model: user.preferred_image_model || "venice-uncensored",
+      generate_image_request: {
+        model: user.preferred_image_model || "hidream",
         prompt: prompt.first(user.prompt_limit),
         safe_mode: user.safe_mode,
         format: "png",

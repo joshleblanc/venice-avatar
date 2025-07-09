@@ -30,9 +30,7 @@ class InitializeSceneJob < ApplicationJob
       }
 
       if conversation.character.venice_created?
-        options[:venice_parameters] = {
-          character_slug: conversation.character.slug,
-        }
+        options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
       end
 
       appearance_response = ChatCompletionJob.perform_now(conversation.user, [
@@ -102,9 +100,7 @@ class InitializeSceneJob < ApplicationJob
       }
 
       if conversation.character.venice_created?
-        options[:venice_parameters] = {
-          character_slug: conversation.character.slug,
-        }
+        options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
       end
 
       opening_message = ChatCompletionJob.perform_now(conversation.user, [
