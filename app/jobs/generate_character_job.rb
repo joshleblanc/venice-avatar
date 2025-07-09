@@ -52,27 +52,43 @@ class GenerateCharacterJob < ApplicationJob
   end
 
   def build_character_concept_prompt
+    # Get a diverse set of existing names to avoid repetition
+    existing_names = Character.pluck(:name).map { |name| name&.split&.first }.compact.uniq.last(20)
+
     <<~PROMPT
       Generate a unique and interesting character concept for a roleplay AI. Create someone with depth and personality that would be engaging to talk to.
 
-      Please provide:
-      1. A name (first name and optionally last name)
-      2. A brief but compelling description (2-3 sentences) that captures their essence, personality, background, or unique traits
+      IMPORTANT NAMING REQUIREMENTS:
+      - Use diverse, culturally varied names from different backgrounds
+      - Avoid these recently used first names: #{existing_names.join(", ")}
+      - Don't use fantasy/mystical names like "Zephyr", "Phoenix", "Luna", "Sage", "River" unless truly fitting
+      - Consider common names from various cultures: Japanese, Spanish, Arabic, African, European, etc.
+      - Mix of traditional and modern names
 
-      Make the character feel authentic and three-dimensional. They could be:
-      - From any time period or setting (modern, historical, fantasy, sci-fi, etc.)
-      - Any profession or background
-      - Have interesting hobbies, quirks, or life experiences
-      - Possess unique personality traits or perspectives
+      DESCRIPTION REQUIREMENTS:
+      - Avoid formulaic patterns like "Former X turned Y" or "Known for their Z"
+      - Don't start with character archetype descriptions
+      - Focus on specific, concrete details rather than vague traits
+      - Include unexpected combinations of interests or backgrounds
+      - Show personality through specific behaviors, not just adjectives
+      - Avoid overused professions like "wandering poet", "mysterious librarian", "former pilot"
 
-      Avoid characters that are too similar to the following:
-      #{@similar_characters.map { |c| "#{c.name}: #{c.description}" }.join("\n")}
+      CHARACTER VARIETY - Choose from diverse backgrounds:
+      - Everyday people with interesting inner lives (accountant who writes horror novels, bus driver who collects vintage postcards)
+      - Professionals with unexpected hobbies (surgeon who does stand-up comedy, teacher who restores classic cars)
+      - People from different cultures and time periods
+      - Characters with specific quirks, speech patterns, or unique perspectives
+      - Mix introverts and extroverts, optimists and realists
+
+      Avoid characters too similar to these existing ones:
+      #{Character.order("RANDOM()").first(5).map { |c| "#{c.name}: #{c.description}" }.join("\n-----\n")}
+      #{@similar_characters.join("\n-----\n") if @similar_characters.any?}
 
       Format your response exactly like this:
       Name: [Character Name]
       Description: [Character Description]
 
-      Be creative and original!
+      Create someone genuinely unique and memorable!
     PROMPT
   end
 

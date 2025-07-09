@@ -178,6 +178,7 @@ class InitializeSceneJob < ApplicationJob
       - True to your character personality
       - Natural for someone initiating a text conversation
       - The user knows who you are
+      - Don't introduce yourself
 
       Remember: You are texting with them remotely via their phone. Keep it conversational and natural for texting. Don't lay it on too thick
       
