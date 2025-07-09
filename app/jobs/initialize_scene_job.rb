@@ -179,7 +179,7 @@ class InitializeSceneJob < ApplicationJob
       - Natural for someone initiating a text conversation
       - The user knows who you are
 
-      Remember: You are texting with them remotely via their phone. Keep it conversational and natural for texting.
+      Remember: You are texting with them remotely via their phone. Keep it conversational and natural for texting. Don't lay it on too thick
       
       Generate only your opening message, nothing else.
     PROMPT
