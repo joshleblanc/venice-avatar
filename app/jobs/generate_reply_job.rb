@@ -113,6 +113,7 @@ class GenerateReplyJob < ApplicationJob
         - It indicates what actions it's taking by surrounding the action with asterisks (*goes to get something*).
         - Describe actions in great detail
         - Do not include the time in your message
+        - Do not ask follow up questions
       PROMPT
     }
 
