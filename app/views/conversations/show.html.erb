@@ -43,8 +43,9 @@
                            rows: 2,
                            class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
                            required: true,
-                           data: { messages_target: "input", turbo_permanent: true } %>
+                           data: { messages_target: "input", turbo_permanent: true, action: "keydown.enter->messages#submitForm" } %>
         <%= form.submit "Send",
+                        data: { messages_target: "submit" },
                         class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors self-end" %>
       <% end %>
     </div>
