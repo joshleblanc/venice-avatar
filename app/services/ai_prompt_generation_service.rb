@@ -33,7 +33,7 @@ class AiPromptGenerationService
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
       # Store the prompt in the conversation or character state
-      store_scene_prompt(generated_prompt)
+      store_scene_prompt(generated_prompt, trigger: "initial")
 
       generated_prompt
     rescue => e
@@ -62,7 +62,7 @@ class AiPromptGenerationService
       Rails.logger.info "Evolved scene prompt: #{evolved_prompt}"
 
       # Store the updated prompt
-      store_scene_prompt(evolved_prompt)
+      store_scene_prompt(evolved_prompt, trigger: "evolution")
 
       evolved_prompt
     rescue => e
@@ -200,13 +200,20 @@ class AiPromptGenerationService
     PROMPT
   end
 
-  def store_scene_prompt(prompt)
-    # Store in conversation metadata
+  def store_scene_prompt(prompt, trigger: "unknown")
+    # Store in conversation metadata for quick access
     metadata = @conversation.metadata || {}
     metadata["current_scene_prompt"] = prompt
     metadata["scene_prompt_updated_at"] = Time.current.iso8601
 
     @conversation.update!(metadata: metadata)
+    
+    # Store in scene prompt history table for analysis
+    @conversation.scene_prompt_histories.create!(
+      prompt: prompt,
+      trigger: trigger,
+      character_count: prompt.length
+    )
   end
 
   # Get character's appearance details by asking them directly

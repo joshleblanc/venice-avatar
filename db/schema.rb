@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_06_103142) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_10_153424) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -96,6 +96,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_103142) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "scene_prompt_histories", force: :cascade do |t|
+    t.integer "conversation_id", null: false
+    t.text "prompt", null: false
+    t.string "trigger", null: false
+    t.integer "character_count", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "created_at"], name: "index_scene_prompt_histories_on_conversation_id_and_created_at"
+    t.index ["conversation_id"], name: "index_scene_prompt_histories_on_conversation_id"
+    t.index ["trigger"], name: "index_scene_prompt_histories_on_trigger"
+  end
+
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "ip_address"
@@ -159,6 +171,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_06_103142) do
   add_foreign_key "conversations", "users"
   add_foreign_key "messages", "conversations"
   add_foreign_key "messages", "users"
+  add_foreign_key "scene_prompt_histories", "conversations"
   add_foreign_key "sessions", "users"
   add_foreign_key "taggings", "tags"
 end
