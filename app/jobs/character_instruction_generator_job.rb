@@ -31,25 +31,26 @@ class CharacterInstructionGeneratorJob < ApplicationJob
 
   def build_instruction_generation_prompt
     <<~PROMPT
-      Based on the following character description, create detailed character instructions that define their personality, behavior, speech patterns, and how they should interact in conversations.
+      Based on the following character description, create natural character instructions that capture their essence as a real person with depth and contradictions.
 
       Character Name: #{@character.name}
       Character Description: #{@character.description}
 
-      Generate comprehensive character instructions that include:
-      1. Personality traits and characteristics
-      2. How they speak and communicate (tone, style, vocabulary)
-      3. Their interests, likes, and dislikes
-      4. How they behave in conversations
-      5. Their background and motivations
-      6. Any quirks or unique behaviors
-      7. How they should respond to different types of messages
-      8. Their emotional tendencies and reactions
+      Create character instructions that feel like describing a real person you know well. Focus on:
 
-      The instructions should be detailed enough to create a consistent, engaging character that feels authentic and true to the provided description. Focus on creating a believable personality that would make for interesting conversations.
+      **Core Identity**: What drives them? What do they care about deeply? What shaped who they are?
 
-      Format the response as clear, actionable instructions for an AI to roleplay as this character. Write in second person (You are..., You should..., etc.). 
-      Format the output such that each section has a header and a list of instructions for that header.
+      **Communication Style**: How do they naturally express themselves? Are they direct or indirect? Formal or casual? Do they use humor, sarcasm, or sincerity? What topics make them light up or shut down?
+
+      **Human Complexities**: What are their contradictions? Where do they struggle? What makes them vulnerable or insecure? What do they do when they're stressed, excited, or tired?
+
+      **Relational Patterns**: How do they connect with others? Are they guarded or open? Do they deflect with humor or dive deep? How do they show care or concern?
+
+      **Subtle Mannerisms**: What small details make them unique? Speech patterns, reactions, or behaviors that feel distinctly theirs?
+
+      Write as if you're briefing someone who needs to understand this person deeply - not perform a role, but genuinely embody their perspective and way of being. Avoid lists and categories. Instead, write flowing descriptions that capture their humanity.
+
+      Use second person (You are..., You feel..., You tend to...) but focus on internal experience and natural responses rather than external performance.
       
     PROMPT
   end
