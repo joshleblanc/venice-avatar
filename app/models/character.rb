@@ -5,6 +5,9 @@ class Character < ApplicationRecord
 
   acts_as_taggable_on :tags
 
+  # Avatar for character headshot
+  has_one_attached :avatar
+
   validates :slug, presence: true, uniqueness: true, unless: :generating?
   validates :name, presence: true, unless: :generating?
   validates :description, presence: true, unless: :generating?
@@ -25,5 +28,18 @@ class Character < ApplicationRecord
   def personality_ready?
     return true if venice_created?
     character_instructions.present?
+  end
+
+  def generate_avatar_later
+    GenerateCharacterAvatarJob.perform_later(self)
+  end
+
+  def generate_appearance_later
+    GenerateCharacterAppearanceJob.perform_later(self)
+  end
+
+  def avatar_url
+    return nil unless avatar.attached?
+    Rails.application.routes.url_helpers.url_for(avatar)
   end
 end

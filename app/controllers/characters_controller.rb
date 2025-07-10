@@ -54,6 +54,7 @@ class CharactersController < ApplicationController
     respond_to do |format|
       if @character.save
         CharacterInstructionGeneratorJob.perform_later(@character)
+        @character.generate_appearance_later
 
         format.html { redirect_to @character, notice: "Character was successfully created." }
         format.json { render :show, status: :created, location: @character }

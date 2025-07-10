@@ -8,8 +8,8 @@ class AiPromptGenerationService
   def generate_initial_scene_prompt
     Rails.logger.info "Generating initial scene prompt for character: #{@character.name}"
 
-    # First, get character's appearance details
-    character_appearance = get_character_appearance_details
+    # First, get character's appearance details from stored appearance
+    character_appearance = @character.appearance || get_character_appearance_details
 
     # Then generate the scene prompt using the appearance details
     generate_initial_scene_prompt_with_appearance(character_appearance)
@@ -207,12 +207,12 @@ class AiPromptGenerationService
     metadata["scene_prompt_updated_at"] = Time.current.iso8601
 
     @conversation.update!(metadata: metadata)
-    
+
     # Store in scene prompt history table for analysis
     @conversation.scene_prompt_histories.create!(
       prompt: prompt,
       trigger: trigger,
-      character_count: prompt.length
+      character_count: prompt.length,
     )
   end
 
@@ -267,7 +267,16 @@ class AiPromptGenerationService
   end
 
   def store_character_appearance(appearance_details)
-    # Store in conversation metadata alongside scene prompt
+    # Store on character if not already present
+    if @character.appearance.blank?
+      @character.update!(appearance: appearance_details)
+      Rails.logger.info "Stored appearance on character: #{@character.name}"
+
+      # Trigger avatar generation now that we have appearance
+      @character.generate_avatar_later if @character.user.present?
+    end
+
+    # Also store in conversation metadata for backward compatibility
     metadata = @conversation.metadata || {}
     metadata["character_appearance_details"] = appearance_details
     metadata["appearance_captured_at"] = Time.current.iso8601

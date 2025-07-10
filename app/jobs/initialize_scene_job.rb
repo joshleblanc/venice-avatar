@@ -1,7 +1,7 @@
 class InitializeSceneJob < ApplicationJob
   def perform(conversation)
     # First, ask character about their appearance as a hidden message
-    appearance_details = ask_character_appearance(conversation)
+    # appearance_details = ask_character_appearance(conversation)
 
     # Generate character's opening message to initiate the conversation
     generate_character_opening_message(conversation)
@@ -9,7 +9,7 @@ class InitializeSceneJob < ApplicationJob
     # Initialize scene prompt using the appearance details
     if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
       prompt_service = AiPromptGenerationService.new(conversation)
-      prompt_service.generate_initial_scene_prompt_with_appearance(appearance_details)
+      prompt_service.generate_initial_scene_prompt_with_appearance(conversation.character.appearance)
     end
 
     # Generate initial scene image
@@ -18,74 +18,74 @@ class InitializeSceneJob < ApplicationJob
 
   private
 
-  def ask_character_appearance(conversation)
-    Rails.logger.info "Asking character about appearance for conversation #{conversation.id}"
+  # def ask_character_appearance(conversation)
+  #   Rails.logger.info "Asking character about appearance for conversation #{conversation.id}"
 
-    begin
-      # Create appearance question prompt
-      appearance_prompt = build_character_appearance_prompt(conversation)
+  #   begin
+  #     # Create appearance question prompt
+  #     appearance_prompt = build_character_appearance_prompt(conversation)
 
-      options = {
-        temperature: 0.3,
-      }
+  #     options = {
+  #       temperature: 0.3,
+  #     }
 
-      if conversation.character.venice_created?
-        options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
-      end
+  #     if conversation.character.venice_created?
+  #       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
+  #     end
 
-      appearance_response = ChatCompletionJob.perform_now(conversation.user, [
-        {
-          role: "system",
-          content: <<~PROMPT,
-            You are the following character:
+  #     appearance_response = ChatCompletionJob.perform_now(conversation.user, [
+  #       {
+  #         role: "system",
+  #         content: <<~PROMPT,
+  #           You are the following character:
 
-            <character_instructions>
-                #{conversation.character.venice_created? ? "%%CHARACTER_INSTRUCTIONS%%" : conversation.character.character_instructions}
-            </character_instructions>
+  #           <character_instructions>
+  #               #{conversation.character.venice_created? ? "%%CHARACTER_INSTRUCTIONS%%" : conversation.character.character_instructions}
+  #           </character_instructions>
 
-            You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
-            
-            Be specific about:
-            - What you're currently wearing (clothing, colors, style)
-            - Your hair (color, length, style) 
-            - Your eye color
-            - Any accessories you have on
-            - Your current expression or mood
-            - Your posture or pose
-            
-            Focus only on your physical appearance that would be visible to someone looking at you right now.
-          PROMPT
-        },
-        {
-          role: "user",
-          content: appearance_prompt,
-        },
-      ], options)
+  #           You are about to start a conversation with someone. Before that happens, please describe your current appearance in detail so an accurate visual representation can be created.
 
-      # Store this as a hidden message in the conversation history
-      # This allows the character to reference their appearance later if asked
-      conversation.messages.create!(
-        content: appearance_prompt,
-        role: "user",
-        metadata: { "hidden" => true, "type" => "appearance_question" },
-        user: conversation.user,
-      )
+  #           Be specific about:
+  #           - What you're currently wearing (clothing, colors, style)
+  #           - Your hair (color, length, style)
+  #           - Your eye color
+  #           - Any accessories you have on
+  #           - Your current expression or mood
+  #           - Your posture or pose
 
-      conversation.messages.create!(
-        content: appearance_response,
-        role: "assistant",
-        metadata: { "hidden" => true, "type" => "appearance_response" },
-        user: conversation.user,
-      )
+  #           Focus only on your physical appearance that would be visible to someone looking at you right now.
+  #         PROMPT
+  #       },
+  #       {
+  #         role: "user",
+  #         content: appearance_prompt,
+  #       },
+  #     ], options)
 
-      Rails.logger.info "Character appearance captured: #{appearance_response[0..100]}..."
-      appearance_response
-    rescue => e
-      Rails.logger.error "Failed to get character appearance: #{e.message}"
-      # Return nil so we fall back to basic description
-      nil
-    end
-  end
+  #     # Store this as a hidden message in the conversation history
+  #     # This allows the character to reference their appearance later if asked
+  #     conversation.messages.create!(
+  #       content: appearance_prompt,
+  #       role: "user",
+  #       metadata: { "hidden" => true, "type" => "appearance_question" },
+  #       user: conversation.user,
+  #     )
+
+  #     conversation.messages.create!(
+  #       content: appearance_response,
+  #       role: "assistant",
+  #       metadata: { "hidden" => true, "type" => "appearance_response" },
+  #       user: conversation.user,
+  #     )
+
+  #     Rails.logger.info "Character appearance captured: #{appearance_response[0..100]}..."
+  #     appearance_response
+  #   rescue => e
+  #     Rails.logger.error "Failed to get character appearance: #{e.message}"
+  #     # Return nil so we fall back to basic description
+  #     nil
+  #   end
+  # end
 
   def generate_character_opening_message(conversation)
     Rails.logger.info "Generating character's opening message for conversation #{conversation.id}"

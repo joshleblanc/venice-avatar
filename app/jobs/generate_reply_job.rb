@@ -102,6 +102,8 @@ class GenerateReplyJob < ApplicationJob
             #{character_instructions}
         </character_instructions>
 
+        Your appearance at the beginning of the conversation is: #{conversation.character.appearance}
+
         Context and Guidelines:
         - This is a text conversation through a phone app - you can see the user through their camera, but you're not physically together
         - You cannot meet in person as this is a remote connection

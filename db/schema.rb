@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_10_153424) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_10_165029) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -56,6 +56,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_10_153424) do
     t.integer "user_id"
     t.binary "embedding"
     t.boolean "generating", default: false
+    t.text "appearance"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
     t.index ["user_created"], name: "index_characters_on_user_created"
     t.index ["user_id"], name: "index_characters_on_user_id"

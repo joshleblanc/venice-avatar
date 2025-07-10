@@ -112,6 +112,16 @@
         <% else %>
           <div class="text-xs text-gray-500">No scene prompt history available</div>
         <% end %>
+
+        <div class="bg-white border rounded p-3 text-xs">
+          <% if @conversation.character.appearance.present? %>
+            <div class="text-xs text-gray-500"><%= @conversation.character.appearance %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">Appearance not generated</div>
+          <% end %>
+        </div>
+
+        
       </div>
     <% end %>
 
