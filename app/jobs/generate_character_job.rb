@@ -30,10 +30,10 @@ class GenerateCharacterJob < ApplicationJob
       return GenerateCharacterJob.perform_now(@character, @similar_characters)
     end
 
-    GenerateCharacterAppearanceJob.perform_now(character)
+    GenerateCharacterAppearanceJob.perform_later(character)
 
     # Generate detailed personality instructions
-    CharacterInstructionGeneratorJob.perform_now(character)
+    CharacterInstructionGeneratorJob.perform_later(character)
     Rails.logger.info "Auto-generated character: #{character.name}"
     character
   end
