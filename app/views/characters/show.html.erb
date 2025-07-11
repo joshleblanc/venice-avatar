@@ -10,7 +10,7 @@
         
       </div>
       <div>
-        <% if @character.generating? %>
+        <% if @character.generating? && @character.name.blank? %>
           <h1 class="text-3xl font-bold text-gray-900 mb-2">What should we call you...</h1>
         <% else %>
           <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @character.name %></h1>
@@ -30,7 +30,7 @@
     <div class="space-y-6">
       <div>
         <h2 class="text-xl font-semibold text-gray-800 mb-3">Description</h2>
-        <% if @character.generating? %> 
+        <% if @character.generating? && @character.description.blank? %> 
         <p class="text-gray-600 leading-relaxed">Generating...</p>
 
         <% else %>
