@@ -26,7 +26,7 @@ class ConversationsController < ApplicationController
     @conversation.generating_reply = true
 
     if @conversation.save
-      initialize_conversation_scene
+      InitializeSceneJob.perform_later(@conversation)
       redirect_to @conversation
     else
       redirect_to root_path, alert: "Failed to create conversation"
@@ -43,9 +43,5 @@ class ConversationsController < ApplicationController
   def set_character
     @character = Character.find(params[:character_id])
     authorize @character
-  end
-
-  def initialize_conversation_scene
-    InitializeSceneJob.perform_later(@conversation)
   end
 end
