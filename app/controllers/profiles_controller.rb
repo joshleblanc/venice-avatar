@@ -64,6 +64,7 @@ class ProfilesController < ApplicationController
           [style, style]
         end
       end
+      @image_styles << ["None", ""]
     rescue => e
       Rails.logger.error "Failed to fetch models from Venice API: #{e.message}"
       @text_models = []
