@@ -3,6 +3,12 @@ class GenerateImagesJob < ApplicationJob
   queue_as :default
 
   def perform(conversation, message_content = nil, message_timestamp = nil)
+    # Guard: only generate when a real scene prompt exists
+    if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
+      Rails.logger.info "Skipping image generation: no current_scene_prompt present"
+      return
+    end
+
     # Set generating flag to true (this will touch the conversation and trigger refresh)
     conversation.update!(scene_generating: true)
 

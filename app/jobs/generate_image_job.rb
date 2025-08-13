@@ -4,16 +4,20 @@ class GenerateImageJob < ApplicationJob
 
     venice_client = VeniceClient::ImageApi.new(user.api_client)
 
+    style = user.image_style 
+
+    options = {
+      model: user.preferred_image_model || "hidream",
+      prompt: prompt.first(user.prompt_limit),
+      safe_mode: user.safe_mode,
+      format: "png",
+      seed: 123871273,
+      **opts,
+    }
+    options[:style_preset] = style if style.present?
+    
     response = venice_client.generate_image({
-      generate_image_request: {
-        model: user.preferred_image_model || "hidream",
-        prompt: prompt.first(user.prompt_limit),
-        safe_mode: user.safe_mode,
-        format: "png",
-        style_preset: user.image_style,
-        seed: 123871273,
-        **opts,
-      },
+      generate_image_request: options,
     })
 
     response.images.first

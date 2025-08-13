@@ -79,8 +79,13 @@ class AiPromptGenerationService
       return @conversation.metadata["current_scene_prompt"]
     end
 
-    # If no prompt exists, enqueue async initial prompt generation and return a lightweight fallback
-    GenerateInitialScenePromptJob.perform_later(@conversation)
+    # If no prompt exists, enqueue async initial prompt generation ONCE and return a lightweight fallback
+    metadata = @conversation.metadata || {}
+    unless metadata["initial_prompt_enqueued"]
+      metadata["initial_prompt_enqueued"] = true
+      @conversation.update!(metadata: metadata)
+      GenerateInitialScenePromptJob.perform_later(@conversation)
+    end
     fallback_initial_prompt
   end
 
