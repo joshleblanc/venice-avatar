@@ -1,4 +1,5 @@
 class GenerateImagesJob < ApplicationJob
+  limits_concurrency to: 1, key: ->(conversation, *_args) { ["GenerateImagesJob", conversation.id].join(":") }
   queue_as :default
 
   def perform(conversation, message_content = nil, message_timestamp = nil)

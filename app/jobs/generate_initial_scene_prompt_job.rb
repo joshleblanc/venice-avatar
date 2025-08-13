@@ -1,10 +1,15 @@
 class GenerateInitialScenePromptJob < ApplicationJob
   queue_as :default
+  limits_concurrency to: 1, key: ->(conversation) { ["GenerateInitialScenePromptJob", conversation.id].join(":") }
 
   def perform(conversation)
     Rails.logger.info "Generating initial scene prompt for conversation #{conversation.id}"
     
-    character_appearance = conversation.character.appearance || generate_character_appearance(conversation)
+    character_appearance = conversation.character.appearance
+    if character_appearance.blank?
+      Rails.logger.info "Character appearance missing; enqueueing async generation"
+      GenerateCharacterAppearanceJob.perform_later(conversation.character)
+    end
     
     prompt = build_initial_prompt_generation_request(conversation, character_appearance)
 

@@ -19,6 +19,9 @@ class ImageGenerationService
   def generate_full_scene_image
     Rails.logger.info "Generating full scene image from scratch"
 
+    # Determine if we have a real scene prompt yet
+    has_real_prompt = @conversation.metadata.present? && @conversation.metadata["current_scene_prompt"].present?
+
     # Check if character is away and generate appropriate prompt
     prompt = if @conversation.character_away?
         build_background_only_prompt
@@ -38,11 +41,13 @@ class ImageGenerationService
       "stable-diffusion-3.5",
     ]
     begin
-      Rails.logger.info "Generating unified scene image with prompt: #{prompt}"
+      mode = has_real_prompt ? "full" : "fast-first"
+      width, height = has_real_prompt ? [640, 1024] : [320, 512]
+      Rails.logger.info "Generating unified scene image (mode=#{mode}, #{width}x#{height}) with prompt length=#{prompt.length}"
 
       base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, {
-        width: 640,
-        height: 1024,
+        width: width,
+        height: height,
       })
       if base64_data
         Rails.logger.info "Received unified scene base64 image data, length: #{base64_data.length}"

@@ -26,7 +26,7 @@ class GenerateCharacterAppearanceJob < ApplicationJob
       character.update!(appearance: appearance_description)
       Rails.logger.info "Successfully generated and stored appearance for character: #{character.name}"
 
-      GenerateCharacterAvatarJob.perform_now(character)
+      GenerateCharacterAvatarJob.perform_later(character)
     rescue => e
       Rails.logger.error "Failed to generate character appearance: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

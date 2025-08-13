@@ -10,7 +10,7 @@ class GenerateImageJob < ApplicationJob
         prompt: prompt.first(user.prompt_limit),
         safe_mode: user.safe_mode,
         format: "png",
-        style_preset: user.preferred_image_style.present? ? user.preferred_image_style.blank? ? nil : user.preferred_image_style : "Anime",
+        style_preset: user.image_style,
         seed: 123871273,
         **opts,
       },
