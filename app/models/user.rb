@@ -39,6 +39,16 @@ class User < ApplicationRecord
     (venice_key.length - 4).times.map { "*" }.join + venice_key.last(4)
   end
 
+  def image_style 
+    if preferred_image_style.nil?
+      "Anime"
+    elsif preferred_image_style.blank?
+      nil
+    else
+      preferred_image_style
+    end
+  end
+
   def api_client
     return unless venice_key.present?
     config = VeniceClient::Configuration.new
