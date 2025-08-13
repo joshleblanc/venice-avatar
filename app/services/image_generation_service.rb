@@ -103,21 +103,30 @@ class ImageGenerationService
 
     # Request Venice to generate just the background description
     begin
-      background_description = ChatCompletionJob.perform_now(@conversation.user, [
+      background_tags = ChatCompletionJob.perform_now(@conversation.user, [
         {
           role: "system",
-          content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation.",
+          content: "You are a visual scene tags generator. Extract ONLY background/environment tags from a scene tag list. Return a concise, lowercase, comma-separated tag list (no quotes, no sentences). Remove all references to people or human features.",
         },
         {
           role: "user",
-          content: "Extract the background-only description from this scene: #{current_prompt}",
+          content: "Extract background-only tags from this scene tags list: #{current_prompt}",
         },
       ], {
-        temperature: 0.3,
+        temperature: 0.2,
       })
 
-      # Add explicit background-only instructions for image generation
-      enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"
+      combined = [
+        "empty room",
+        "no people",
+        "no characters",
+        background_tags,
+        "detailed interior background",
+        "ambient lighting",
+        "peaceful atmosphere",
+      ].compact.join(", ")
+
+      enhanced_prompt = PromptUtils.normalize_tag_list(combined, max_len: @conversation.user.prompt_limit, always_include: [])
 
       Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
 
@@ -125,8 +134,12 @@ class ImageGenerationService
     rescue => e
       Rails.logger.error "Failed to generate background description via Venice: #{e.message}"
 
-      # Fallback to a simple default background
-      fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere"
+      # Fallback to a simple default background in tag style
+      fallback_prompt = PromptUtils.normalize_tag_list(
+        "empty room, no people, no characters, cozy indoor setting, warm lighting, comfortable furniture, peaceful atmosphere",
+        max_len: @conversation.user.prompt_limit,
+        always_include: [],
+      )
 
       Rails.logger.info "Using fallback background prompt: #{fallback_prompt}"
 

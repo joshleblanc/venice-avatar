@@ -48,7 +48,7 @@ class GenerateCharacterAvatarJob < ApplicationJob
     <<~PROMPT
       Professional headshot portrait based on this description: #{appearance}
       
-      Anime style illustration, head and shoulders view, clean professional lighting, neutral background.
+      Head and shoulders view, clean professional lighting, neutral background.
       High quality, detailed facial features, friendly expression, direct gaze.
       Sharp focus on face, soft background blur.
     PROMPT

@@ -100,41 +100,24 @@ class AiPromptGenerationService
       else
         ""
       end
-
+    
     <<~PROMPT
-      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
-      You are a visual prompt generator. Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator
-      
+      You are a visual prompt generator. Output a single compact, comma-separated tag list (Civitai-style). No sentences. No articles. No character names.
+
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}
 
-      Generate a detailed prompt that includes:
-      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
-      2. Environment/setting (location, background elements, lighting)
-      3. Atmosphere and mood
-      4. NO Art style specifications
-      5. No not include any superfluous, unimportant descriptions.
-      6. Do not include the character name
-      7. Do not state you're generating an image in the prompt
-      8. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      9. Limit Verbosity and Emotional Verbs Ask the model to avoid:
-        - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
-        - Internal states or psychological exposition
-        Instead, lean on:
-        - Physical cues ("red eyes," "wet cheeks," "slumped posture")
-        - Static elements of the environment
-      10. Don't include tendencies. Only the current state of the character should be described.
-      11. State the character is an adult
-      12. Do not describe actions or sounds.
-      13. Do not use poetic language. Use simple, direct language.
-      14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      15. Keep the response within #{@conversation.user.prompt_limit} characters
+      Rules:
+      - Tags only, lowercase, comma-separated
+      - No quotes, parentheses, brackets, colons, or periods
+      - Start with subject/appearance, then clothing, expression, pose, environment, lighting, quality
+      - Always include: adult
+      - Avoid inner thoughts, actions, or sounds
+      - Do not list artists, model names, or copyrighted styles
+      - Keep under #{@conversation.user.prompt_limit} characters
 
-      The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
-
-      Generate the character's bodily apperance, followed by their clothes/accessories. Finally the background.
-
-      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific. 
+      Return ONLY the tag list, for example:
+      1woman, professional woman, auburn hair, wavy hair, green eyes, beauty mark above eyebrow, natural makeup, rosy lips, neutral-toned business suit, crisp blouse, tailored pants, confident posture, standing pose, sunlit office, modern interior, large windows, daylight, soft shadows, focused expression, poised demeanor, adult, clean background, sharp focus
     PROMPT
   end
 
@@ -161,64 +144,48 @@ class AiPromptGenerationService
     end
 
     <<~PROMPT
-      You are a visual novel scene prompt evolution specialist. You need to update an existing scene prompt based on new story content.
+      You are updating a compact image-generation prompt expressed as a comma-separated tag list.
 
-      PREVIOUS SCENE PROMPT:
+      PREVIOUS TAG LIST:
       #{previous_prompt}
 
       NEW MESSAGE CONTENT:
       #{new_message_content} #{time_context}
 
-      Analyze the new message content and update the scene prompt with MINIMAL changes to reflect ONLY the character's own state and reactions:
-      - Character expression or emotion changes (based on their dialogue/reactions)
-      - Character clothing or appearance changes (if they mention changing clothes)
-      - Character location changes (if they mention moving somewhere)
-      - Character pose or activity changes (based on their actions)
-      
+      Update the tag list with MINIMAL necessary changes that reflect ONLY the character's own state:
+      - Expression changes
+      - Clothing/appearance changes explicitly mentioned
+      - Location/background changes if the character moves
+      - Pose or activity changes
 
-      DO NOT INCORPORATE:
-      - Environmental conditions mentioned by other people (weather, temperature, humidity, etc.)
-      - Background elements described by others unless the character explicitly reacts to them
-      - Physical effects on the character caused by conditions others mention (sweating, shivering, etc.)
+      Do NOT incorporate:
+      - Conditions mentioned by others
+      - Inner thoughts, actions, or sounds
 
-      IMPORTANT RULES:
-      1. Keep the character's core appearance consistent (don't change fundamental features)
-      2. Only modify elements that represent the CHARACTER'S OWN state, actions, or explicit mentions
-      3. Maintain the same art style and quality specifications
-      4. If no visual changes to the character are needed, return the previous prompt unchanged
-      5. Make changes subtle and natural - avoid dramatic shifts
-      6. Changes to the character should replace the previous character description. For example, if the previous prompt says the character is sad, and the new message says she's screaming in rage, the description of her being sad should be replaced. The new emotion should not be appended.
-      7. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      8. Limit Verbosity and Emotional Verbs Ask the model to avoid:
-        - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
-        - Internal states or psychological exposition
-        Instead, lean on:
-        - Physical cues ("red eyes", "wet cheeks", "slumped posture")
-        - Static elements of the environment
-      9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor")
-      10. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
-      11. Do not describe actions or sounds.
-      12. Do not use poetic language. Use simple, direct language.
-      13. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others.
-      14. Keep the response within #{@conversation.user.prompt_limit} characters
-
-      Return the updated prompt as a single, detailed image generation prompt in under 1500 characters.
+      Rules:
+      - Tags only, lowercase, comma-separated; no quotes or brackets
+      - Keep core appearance consistent; replace changed tokens rather than appending duplicates
+      - Remove tags that no longer apply; deduplicate
+      - Always include: adult
+      - Return ONLY the final tag list (no prose)
+      - Keep under #{@conversation.user.prompt_limit} characters
     PROMPT
   end
 
   def store_scene_prompt(prompt, trigger: "unknown")
     # Store in conversation metadata for quick access
+    normalized = PromptUtils.normalize_tag_list(prompt, max_len: @conversation.user.prompt_limit, always_include: ["adult"]) 
     metadata = @conversation.metadata || {}
-    metadata["current_scene_prompt"] = prompt
+    metadata["current_scene_prompt"] = normalized
     metadata["scene_prompt_updated_at"] = Time.current.iso8601
 
     @conversation.update!(metadata: metadata)
 
     # Store in scene prompt history table for analysis
     @conversation.scene_prompt_histories.create!(
-      prompt: prompt,
+      prompt: normalized,
       trigger: trigger,
-      character_count: prompt.length,
+      character_count: normalized.length,
     )
   end
 
@@ -291,9 +258,11 @@ class AiPromptGenerationService
   end
 
   def fallback_initial_prompt
-    character_name = @character.name || "character"
-    character_desc = @character.description || "a person"
-
-    "Anime style illustration of #{character_name}, #{character_desc}, standing in a cozy indoor setting, soft lighting, detailed character design, warm atmosphere"
+    # Compact tag-style fallback
+    PromptUtils.normalize_tag_list(
+      "adult, person, cozy indoor setting, warm lighting, soft shadows, standing pose, clean background, sharp focus, high detail",
+      max_len: @conversation.user.prompt_limit,
+      always_include: ["adult"],
+    )
   end
 end

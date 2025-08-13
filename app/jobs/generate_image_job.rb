@@ -10,6 +10,8 @@ class GenerateImageJob < ApplicationJob
       model: user.preferred_image_model || "hidream",
       prompt: prompt.first(user.prompt_limit),
       safe_mode: user.safe_mode,
+      cfg_scale: 1,
+      steps: 30,
       format: "png",
       seed: 123871273,
       **opts,
