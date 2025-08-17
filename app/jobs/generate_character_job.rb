@@ -66,6 +66,33 @@ class GenerateCharacterJob < ApplicationJob
       - Don't use fantasy/mystical names like "Zephyr", "Phoenix", "Luna", "Sage", "River" unless truly fitting
       - Consider common names from various cultures: Japanese, Spanish, Arabic, African, European, etc.
       - Mix of traditional and modern names
+      - Examples:
+        - Aiden Clarke
+        - Bianca Rossi
+        - Carlos Mendoza
+        - Daria Ivanova
+        - Elias Okafor
+        - Fatima Zahid
+        - Gianni Conti
+        - Hiroshi Tanaka
+        - Isabel Duarte
+        - Jonas Bergstrom
+        - Kamala Patel
+        - Lukas Schneider
+        - Marisol Alvarez
+        - Nadia Petrovic
+        - Omar Haddad
+        - Priya Mehra
+        - Quentin Dubois
+        - Rosa Jimenez
+        - Samuel Cohen
+        - Tariq Khalil
+        - Ursula Novak
+        - Victor Hansen
+        - Wei Zhang
+        - Ximena Castillo
+        - Yara Suleiman
+        - Zoltan Kovacs
 
       DESCRIPTION REQUIREMENTS:
       - Avoid formulaic patterns like "Former X turned Y" or "Known for their Z"
@@ -74,6 +101,17 @@ class GenerateCharacterJob < ApplicationJob
       - Include unexpected combinations of interests or backgrounds
       - Show personality through specific behaviors, not just adjectives
       - Avoid overused professions like "wandering poet", "mysterious librarian", "former pilot"
+      - Examples:
+        - Grew up in a coastal town repairing fishing nets with a grandfather. Studied marine biology but dropped out to run a community sailing program for underprivileged kids.
+        - Second-generation baker from Naples whose family shop nearly collapsed during the pandemic. Rebuilt it with modern twists—selling focaccia on TikTok turned into a minor local celebrity.
+        - Former professional cyclist sidelined by an injury, now a postal worker who secretly maps out the best bike routes in the city and shares them online under a pseudonym.
+        - Once a competitive pianist, but stage fright derailed the career. Now restores antique instruments, convinced every piano has a memory of its players.
+        - Trained as an architect, but turned to activism after a flood destroyed the neighborhood. Works on affordable housing initiatives and teaches carpentry to teens.
+        - Born in Casablanca, worked as a translator for a human rights NGO. Keeps a diary in five languages, switching depending on mood.
+        - Former paramedic in Rome, haunted by the one patient that couldn’t be saved. Volunteers as a crisis counselor on night shifts.
+        - Retired bullet-train conductor who still wakes up at 4:30 a.m. every day. Collects miniature trains and is writing a memoir of the railway stories passengers told.
+        - Grew up on a vineyard in Portugal. Left to become a software engineer but keeps a grandmother’s winemaking journal, planning to return and revive the land.
+        - Once a rising hockey star in Sweden, became a wilderness guide after burning out from competition. Lives half the year in a cabin built by hand.
 
       CHARACTER VARIETY - Choose from diverse backgrounds:
       - Everyday people with interesting inner lives (accountant who writes horror novels, bus driver who collects vintage postcards)

@@ -50,7 +50,7 @@ class GenerateCharacterAvatarJob < ApplicationJob
       
       Head and shoulders view, clean professional lighting, neutral background.
       High quality, detailed facial features, friendly expression, direct gaze.
-      Sharp focus on face, soft background blur.
+      Sharp focus on face, soft background blur, 1 subject
     PROMPT
   end
 
