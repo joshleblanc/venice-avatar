@@ -120,6 +120,7 @@ class ImageGenerationService
       enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"
 
       Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
+      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: enhanced_prompt))
 
       enhanced_prompt
     rescue => e
@@ -129,6 +130,7 @@ class ImageGenerationService
       fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere"
 
       Rails.logger.info "Using fallback background prompt: #{fallback_prompt}"
+      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: fallback_prompt))
 
       fallback_prompt
     end

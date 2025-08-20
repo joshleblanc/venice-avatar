@@ -136,6 +136,15 @@
           <div class="text-xs text-gray-500"><%= @conversation.current_scene_prompt %></div>
         </div>
 
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Background-Only Prompt (when away)</h4>
+          <% if @conversation.metadata&.dig("background_only_prompt") %>
+            <div class="text-xs text-gray-500"><%= @conversation.metadata["background_only_prompt"] %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">No background-only prompt generated</div>
+          <% end %>
+        </div>
+
         
       </div>
     <% end %>
