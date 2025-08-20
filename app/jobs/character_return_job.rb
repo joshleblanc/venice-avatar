@@ -31,7 +31,7 @@ class CharacterReturnJob < ApplicationJob
       # Generate a contextual "I'm back" message referencing what they left to do
 
       return_message = generate_return_message(conversation, brb_message)
-      conversation.messages.create!(
+      new_message = conversation.messages.create!(
         content: return_message,
         role: "assistant",
         metadata: { auto_generated: true, return_message: true },
@@ -39,9 +39,11 @@ class CharacterReturnJob < ApplicationJob
       )
       # Mark character as no longer away
       conversation.update!(character_away: false)
+
+      # Evolve the scene prompt based on what the character did while they were away
       prompt_service = AiPromptGenerationService.new(conversation)
       current_prompt = prompt_service.get_current_scene_prompt
-      evolved_prompt = prompt_service.evolve_scene_prompt(current_prompt, return_message)
+      EvolveScenePromptJob.perform_later(conversation, new_message, current_prompt)
     end
 
     GenerateImagesJob.perform_later(conversation)

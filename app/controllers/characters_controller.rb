@@ -5,7 +5,6 @@ class CharactersController < ApplicationController
   def index
     authorize Character
     @user_characters = policy_scope(Character.where(user_created: true).order(:name))
-    @venice_characters = policy_scope(Character.where(user_created: false).order(:name))
   end
 
   # GET /characters/1 or /characters/1.json

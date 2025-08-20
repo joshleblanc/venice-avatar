@@ -1,5 +1,5 @@
 <div class="max-w-6xl mx-auto p-6">
-  <div class="flex justify-between items-center mb-8">
+  <div class="flex justify-between items-center mb-2">
     <h1 class="text-3xl font-bold text-gray-900">Characters</h1>
     <% if Current.user.venice_key_valid? %>
       <div class="flex space-x-3">
@@ -12,6 +12,8 @@
       </div>
     <% end %>
   </div>
+
+  <%= render "shared/character_tabs", active: :your %>
 
   <!-- User Created Characters -->
   <% if @user_characters.any? %>
@@ -61,33 +63,7 @@
     </div>
   <% end %>
 
-  <!-- Venice Characters -->
-  <% if @venice_characters.any? %>
-    <div>
-      <h2 class="text-2xl font-semibold text-gray-800 mb-6">Venice Characters</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <% @venice_characters.each do |character| %>
-          <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div class="flex items-start justify-between mb-4">
-              <h3 class="text-xl font-semibold text-gray-900"><%= character.name %></h3>
-              <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded">Venice</span>
-            </div>
-            
-            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
-              <%= character.description %>
-            </p>
-            
-            <div class="flex justify-between items-center">
-              <%= button_to "Chat", character_conversations_path(character),
-                            method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm disabled:opacity-50", disabled: !Current.user.venice_key_valid? %>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
-
-  <% if @user_characters.empty? && @venice_characters.empty? %>
+  <% if @user_characters.empty? %>
     <div class="text-center py-12">
       <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
         <path d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A9.971 9.971 0 0124 24c4.004 0 7.625 2.371 9.287 6.286M32 14a6 6 0 11-12 0 6 6 0 0112 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />

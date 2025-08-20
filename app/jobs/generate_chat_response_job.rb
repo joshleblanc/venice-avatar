@@ -73,12 +73,14 @@ class GenerateChatResponseJob < ApplicationJob
 
       Rails.logger.info "Chat response generated: #{chat_response[0..100]}..."
 
-      # Evolve scene prompt and generate images if needed
-      EvolveScenePromptJob.perform_later(conversation, assistant_msg, current_prompt)
-
       # Check if character wants to step away
       followup_detector = FollowupIntentDetectorService.new(conversation)
       followup_intent = followup_detector.detect_character_followup_intent(chat_response)
+
+      # Evolve scene prompt, but only if character isn't leaving
+      unless followup_intent[:has_intent] && followup_intent[:duration].to_i > 0
+        EvolveScenePromptJob.perform_later(conversation, assistant_msg, current_prompt)
+      end
 
       if followup_intent[:has_intent] && followup_intent[:duration].to_i > 0
         assistant_msg.update!(
