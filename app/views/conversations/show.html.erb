@@ -114,11 +114,26 @@
         <% end %>
 
         <div class="bg-white border rounded p-3 text-xs">
+          <h4 class="font-semibold mb-2">Current Appearance Prompt</h4>
           <% if @conversation.character.appearance.present? %>
             <div class="text-xs text-gray-500"><%= @conversation.character.appearance %></div>
           <% else %>
             <div class="text-xs text-gray-500">Appearance not generated</div>
           <% end %>
+        </div>
+
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Current Background Prompt</h4>
+          <% if @conversation.character.character_instructions.present? %>
+            <div class="text-xs text-gray-500"><%= @conversation.character.character_instructions %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">Background not generated</div>
+          <% end %>
+        </div>
+
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Current Scene Prompt</h4>
+          <div class="text-xs text-gray-500"><%= @conversation.current_scene_prompt %></div>
         </div>
 
         
