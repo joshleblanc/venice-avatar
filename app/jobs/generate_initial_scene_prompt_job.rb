@@ -23,20 +23,19 @@ class GenerateInitialScenePromptJob < ApplicationJob
         temperature: 0.7,
       })
       
-      normalized = PromptUtils.normalize_tag_list(generated_prompt, max_len: conversation.user.prompt_limit, always_include: ["adult"]) 
-      Rails.logger.info "Generated initial scene prompt: #{normalized}"
+      Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
       # Store the prompt in conversation metadata
       metadata = conversation.metadata || {}
-      metadata["current_scene_prompt"] = normalized
+      metadata["current_scene_prompt"] = generated_prompt
       metadata["scene_prompt_updated_at"] = Time.current.iso8601
       conversation.update!(metadata: metadata)
 
       # Store in scene prompt history table
       conversation.scene_prompt_histories.create!(
-        prompt: normalized,
+        prompt: generated_prompt,
         trigger: "initial",
-        character_count: normalized.length,
+        character_count: generated_prompt.length,
       )
 
       # Now that we have the scene prompt, generate the initial scene image
@@ -132,22 +131,39 @@ class GenerateInitialScenePromptJob < ApplicationJob
       end
 
     <<~PROMPT
-      You are a visual prompt generator. Output a single compact, comma-separated tag list (Civitai-style). No sentences. No articles. No character names.
-
+      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
+      You are a visual prompt generator. Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator
+      
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}
 
-      Rules:
-      - Tags only, lowercase, comma-separated
-      - No quotes, parentheses, brackets, colons, or periods
-      - Start with subject/appearance, then clothing, expression, pose, environment, lighting, quality
-      - Always include: adult
-      - Avoid inner thoughts, actions, or sounds
-      - Do not list artists, model names, or copyrighted styles
-      - Keep under #{conversation.user.prompt_limit} characters
+      Generate a detailed prompt that includes:
+      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
+      2. Environment/setting (location, background elements, lighting)
+      3. Atmosphere and mood
+      4. NO Art style specifications
+      5. No not include any superfluous, unimportant descriptions.
+      6. Do not include the character name
+      7. Do not state you're generating an image in the prompt
+      8. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
+      9. Limit Verbosity and Emotional Verbs Ask the model to avoid:
+        - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
+        - Internal states or psychological exposition
+        Instead, lean on:
+        - Physical cues ("red eyes," "wet cheeks," "slumped posture")
+        - Static elements of the environment
+      10. Don't include tendencies. Only the current state of the character should be described.
+      11. State the character is an adult
+      12. Do not describe actions or sounds.
+      13. Do not use poetic language. Use simple, direct language.
+      14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      15. Keep the response within #{conversation.user.prompt_limit} characters
 
-      Return ONLY the tag list, for example:
-      1woman, auburn hair, wavy hair, green eyes, beauty mark, natural makeup, rosy lips, tailored suit, crisp blouse, confident posture, standing pose, sunlit office, modern interior, large windows, daylight, soft shadows, focused expression, adult, clean background, sharp focus
+      The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
+
+      Generate the character's bodily apperance, followed by their clothes/accessories. Finally the background.
+
+      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific. 
     PROMPT
   end
 
