@@ -48,13 +48,17 @@ class ImageGenerationService
       # Conversation-specific style override
       style_override = @conversation.metadata&.dig("image_style_override")
 
-      Rails.logger.debug "Style override: #{style_override}"
+      Rails.logger.debug "Style override: #{style_override.inspect}"
 
-      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, {
-        width: width,
-        height: height,
-        style_preset: style_override,
-      })
+      opts = { width: width, height: height }
+      if style_override == "__none__"
+        # Explicitly disable style preset
+        opts[:style_preset] = ""
+      elsif style_override.present?
+        opts[:style_preset] = style_override
+      end
+
+      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, opts)
       if base64_data
         Rails.logger.info "Received unified scene base64 image data, length: #{base64_data.length}"
         attach_base64_image_to_conversation(base64_data, "scene.png")

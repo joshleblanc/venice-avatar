@@ -16,14 +16,16 @@ class ConversationsController < ApplicationController
     # Load available image styles for per-conversation override
     begin
       styles = FetchImageStylesJob.perform_now(Current.user)
-      @image_styles = styles.map { |style| [style, style] }
-      @image_styles << ["Default", ""]
+      # Include special options first
+      @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
+      @image_styles += styles.map { |style| [style, style] }
     rescue => e
       Rails.logger.error "Failed to fetch image styles for conversation: #{e.message}"
-      @image_styles = [["Default", ""]]
+      @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
     end
 
-    @selected_image_style = @conversation.metadata&.dig("image_style_override") || @conversation.user.image_style
+    override = @conversation.metadata&.dig("image_style_override")
+    @selected_image_style = override.presence || "__default__"
 
     # Generate initial scene image if needed
     # if @conversation.scene_image.blank?
@@ -50,7 +52,11 @@ class ConversationsController < ApplicationController
 
     style = params.require(:conversation).permit(:image_style)[:image_style]
     metadata = @conversation.metadata || {}
-    metadata["image_style_override"] = style.presence
+    metadata["image_style_override"] = case style
+                                        when "__default__" then nil
+                                        when "__none__" then "__none__"
+                                        else style.presence
+                                        end
     @conversation.update!(metadata: metadata)
 
     respond_to do |format|
