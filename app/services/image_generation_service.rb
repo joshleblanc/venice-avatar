@@ -45,9 +45,15 @@ class ImageGenerationService
       width, height = has_real_prompt ? [640, 1024] : [320, 512]
       Rails.logger.info "Generating unified scene image (mode=#{mode}, #{width}x#{height}) with prompt length=#{prompt.length}"
 
+      # Conversation-specific style override
+      style_override = @conversation.metadata&.dig("image_style_override")
+
+      Rails.logger.debug "Style override: #{style_override}"
+
       base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, {
         width: width,
         height: height,
+        style_preset: style_override,
       })
       if base64_data
         Rails.logger.info "Received unified scene base64 image data, length: #{base64_data.length}"

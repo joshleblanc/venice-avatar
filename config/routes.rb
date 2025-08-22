@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   resources :conversations, only: [:index, :show] do
     member do
       post :regenerate_scene
+      patch :image_style
     end
     resources :messages, only: [:create]
   end

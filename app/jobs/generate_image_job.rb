@@ -14,7 +14,13 @@ class GenerateImageJob < ApplicationJob
       seed: 123871273,
       **opts,
     }
-    options[:style_preset] = style if style.present?
+    # Respect explicit style in opts if provided; otherwise fall back to user's image_style
+    Rails.logger.debug "Generating image pre: #{options}"
+
+
+    options[:style_preset] = options[:style_preset].presence || style
+
+    Rails.logger.debug "Generating image: #{options}"
     
     response = venice_client.generate_image({
       generate_image_request: options,

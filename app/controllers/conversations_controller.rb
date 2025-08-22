@@ -13,6 +13,18 @@ class ConversationsController < ApplicationController
       "metadata IS NULL OR metadata->>'hidden' IS NULL OR metadata->>'hidden' != 'true'"
     ).order(:created_at)
 
+    # Load available image styles for per-conversation override
+    begin
+      styles = FetchImageStylesJob.perform_now(Current.user)
+      @image_styles = styles.map { |style| [style, style] }
+      @image_styles << ["Default", ""]
+    rescue => e
+      Rails.logger.error "Failed to fetch image styles for conversation: #{e.message}"
+      @image_styles = [["Default", ""]]
+    end
+
+    @selected_image_style = @conversation.metadata&.dig("image_style_override") || @conversation.user.image_style
+
     # Generate initial scene image if needed
     # if @conversation.scene_image.blank?
     #   initialize_conversation_scene
@@ -29,6 +41,22 @@ class ConversationsController < ApplicationController
       format.html { redirect_to @conversation, notice: "Regenerating scene image" }
       format.turbo_stream { head :ok }
       format.json { head :accepted }
+    end
+  end
+
+  def image_style
+    @conversation = Conversation.find(params[:id])
+    authorize @conversation
+
+    style = params.require(:conversation).permit(:image_style)[:image_style]
+    metadata = @conversation.metadata || {}
+    metadata["image_style_override"] = style.presence
+    @conversation.update!(metadata: metadata)
+
+    respond_to do |format|
+      format.html { redirect_to @conversation, notice: "Updated image style" }
+      format.turbo_stream { head :ok }
+      format.json { head :ok }
     end
   end
 
