@@ -153,12 +153,13 @@ class GenerateInitialScenePromptJob < ApplicationJob
         Instead, lean on:
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
-      11. Don't include tendencies. Only the current state of the character should be described.
-      12. State the character is an adult
-      13. Do not describe actions or sounds.
-      14. Do not use poetic language. Use simple, direct language.
-      15. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      16. Keep the response within #{conversation.user.prompt_limit} characters
+      11. Present-state only: do NOT use temporal or comparative phrasing (e.g., "no longer", "still", "now", "currently", "used to", "remains"). Describe only the current visible state as facts.
+      12. Don't include tendencies. Only the current state of the character should be described.
+      13. State the character is an adult
+      14. Do not describe actions or sounds.
+      15. Do not use poetic language. Use simple, direct language.
+      16. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      17. Keep the response within #{conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 

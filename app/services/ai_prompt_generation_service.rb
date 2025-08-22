@@ -30,6 +30,8 @@ class AiPromptGenerationService
       ], {
         temperature: 0.7,
       })
+      # Enforce present-state description (no temporal/negation phrasing)
+      generated_prompt = enforce_present_state(generated_prompt)
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
       # Store the prompt in the conversation or character state
@@ -58,6 +60,9 @@ class AiPromptGenerationService
       ], {
         temperature: 0.3,  # Lower temperature for consistency
       })
+
+      # Enforce present-state description (no temporal/negation phrasing)
+      evolved_prompt = enforce_present_state(evolved_prompt)
 
       Rails.logger.info "Evolved scene prompt: #{evolved_prompt}"
 
@@ -124,12 +129,13 @@ class AiPromptGenerationService
         Instead, lean on:
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
-      11. Don't include tendencies. Only the current state of the character should be described.
-      12. State the character is an adult
-      13. Do not describe actions or sounds.
-      14. Do not use poetic language. Use simple, direct language.
-      15. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      16. Keep the response within #{@conversation.user.prompt_limit} characters
+      11. Present-state only: do NOT use temporal or comparative phrasing (e.g., "no longer", "still", "now", "currently", "used to", "remains"). Describe only the current visible state as facts.
+      12. Don't include tendencies. Only the current state of the character should be described.
+      13. State the character is an adult
+      14. Do not describe actions or sounds.
+      15. Do not use poetic language. Use simple, direct language.
+      16. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      17. Keep the response within #{@conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
@@ -198,11 +204,12 @@ class AiPromptGenerationService
         - Physical cues ("red eyes", "wet cheeks", "slumped posture")
         - Static elements of the environment
       9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor"). Do NOT remove the environment/background unless the character explicitly changes location.
-      10. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
-      11. Do not describe actions or sounds.
-      12. Do not use poetic language. Use simple, direct language.
-      13. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others. Keep the background from the previous prompt if unchanged.
-      14. Keep the response within #{@conversation.user.prompt_limit} characters
+      10. PRESENT-STATE ONLY: Never write about changes over time. Do not use temporal or comparative phrasing such as "no longer", "still", "now", "currently", "used to", "remains", "continues". Instead, state the resulting current state directly. Examples: "cheeks are no longer flushed" → "cheeks have a normal color"; "no longer wearing a jacket" → omit the jacket and describe the current outfit.
+      11. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
+      12. Do not describe actions or sounds.
+      13. Do not use poetic language. Use simple, direct language.
+      14. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others. Keep the background from the previous prompt if unchanged.
+      15. Keep the response within #{@conversation.user.prompt_limit} characters
 
       Return the updated prompt as a single, detailed image generation prompt in under 1500 characters.
     PROMPT
@@ -222,6 +229,33 @@ class AiPromptGenerationService
       trigger: trigger,
       character_count: prompt.length,
     )
+  end
+
+  # Ensure the final prompt expresses only present visual state (no temporal/negation phrasing)
+  def enforce_present_state(description)
+    begin
+      rewritten = ChatCompletionJob.perform_now(@conversation.user, [
+        {
+          role: "system",
+          content: <<~SYS,
+            Rewrite the user's scene description to express ONLY the present visual state.
+            - Remove temporal/comparative phrasing (e.g., "no longer", "still", "now", "currently", "used to", "remains", "continues").
+            - Do not describe changes; only the resulting state should be described.
+            - If something is absent, either omit it or describe what is visible instead.
+            - Preserve the meaning faithfully. Do not add new details.
+            - Return just the rewritten description, under 1500 characters.
+          SYS
+        },
+        {
+          role: "user",
+          content: description,
+        },
+      ], { temperature: 0.1 })
+      rewritten.presence || description
+    rescue => e
+      Rails.logger.error "Failed to enforce present-state rewrite: #{e.message}"
+      description
+    end
   end
 
   # Get character's appearance details by asking them directly
