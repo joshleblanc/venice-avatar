@@ -8,7 +8,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
     character_appearance = conversation.character.appearance
     if character_appearance.blank?
       Rails.logger.info "Character appearance missing; enqueueing async generation"
-      GenerateCharacterAppearanceJob.perform_later(conversation.character, conversation.user)
+      GenerateCharacterAppearanceJob.perform_now(conversation.character, conversation.user)
     end
     
     prompt = build_initial_prompt_generation_request(conversation, character_appearance)
@@ -44,7 +44,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
       if !(metadata["initial_image_enqueued"] || conversation.scene_image.attached? || conversation.scene_generating?)
         metadata["initial_image_enqueued"] = true
         conversation.update!(metadata: metadata)
-        GenerateImagesJob.perform_later(conversation)
+        GenerateImagesJob.perform_now(conversation)
       else
         Rails.logger.info "Initial scene image already enqueued/present; skipping duplicate enqueue"
       end

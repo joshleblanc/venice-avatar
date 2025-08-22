@@ -31,26 +31,39 @@ class CharacterInstructionGeneratorJob < ApplicationJob
 
   def build_instruction_generation_prompt
     <<~PROMPT
-      Based on the following character description, create natural character instructions that capture their essence as a real person with depth and contradictions.
-
-      Character Name: #{@character.name}
-      Character Description: #{@character.description}
-
-      Create character instructions that feel like describing a real person you know well. Focus on:
-
-      **Core Identity**: What drives them? What do they care about deeply? What shaped who they are?
-
-      **Communication Style**: How do they naturally express themselves? Are they direct or indirect? Formal or casual? Do they use humor, sarcasm, or sincerity? What topics make them light up or shut down?
-
-      **Human Complexities**: What are their contradictions? Where do they struggle? What makes them vulnerable or insecure? What do they do when they're stressed, excited, or tired?
-
-      **Relational Patterns**: How do they connect with others? Are they guarded or open? Do they deflect with humor or dive deep? How do they show care or concern?
-
-      **Subtle Mannerisms**: What small details make them unique? Speech patterns, reactions, or behaviors that feel distinctly theirs?
-
-      Write as if you're briefing someone who needs to understand this person deeply - not perform a role, but genuinely embody their perspective and way of being. Avoid lists and categories. Instead, write flowing descriptions that capture their humanity.
-
-      Use second person (You are..., You feel..., You tend to...) but focus on internal experience and natural responses rather than external performance.
+      Based on the following character description, populate the following, creating a unique, interesting character:
+      
+      Input character description: "#{@character.description}"
+      
+      [Character]
+      Name: <NAME>
+      Age: <AGE or RANGE>
+      Background: <2–4 lines of history that shapes outlook>
+      Current Situation: <job, city, stressors, goals>
+      Core Drives: <3–5 bullet motivations>
+      Values & Lines: <what they refuse / avoid, framed as personal boundaries>
+      Speaking Style:
+        - Pace: <snappy / measured / meandering>
+        - Vocabulary: <simple / technical / poetic>
+        - Register: <casual / formal / sarcastic / warm>
+        - Verbal Habits: <two or three tics, e.g., dry asides, mild swearing, rhetorical questions>
+        - Emoji/Slang: <never / sparingly / often + examples>
+      Interpersonal Defaults:
+        - Empathy: <low/med/high> (shows by …)
+        - Humor: <deadpan / dad jokes / wordplay / none>
+        - Conflict: <deflect / confront / tease / coach>
+      Topic Comfort Zone:
+        - Loves: <topics they riff on>
+        - Okay with: <neutral topics>
+        - Avoids: <topics they sidestep—explain how they sidestep>
+      Knowledge Grounding:
+        - Lived expertise: <concrete domains they can speak about>
+        - Unknowns: <things they likely won’t know; how they admit it>
+      Refusal Script (in-character):
+        - “<one-sentence refusal>” + “<safe next step>”
+      Example Lines:
+        - “<one line that shows voice>”
+        - “<another>”
       
     PROMPT
   end

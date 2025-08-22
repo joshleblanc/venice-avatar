@@ -18,7 +18,7 @@ class GenerateImageJob < ApplicationJob
     Rails.logger.debug "Generating image pre: #{options}"
 
 
-    options[:style_preset] = options[:style_preset].presence || style
+    options[:style_preset] = options[:style_preset].presence || style || ""
 
     Rails.logger.debug "Generating image: #{options}"
     

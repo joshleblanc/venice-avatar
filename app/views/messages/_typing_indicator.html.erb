@@ -2,7 +2,13 @@
   <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-white text-gray-800 shadow-sm border">
     <div class="flex items-center mb-1">
       <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-2">
-        <span class="text-purple-600 text-xs font-bold"><%= character.name.first %></span>
+        <% if character.avatar.attached? %>
+          <%= image_tag character.avatar, class: "w-full h-full object-cover" %>
+        <% else %>
+          <div class="w-full h-full bg-purple-100 flex items-center justify-center">
+            <span class="text-purple-600 text-xs font-bold"><%= character.name.first %></span>
+          </div>
+        <% end %>      
       </div>
       <span class="text-xs text-gray-500"><%= character.name %></span>
     </div>

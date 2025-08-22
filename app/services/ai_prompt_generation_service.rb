@@ -61,8 +61,9 @@ class AiPromptGenerationService
         temperature: 0.3,  # Lower temperature for consistency
       })
 
-      # Enforce present-state description (no temporal/negation phrasing)
-      evolved_prompt = enforce_present_state(evolved_prompt)
+      # Enforce present-state description (no temporal/negation phrasing),
+      # preserving unchanged descriptors from the previous prompt
+      evolved_prompt = enforce_present_state(evolved_prompt, previous_prompt)
 
       Rails.logger.info "Evolved scene prompt: #{evolved_prompt}"
 
@@ -195,6 +196,8 @@ class AiPromptGenerationService
       3. Maintain the same art style and quality specifications
       4. If no visual changes to the character are needed, return the previous prompt unchanged
       5. Make changes subtle and natural - avoid dramatic shifts
+      5a. VERBATIM PRESERVATION: Copy unchanged parts of the PREVIOUS SCENE PROMPT exactly as written. Do NOT paraphrase unchanged elements.
+      5b. Elements that MUST remain verbatim unless explicitly contradicted by the new message: numbers (ages, measurements like 5'2"), colors, proper nouns/place names (e.g., El Dorado), clothing items and accessories with their colors, face/body descriptors (e.g., "heart-shaped face", "full pink lips", "thick thighs"), and background descriptors (e.g., "maize fields", "stepped pyramids", "grand plazas").
       6. Changes to the character should replace the previous character description. For example, if the previous prompt says the character is sad, and the new message says she's screaming in rage, the description of her being sad should be replaced. The new emotion should not be appended.
       7. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
       8. Limit Verbosity and Emotional Verbs Ask the model to avoid:
@@ -232,9 +235,9 @@ class AiPromptGenerationService
   end
 
   # Ensure the final prompt expresses only present visual state (no temporal/negation phrasing)
-  def enforce_present_state(description)
+  def enforce_present_state(description, previous_prompt = nil)
     begin
-      rewritten = ChatCompletionJob.perform_now(@conversation.user, [
+      messages = [
         {
           role: "system",
           content: <<~SYS,
@@ -243,14 +246,17 @@ class AiPromptGenerationService
             - Do not describe changes; only the resulting state should be described.
             - If something is absent, either omit it or describe what is visible instead.
             - Preserve the meaning faithfully. Do not add new details.
+            - If a PREVIOUS PROMPT is provided, preserve unchanged descriptors verbatim from it: numbers, measurements (e.g., 5'2"), colors, proper nouns/place names (e.g., El Dorado), clothing items/accessories, and body/face descriptors (e.g., "heart-shaped face", "full pink lips", "thick thighs").
             - Return just the rewritten description, under 1500 characters.
           SYS
         },
-        {
-          role: "user",
-          content: description,
-        },
-      ], { temperature: 0.1 })
+      ]
+      if previous_prompt.present?
+        messages << { role: "user", content: "PREVIOUS PROMPT (for preservation):\n#{previous_prompt}" }
+      end
+      messages << { role: "user", content: "CURRENT DESCRIPTION TO REWRITE:\n#{description}" }
+
+      rewritten = ChatCompletionJob.perform_now(@conversation.user, messages, { temperature: 0.1 })
       rewritten.presence || description
     rescue => e
       Rails.logger.error "Failed to enforce present-state rewrite: #{e.message}"
