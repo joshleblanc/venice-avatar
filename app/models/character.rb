@@ -30,12 +30,12 @@ class Character < ApplicationRecord
     character_instructions.present?
   end
 
-  def generate_avatar_later
-    GenerateCharacterAvatarJob.perform_later(self)
+  def generate_avatar_later(user)
+    GenerateCharacterAvatarJob.perform_later(self, user)
   end
 
-  def generate_appearance_later
-    GenerateCharacterAppearanceJob.perform_later(self)
+  def generate_appearance_later(user)
+    GenerateCharacterAppearanceJob.perform_later(self, user)
   end
 
   def avatar_url

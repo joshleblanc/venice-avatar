@@ -1,9 +1,9 @@
 class CharacterInstructionGeneratorJob < ApplicationJob
   queue_as :default
 
-  def perform(character)
+  def perform(character, user)
     @character = character
-    @user = character.user
+    @user = user
 
     Rails.logger.info "Starting character instruction generation for: #{@character.name}"
 

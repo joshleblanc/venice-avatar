@@ -1,7 +1,7 @@
 class GenerateCharacterAppearanceJob < ApplicationJob
   queue_as :default
 
-  def perform(character)
+  def perform(character, user)
 
     # Skip if appearance already exists
     return if character.appearance.present?
@@ -9,7 +9,7 @@ class GenerateCharacterAppearanceJob < ApplicationJob
     Rails.logger.info "Generating appearance description for character: #{character.name}"
 
     begin
-      appearance_description = ChatCompletionJob.perform_now(character.user, [
+      appearance_description = ChatCompletionJob.perform_now(user, [
         {
           role: "system",
           content: build_appearance_generation_instructions,
@@ -26,7 +26,7 @@ class GenerateCharacterAppearanceJob < ApplicationJob
       character.update!(appearance: appearance_description)
       Rails.logger.info "Successfully generated and stored appearance for character: #{character.name}"
 
-      GenerateCharacterAvatarJob.perform_later(character)
+      GenerateCharacterAvatarJob.perform_later(character, user)
     rescue => e
       Rails.logger.error "Failed to generate character appearance: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

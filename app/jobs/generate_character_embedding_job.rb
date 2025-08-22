@@ -1,6 +1,6 @@
 class GenerateCharacterEmbeddingJob < ApplicationJob
-  def perform(model)
-    embedding = GenerateEmbeddingJob.perform_now(model.user, "#{model.name}: #{model.description}")
+  def perform(model, user)
+    embedding = GenerateEmbeddingJob.perform_now(user, "#{model.name}: #{model.description}")
 
     model.update(embedding: embedding)
   end

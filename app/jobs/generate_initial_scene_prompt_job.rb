@@ -8,7 +8,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
     character_appearance = conversation.character.appearance
     if character_appearance.blank?
       Rails.logger.info "Character appearance missing; enqueueing async generation"
-      GenerateCharacterAppearanceJob.perform_later(conversation.character)
+      GenerateCharacterAppearanceJob.perform_later(conversation.character, conversation.user)
     end
     
     prompt = build_initial_prompt_generation_request(conversation, character_appearance)
@@ -110,7 +110,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
       # Store appearance on character for future use
       if conversation.character.appearance.blank?
         conversation.character.update!(appearance: appearance_details)
-        conversation.character.generate_avatar_later if conversation.character.user.present?
+        conversation.character.generate_avatar_later(conversation.user)
       end
 
       appearance_details

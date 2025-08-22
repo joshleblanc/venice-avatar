@@ -25,7 +25,7 @@ class CharactersController < ApplicationController
       user: current_user,
       generating: true,
     )
-    GenerateCharacterJob.perform_later(@character)
+    GenerateCharacterJob.perform_later(@character, current_user)
 
     respond_to do |format|
       if @character
@@ -52,8 +52,8 @@ class CharactersController < ApplicationController
 
     respond_to do |format|
       if @character.save
-        CharacterInstructionGeneratorJob.perform_later(@character)
-        @character.generate_appearance_later
+        CharacterInstructionGeneratorJob.perform_later(@character, current_user)
+        @character.generate_appearance_later(current_user)
 
         format.html { redirect_to @character, notice: "Character was successfully created." }
         format.json { render :show, status: :created, location: @character }

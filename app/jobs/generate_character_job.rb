@@ -4,9 +4,9 @@ class GenerateCharacterJob < ApplicationJob
     character&.destroy if character&.persisted?
   end
 
-  def perform(character, similar_characters = [])
+  def perform(character, user, similar_characters = [])
     @character = character
-    @user = character.user
+    @user = user
     @similar_characters = similar_characters
 
     Rails.logger.info "Generating automatic character"
@@ -20,20 +20,20 @@ class GenerateCharacterJob < ApplicationJob
       slug: generate_unique_slug(character_concept[:name]),
     })
 
-    embedding = GenerateEmbeddingJob.perform_now(character.user, "#{character.name}: #{character.description}")
+    embedding = GenerateEmbeddingJob.perform_now(@user, "#{character.name}: #{character.description}")
     character.embedding = embedding
     character.save!
 
     similar_character = Character.nearest_neighbors(:embedding, embedding, distance: "cosine").first
     if similar_character.present? && similar_character.neighbor_distance < 0.5 && similar_character != character
       @similar_characters << "#{similar_character.name}: #{similar_character.description}"
-      return GenerateCharacterJob.perform_now(@character, @similar_characters)
+      return GenerateCharacterJob.perform_now(@character, @user, @similar_characters)
     end
 
-    GenerateCharacterAppearanceJob.perform_later(character)
+    GenerateCharacterAppearanceJob.perform_later(character, @user)
 
     # Generate detailed personality instructions
-    CharacterInstructionGeneratorJob.perform_later(character)
+    CharacterInstructionGeneratorJob.perform_later(character, @user)
     Rails.logger.info "Auto-generated character: #{character.name}"
     character
   end

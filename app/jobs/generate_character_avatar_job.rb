@@ -1,8 +1,8 @@
 class GenerateCharacterAvatarJob < ApplicationJob
-  limits_concurrency to: 1, key: ->(character) { character }
+  limits_concurrency to: 1, key: ->(character, *_rest) { character }
   queue_as :default
 
-  def perform(character)
+  def perform(character, user)
     # Skip if avatar already exists
     return if character.avatar.attached?
 
@@ -15,7 +15,7 @@ class GenerateCharacterAvatarJob < ApplicationJob
     prompt = build_headshot_prompt_from_appearance(character)
 
     begin
-      base64_data = GenerateImageJob.perform_now(character.user, prompt, {
+      base64_data = GenerateImageJob.perform_now(user, prompt, {
         width: 512,
         height: 512,
       })
