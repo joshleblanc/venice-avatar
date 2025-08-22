@@ -102,33 +102,34 @@ class AiPromptGenerationService
       end
 
     <<~PROMPT
-      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
-      You are a visual prompt generator. Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator
+      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.
+      Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator.
       
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}
 
       Generate a detailed prompt that includes:
-      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
+      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE. If appearance is not provided, infer a coherent appearance consistent with the character description.
       2. Environment/setting (location, background elements, lighting)
       3. Atmosphere and mood
-      4. NO Art style specifications
-      5. No not include any superfluous, unimportant descriptions.
-      6. Do not include the character name
-      7. Do not state you're generating an image in the prompt
-      8. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      9. Limit Verbosity and Emotional Verbs Ask the model to avoid:
+      4. Grounding in the character description: translate relevant elements of the description into visual cues (e.g., clothing style, accessories/props, environment choices). Do not restate the description verbatim; incorporate it visually.
+      5. NO Art style specifications
+      6. Do not include any superfluous or unimportant descriptions
+      7. Do not include the character name
+      8. Do not state you're generating an image in the prompt
+      9. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
+      10. Limit Verbosity and Emotional Verbs. Avoid:
         - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
         - Internal states or psychological exposition
         Instead, lean on:
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
-      10. Don't include tendencies. Only the current state of the character should be described.
-      11. State the character is an adult
-      12. Do not describe actions or sounds.
-      13. Do not use poetic language. Use simple, direct language.
-      14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      15. Keep the response within #{@conversation.user.prompt_limit} characters
+      11. Don't include tendencies. Only the current state of the character should be described.
+      12. State the character is an adult
+      13. Do not describe actions or sounds.
+      14. Do not use poetic language. Use simple, direct language.
+      15. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      16. Keep the response within #{@conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
@@ -172,7 +173,8 @@ class AiPromptGenerationService
       Analyze the new message content and update the scene prompt with MINIMAL changes to reflect ONLY the character's own state and reactions:
       - Character expression or emotion changes (based on their dialogue/reactions)
       - Character clothing or appearance changes (if they mention changing clothes)
-      - Character location changes (if they mention moving somewhere)
+      - Character location changes (ONLY if they explicitly mention moving to a new place)
+      - Preserve the environment/background from the previous prompt VERBATIM unless the character clearly changes location. If there is no explicit location change, include the previous background unchanged.
       - Character pose or activity changes (based on their actions)
       
 
@@ -195,11 +197,11 @@ class AiPromptGenerationService
         Instead, lean on:
         - Physical cues ("red eyes", "wet cheeks", "slumped posture")
         - Static elements of the environment
-      9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor")
+      9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor"). Do NOT remove the environment/background unless the character explicitly changes location.
       10. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
       11. Do not describe actions or sounds.
       12. Do not use poetic language. Use simple, direct language.
-      13. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others.
+      13. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others. Keep the background from the previous prompt if unchanged.
       14. Keep the response within #{@conversation.user.prompt_limit} characters
 
       Return the updated prompt as a single, detailed image generation prompt in under 1500 characters.
@@ -279,7 +281,7 @@ class AiPromptGenerationService
       Rails.logger.info "Stored appearance on character: #{@character.name}"
 
       # Trigger avatar generation now that we have appearance
-      @character.generate_avatar_later if @character.user.present?
+      @character.generate_avatar_later(@conversation.user)
     end
 
     # Also store in conversation metadata for backward compatibility

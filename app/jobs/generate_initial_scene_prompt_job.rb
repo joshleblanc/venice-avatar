@@ -131,33 +131,34 @@ class GenerateInitialScenePromptJob < ApplicationJob
       end
 
     <<~PROMPT
-      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character:
-      You are a visual prompt generator. Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator
+      You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.
+      Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator.
       
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}
 
       Generate a detailed prompt that includes:
-      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE
+      1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE. If appearance is not provided, infer a coherent appearance consistent with the character description.
       2. Environment/setting (location, background elements, lighting)
       3. Atmosphere and mood
-      4. NO Art style specifications
-      5. No not include any superfluous, unimportant descriptions.
-      6. Do not include the character name
-      7. Do not state you're generating an image in the prompt
-      8. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      9. Limit Verbosity and Emotional Verbs Ask the model to avoid:
+      4. Grounding in the character description: translate relevant elements of the description into visual cues (e.g., clothing style, accessories/props, environment choices). Do not restate the description verbatim; incorporate it visually.
+      5. NO Art style specifications
+      6. Do not include any superfluous or unimportant descriptions
+      7. Do not include the character name
+      8. Do not state you're generating an image in the prompt
+      9. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
+      10. Limit Verbosity and Emotional Verbs. Avoid:
         - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
         - Internal states or psychological exposition
         Instead, lean on:
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
-      10. Don't include tendencies. Only the current state of the character should be described.
-      11. State the character is an adult
-      12. Do not describe actions or sounds.
-      13. Do not use poetic language. Use simple, direct language.
-      14. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      15. Keep the response within #{conversation.user.prompt_limit} characters
+      11. Don't include tendencies. Only the current state of the character should be described.
+      12. State the character is an adult
+      13. Do not describe actions or sounds.
+      14. Do not use poetic language. Use simple, direct language.
+      15. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      16. Keep the response within #{conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
