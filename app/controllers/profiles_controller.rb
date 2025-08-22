@@ -1,5 +1,5 @@
 class ProfilesController < ApplicationController
-  before_action :load_available_models, only: [:edit, :update]
+  before_action :load_available_traits_and_styles, only: [:edit, :update]
 
   def show
     @user = Current.user
@@ -34,26 +34,26 @@ class ProfilesController < ApplicationController
     params.require(:user).permit(:timezone, :safe_mode, :preferred_image_style, :venice_key, :preferred_image_model, :preferred_text_model)
   end
 
-  def load_available_models
+  def load_available_traits_and_styles
     begin
-      # Fetch text models
-      text_models_response = FetchModelsJob.perform_now(Current.user, "text")
-      @text_models = text_models_response.map do |model|
-        if model.id == "venice-uncensored"
-          ["#{model.model_spec.name} (Default)", model.id]
-        else
-          [model.model_spec.name, model.id]
-        end
-      end
+      # Fetch traits for text and image
+      text_traits = FetchTraitsJob.perform_now(Current.user, "text") || {}
+      image_traits = FetchTraitsJob.perform_now(Current.user, "image") || {}
 
-      # Fetch image models
-      image_models_response = FetchModelsJob.perform_now(Current.user, "image")
-      @image_models = image_models_response.map do |model|
-        if model.id == "hidream"
-          ["#{model.model_spec.name} (Default)", model.id]
-        else
-          [model.model_spec.name, model.id]
-        end
+      # Build options: label by trait name, value is trait key
+      @text_traits = text_traits.keys.map { |k| [k.to_s.titleize, k] }
+      @image_traits = image_traits.keys.map { |k| [k.to_s.titleize, k] }
+
+      # Determine selected trait: if current value is a model id, remap to trait key when possible
+      @selected_text_trait = if Current.user.preferred_text_model.present?
+        text_traits.key(Current.user.preferred_text_model) || Current.user.preferred_text_model
+      else
+        ""
+      end
+      @selected_image_trait = if Current.user.preferred_image_model.present?
+        image_traits.key(Current.user.preferred_image_model) || Current.user.preferred_image_model
+      else
+        ""
       end
 
       image_styles_response = FetchImageStylesJob.perform_now(Current.user)
@@ -67,10 +67,10 @@ class ProfilesController < ApplicationController
       @image_styles << ["None", ""]
     rescue => e
       Rails.logger.error "Failed to fetch models from Venice API: #{e.message}"
-      @text_models = []
-      @image_models = []
+      @text_traits = []
+      @image_traits = []
       @image_styles = []
-      flash.now[:alert] = "Unable to load available models. Please try again later."
+      flash.now[:alert] = "Unable to load available traits. Please try again later."
     end
   end
 end

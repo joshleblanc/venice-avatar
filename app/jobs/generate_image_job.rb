@@ -7,7 +7,7 @@ class GenerateImageJob < ApplicationJob
     style = user.image_style 
 
     options = {
-      model: user.preferred_image_model || "hidream",
+      model: user.image_model,
       prompt: prompt.first(user.prompt_limit),
       safe_mode: user.safe_mode,
       format: "png",

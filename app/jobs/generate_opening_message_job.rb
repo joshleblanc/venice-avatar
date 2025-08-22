@@ -34,7 +34,7 @@ class GenerateOpeningMessageJob < ApplicationJob
           role: "user",
           content: opening_prompt,
         },
-      ], options, conversation.user.preferred_text_model)
+      ], options, conversation.user.text_model)
 
       # Create the character's opening message
       conversation.messages.create!(

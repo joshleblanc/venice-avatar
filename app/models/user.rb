@@ -19,7 +19,7 @@ class User < ApplicationRecord
   end
 
   def prompt_limit
-    if preferred_image_model.include?("flux")
+    if image_model.include?("flux")
       2048
     else
       1500
@@ -46,6 +46,25 @@ class User < ApplicationRecord
       nil
     else
       preferred_image_style
+    end
+  end
+
+  def text_model
+    traits = FetchTraitsJob.perform_now(self, "text") || {}
+    if preferred_text_model.present?
+      # Allow storing either a trait key or a raw model id
+      traits[preferred_text_model] || preferred_text_model
+    else
+      traits["default"]
+    end
+  end
+
+  def image_model
+    traits = FetchTraitsJob.perform_now(self, "image") || {}
+    if preferred_image_model.present?
+      traits[preferred_image_model] || preferred_image_model
+    else
+      traits["default"]
     end
   end
 

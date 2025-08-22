@@ -43,27 +43,27 @@
         </div>
         
         <div>
-          <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_text_model, "Preferred Text Trait", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_text_model,
-                          options_for_select(@text_models, @user.preferred_text_model),
-                          { prompt: "Use default text model" },
+                          options_for_select(@text_traits, @selected_text_trait),
+                          { prompt: "Use default text trait" },
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">Choose your preferred model for character conversations.</p>
+          <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>
         </div>
         
         <div>
-          <%= form.label :preferred_image_model, "Preferred Image Model", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_image_model, "Preferred Image Trait", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_image_model,
-                          options_for_select(@image_models, @user.preferred_image_model),
-                          { prompt: "Use default image model" },
+                          options_for_select(@image_traits, @selected_image_trait),
+                          { prompt: "Use default image trait" },
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">Choose your preferred model for scene image generation.</p>
+          <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>
         </div>
 
         <div>
           <%= form.label :preferred_image_style, "Preferred Image Style", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_image_style,
-                          options_for_select(@image_styles, @user.preferred_image_style),
+                          options_for_select(@image_styles, @user.image_style),
                           { prompt: "Use default image style" },
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">Choose your preferred style for scene image generation.</p>

@@ -44,20 +44,20 @@
           <div>
             <dt class="text-sm font-medium text-gray-500">Preferred Text Model</dt>
             <dd class="mt-1 text-sm text-gray-900">
-              <%= @user.preferred_text_model.present? ? @user.preferred_text_model : "Default" %>
+              <%= @user.preferred_text_model.titleize %>
             </dd>
           </div>
           <div>
             <dt class="text-sm font-medium text-gray-500">Preferred Image Model</dt>
             <dd class="mt-1 text-sm text-gray-900">
-              <%= @user.preferred_image_model.present? ? @user.preferred_image_model : "Default" %>
+              <%= @user.preferred_image_model.titleize %>
             </dd>
           </div>
 
           <div>
             <dt class="text-sm font-medium text-gray-500">Preferred Image Style</dt>
             <dd class="mt-1 text-sm text-gray-900">
-              <%= @user.preferred_image_style.present? ? @user.preferred_image_style : "Default" %>
+              <%= @user.image_style %>
             </dd>
           </div>
 

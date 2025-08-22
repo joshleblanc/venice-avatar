@@ -145,6 +145,6 @@ class GenerateChatResponseJob < ApplicationJob
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
 
-    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.preferred_text_model) || "I'm sorry, I couldn't respond right now."
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.text_model) || "I'm sorry, I couldn't respond right now."
   end
 end
