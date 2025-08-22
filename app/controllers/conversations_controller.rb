@@ -19,6 +19,19 @@ class ConversationsController < ApplicationController
     # end
   end
 
+  def regenerate_scene
+    @conversation = Conversation.find(params[:id])
+    authorize @conversation
+
+    GenerateImagesJob.perform_later(@conversation)
+
+    respond_to do |format|
+      format.html { redirect_to @conversation, notice: "Regenerating scene image" }
+      format.turbo_stream { head :ok }
+      format.json { head :accepted }
+    end
+  end
+
   def create
     authorize Conversation
     @conversation = Conversation.new(character: @character)

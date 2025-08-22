@@ -49,6 +49,14 @@
             <% end %>
           </div>
         <% end %>
+
+        <div class="flex justify-center">
+          <%= button_to "Regenerate Image",
+                        regenerate_scene_conversation_path(conversation),
+                        method: :post,
+                        class: "mt-2 bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 transition-colors disabled:opacity-50",
+                        disabled: conversation.scene_generating || !conversation.user.venice_key_valid? %>
+        </div>
       </div>
     </div>
   </div>

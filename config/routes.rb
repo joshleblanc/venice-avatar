@@ -10,6 +10,9 @@ Rails.application.routes.draw do
   resources :venice_characters, only: [:index]
 
   resources :conversations, only: [:index, :show] do
+    member do
+      post :regenerate_scene
+    end
     resources :messages, only: [:create]
   end
 
