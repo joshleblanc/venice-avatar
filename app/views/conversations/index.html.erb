@@ -5,7 +5,8 @@
     <div class="mt-12">
       <div class="space-y-4">
         <% @conversations.each do |conversation| %>
-          <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
+          <%= turbo_stream_from conversation %>
+          <div id="<%= dom_id(conversation) %>" class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
             <div class="flex justify-between items-start">
               <div>
                 <h3 class="text-lg font-semibold"><%= conversation.character.name %></h3>
@@ -14,12 +15,19 @@
                   Last updated <%= time_ago_in_words(conversation.updated_at) %> ago
                 </p>
               </div>
-              <% if conversation.user.venice_key_valid? %>
-                <%= link_to "Continue", conversation_path(conversation),
-                            class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors disabled:opacity-50", disabled: !conversation.user.venice_key_valid? %>
-              <% else %>
-                <span class="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition-colors disabled:opacity-50">Invalid Venice Key</span>
-              <% end %>
+              <div class="flex items-center gap-2">
+                <% if conversation.user.venice_key_valid? %>
+                  <%= link_to "Continue", conversation_path(conversation),
+                              class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors disabled:opacity-50", disabled: !conversation.user.venice_key_valid? %>
+                <% else %>
+                  <span class="bg-red-600 text-white py-2 px-4 rounded transition-colors disabled:opacity-50">Invalid Venice Key</span>
+                <% end %>
+                <%= button_to "Delete",
+                              conversation_path(conversation),
+                              method: :delete,
+                              form: { data: { turbo_confirm: "Delete this conversation?" } },
+                              class: "bg-white text-red-600 border border-red-200 px-3 py-2 rounded hover:bg-red-50" %>
+              </div>
             </div>
           </div>
         <% end %>

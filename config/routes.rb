@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   # Separate index for Venice-provided characters
   resources :venice_characters, only: [:index]
 
-  resources :conversations, only: [:index, :show] do
+  resources :conversations, only: [:index, :show, :destroy] do
     member do
       post :regenerate_scene
       patch :image_style

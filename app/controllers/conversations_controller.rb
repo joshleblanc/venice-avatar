@@ -74,6 +74,17 @@ class ConversationsController < ApplicationController
     end
   end
 
+  def destroy
+    conversation = Conversation.find(params[:id])
+    authorize conversation
+    conversation.destroy!
+
+    respond_to do |format|
+      format.html { redirect_to conversations_path, notice: "Conversation deleted" }
+      format.json { head :no_content }
+    end
+  end
+
   private
 
   def set_conversation

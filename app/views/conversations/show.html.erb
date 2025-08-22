@@ -4,8 +4,15 @@
   <!-- Chat Panel (Left Side) -->
   <div class="flex-1 flex flex-col">
     <!-- Header -->
-    <%= link_to "← Back to Conversations", conversations_path,
-                class: "text-blue-600 hover:text-blue-800" %>
+    <div class="flex items-center justify-between">
+      <%= link_to "← Back to Conversations", conversations_path,
+                  class: "text-blue-600 hover:text-blue-800" %>
+      <%= button_to "Delete Conversation",
+                    conversation_path(@conversation),
+                    method: :delete,
+                    form: { data: { turbo_confirm: "Delete this conversation?" } },
+                    class: "text-red-600 border border-red-200 px-3 py-1.5 rounded hover:bg-red-50" %>
+    </div>
     <div class="bg-white shadow-sm p-4 border-b">
       <div class="flex items-center justify-between">
         <div>
@@ -148,5 +155,4 @@
         
       </div>
     <% end %>
-
 
