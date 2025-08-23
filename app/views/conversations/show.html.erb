@@ -1,6 +1,6 @@
 <%= turbo_stream_from @conversation %>
 
-<div class="h-screen flex flex-1 bg-gray-100" data-controller="messages" data-messages-container-target="container">
+<div class="min-h-screen md:h-screen flex flex-col md:flex-row flex-1 bg-gray-100" data-controller="messages" data-messages-container-target="container">
   <!-- Chat Panel (Left Side) -->
   <div class="flex-1 flex flex-col">
     <!-- Header -->
@@ -59,7 +59,7 @@
   </div>
 
   <!-- Character Display Panel (Right Side) -->
-  <div class="w-96 bg-white shadow-lg" id="character-display">
+  <div class="w-full md:w-96 bg-white shadow-lg mt-4 md:mt-0" id="character-display">
     <%= render "character_display", conversation: @conversation %>
   </div>
 </div>
@@ -155,4 +155,3 @@
         
       </div>
     <% end %>
-

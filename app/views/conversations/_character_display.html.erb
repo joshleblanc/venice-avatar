@@ -1,14 +1,14 @@
-<div class="h-full flex flex-col">
+<div class="md:h-full flex flex-col">
   <!-- Visual Novel Scene Area -->
-  <div class="flex-1 relative bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col">
+  <div class="md:flex-1 relative bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col">
     <!-- Scene Image Container -->
-    <div class="flex-1 flex items-center justify-center relative">
+    <div class="md:flex-1 flex items-center justify-center relative min-h-[240px]">
       <% scene_image = conversation.last_scene_image %>
       
       <% if scene_image %>
         <%= image_tag scene_image,
                       alt: "#{conversation.character.name} scene",
-                      class: "max-w-full max-h-full object-contain object-cover" %>
+                      class: "max-w-full max-h-full object-contain" %>
       <% else %>
         <!-- Initial Generation - Vertically Centered -->
         <div class="flex items-center justify-center">
