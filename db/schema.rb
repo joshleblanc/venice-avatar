@@ -155,7 +155,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_10_165029) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "timezone"
-    t.string "preferred_image_model", default: "flux-dev-uncensored-11"
+    t.string "preferred_image_model", default: "hidream"
     t.string "preferred_text_model", default: "venice-uncensored"
     t.string "preferred_image_style", default: "Anime"
     t.string "venice_key"
