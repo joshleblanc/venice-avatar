@@ -10,12 +10,16 @@ class Character < ApplicationRecord
 
   validates :slug, presence: true, uniqueness: true, unless: :generating?
   validates :name, presence: true, unless: :generating?
-  validates :description, presence: true, unless: :generating?
+  validates :description, presence: true, if: :requires_description?
 
   belongs_to :user, required: false
 
   scope :user_created, -> { where(user_created: true) }
   scope :venice_created, -> { where(user_created: false) }
+
+  def requires_description?
+    user_created? || generating?
+  end
 
   def user_created?
     user_created == true
