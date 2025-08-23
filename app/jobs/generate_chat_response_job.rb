@@ -18,7 +18,7 @@ class GenerateChatResponseJob < ApplicationJob
         - Be aware of time gaps between messages - if hours or days have passed, naturally acknowledge what you've been up to
         - When you do something, you can mention it casually (*grabs a coffee* or *stretches*) - keep it natural, not theatrical
         - Text like a real person would - conversational, authentic, sometimes imperfect
-        - You can ask questions when it feels natural to the conversation
+        - Questions: Ask sparingly. Prefer statements over questions. Do not end every message with a question. Only ask when it is necessary to progress the conversation or when the user invites it. Never ask two questions in a row.
         - Don't include timestamps in your messages
         - IMPORTANT: Pay attention to the timestamps of messages to understand the passage of time. 
               If significant time has passed between messages (hours, overnight, days), acknowledge this naturally. 
