@@ -13,6 +13,7 @@ class Character < ApplicationRecord
   validates :description, presence: true, if: :requires_description?
 
   belongs_to :user, required: false
+  has_many :conversations, dependent: :destroy
 
   scope :user_created, -> { where(user_created: true) }
   scope :venice_created, -> { where(user_created: false) }

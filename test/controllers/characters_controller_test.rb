@@ -3,6 +3,9 @@ require "test_helper"
 class CharactersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @character = characters(:one)
+    @user = users(:one)
+    @character.update!(user: @user)
+    sign_in_as(@user)
   end
 
   test "should get index" do
@@ -17,7 +20,14 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
 
   test "should create character" do
     assert_difference("Character.count") do
-      post characters_url, params: { character: { adult: @character.adult, description: @character.description, external_created_at: @character.external_created_at, external_updated_at: @character.external_updated_at, name: @character.name, share_url: @character.share_url, slug: @character.slug, stats: @character.stats, web_enabled: @character.web_enabled } }
+      post characters_url, params: { character: { 
+        adult: false, 
+        description: "A new test character", 
+        name: "Test Character", 
+        slug: "test-character-unique", 
+        web_enabled: true,
+        user_created: true
+      } }
     end
 
     assert_redirected_to character_url(Character.last)
@@ -34,7 +44,10 @@ class CharactersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update character" do
-    patch character_url(@character), params: { character: { adult: @character.adult, description: @character.description, external_created_at: @character.external_created_at, external_updated_at: @character.external_updated_at, name: @character.name, share_url: @character.share_url, slug: @character.slug, stats: @character.stats, web_enabled: @character.web_enabled } }
+    patch character_url(@character), params: { character: { 
+      description: "Updated description",
+      name: "Updated Name"
+    } }
     assert_redirected_to character_url(@character)
   end
 

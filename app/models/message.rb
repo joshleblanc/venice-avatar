@@ -47,32 +47,36 @@ class Message < ApplicationRecord
   private
 
   def parse_message_content
-    return { clean_text: content, actions_and_thoughts: [] } #if content.blank?
+    return { clean_text: "", actions_and_thoughts: [] } if content.blank?
 
     clean_text = content.dup
     actions_and_thoughts = []
 
     # Extract parenthetical actions like (blushes furiously)
-    clean_text.gsub!(/\(([^)]+)\)/) do |match|
-      actions_and_thoughts << { type: "action", text: $1.strip }
+    clean_text.gsub!(/\(([^)]*)\)/) do |match|
+      text = $1.strip
+      actions_and_thoughts << { type: "action", text: text } unless text.empty?
       "" # Remove from clean text
     end
 
     # Extract bold actions like **looks sternly**
-    clean_text.gsub!(/\*\*([^*]+)\*\*/) do |match|
-      actions_and_thoughts << { type: "action", text: $1.strip }
+    clean_text.gsub!(/\*\*([^*]*)\*\*/) do |match|
+      text = $1.strip
+      actions_and_thoughts << { type: "action", text: text } unless text.empty?
       "" # Remove from clean text
     end
 
     # Extract italic thoughts like *thinks to themselves*
-    clean_text.gsub!(/\*([^*]+)\*/) do |match|
-      actions_and_thoughts << { type: "thought", text: $1.strip }
+    clean_text.gsub!(/\*([^*]*)\*/) do |match|
+      text = $1.strip
+      actions_and_thoughts << { type: "thought", text: text } unless text.empty?
       "" # Remove from clean text
     end
 
     # Extracts square bracket actions like [blushes furiously]
-    clean_text.gsub!(/\[([^\]]+)\]/) do |match|
-      actions_and_thoughts << { type: "action", text: $1.strip }
+    clean_text.gsub!(/\[([^\]]*)\]/) do |match|
+      text = $1.strip
+      actions_and_thoughts << { type: "action", text: text } unless text.empty?
       "" # Remove from clean text
     end
 
