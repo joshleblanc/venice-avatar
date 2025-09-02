@@ -1,0 +1,68 @@
+services:
+  rails-server:
+    name: Rails Server
+    description: The main Rails application server
+    triggeredBy:
+      - postEnvironmentStart
+    commands:
+      start: |
+        export PATH="$HOME/.rbenv/bin:$PATH"
+        eval "$(rbenv init -)"
+        cd /workspaces/venice-avatar
+        bin/rails server -b 0.0.0.0 -p 3000
+      ready: curl -f http://localhost:3000 -s -o /dev/null
+
+  tailwind-watcher:
+    name: Tailwind CSS Watcher
+    description: Watches and compiles Tailwind CSS changes
+    triggeredBy:
+      - postEnvironmentStart
+    commands:
+      start: |
+        export PATH="$HOME/.rbenv/bin:$PATH"
+        eval "$(rbenv init -)"
+        cd /workspaces/venice-avatar
+        bash -c "bin/rails tailwindcss:watch; sleep infinity"
+      ready:  pgrep -f "tailwindcss:watch"
+
+tasks:
+  setup-database:
+    name: Setup Database
+    description: Prepare the database for development
+    triggeredBy:
+      - postEnvironmentStart
+    command: |
+      export PATH="$HOME/.rbenv/bin:$PATH"
+      eval "$(rbenv init -)"
+      cd /workspaces/venice-avatar
+      bin/rails db:prepare
+
+  install-dependencies:
+    name: Install Dependencies
+    description: Install Ruby gems and prepare the application
+    triggeredBy:
+      - postEnvironmentStart
+    command: |
+      export PATH="$HOME/.rbenv/bin:$PATH"
+      eval "$(rbenv init -)"
+      cd /workspaces/venice-avatar
+      bundle install
+
+  run-tests:
+    name: Run Tests
+    description: Run the Rails test suite
+    command: |
+      export PATH="$HOME/.rbenv/bin:$PATH"
+      eval "$(rbenv init -)"
+      cd /workspaces/venice-avatar
+      bin/rails test
+
+  build-assets:
+    name: Build Assets
+    description: Precompile assets for production
+    command: |
+      export PATH="$HOME/.rbenv/bin:$PATH"
+      eval "$(rbenv init -)"
+      cd /workspaces/venice-avatar
+      bin/rails assets:precompile
+
