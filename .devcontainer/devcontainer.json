@@ -1,0 +1,30 @@
+{
+	"name": "Venice Avatar Rails App",
+	"build": {
+        "context": ".",
+        "dockerfile": "Dockerfile"
+    },
+	"postCreateCommand": "export PATH=\"$HOME/.rbenv/bin:$PATH\" && eval \"$(rbenv init -)\" && bundle install && bin/rails db:prepare",
+	"forwardPorts": [3000],
+	"portsAttributes": {
+		"3000": {
+			"label": "Rails Server",
+			"onAutoForward": "notify"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rebornix.Ruby",
+				"Shopify.ruby-lsp",
+				"bradlc.vscode-tailwindcss"
+			],
+			"settings": {
+				"ruby.useLanguageServer": true,
+				"ruby.lint": {
+					"rubocop": true
+				}
+			}
+		}
+	}
+}
