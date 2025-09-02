@@ -31,6 +31,7 @@ tasks:
     description: Prepare the database for development
     triggeredBy:
       - postEnvironmentStart
+      - manual
     command: |
       export PATH="$HOME/.rbenv/bin:$PATH"
       eval "$(rbenv init -)"
@@ -42,6 +43,7 @@ tasks:
     description: Install Ruby gems and prepare the application
     triggeredBy:
       - postEnvironmentStart
+      - manual
     command: |
       export PATH="$HOME/.rbenv/bin:$PATH"
       eval "$(rbenv init -)"
@@ -51,6 +53,8 @@ tasks:
   run-tests:
     name: Run Tests
     description: Run the Rails test suite
+    triggeredBy:
+      - manual
     command: |
       export PATH="$HOME/.rbenv/bin:$PATH"
       eval "$(rbenv init -)"
@@ -60,6 +64,8 @@ tasks:
   build-assets:
     name: Build Assets
     description: Precompile assets for production
+    triggeredBy:
+      - manual
     command: |
       export PATH="$HOME/.rbenv/bin:$PATH"
       eval "$(rbenv init -)"
