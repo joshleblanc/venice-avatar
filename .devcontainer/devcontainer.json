@@ -4,7 +4,6 @@
         "context": ".",
         "dockerfile": "Dockerfile"
     },
-	"postCreateCommand": "export PATH=\"$HOME/.rbenv/bin:$PATH\" && eval \"$(rbenv init -)\" && bundle install && bin/rails db:prepare",
 	"forwardPorts": [3000],
 	"portsAttributes": {
 		"3000": {

@@ -3,7 +3,11 @@
 one:
   email_address: one@example.com
   password_digest: <%= password_digest %>
+  venice_key: "test_key_123456789"
+  venice_key_valid: true
 
 two:
   email_address: two@example.com
   password_digest: <%= password_digest %>
+  venice_key: "test_key_987654321"
+  venice_key_valid: true

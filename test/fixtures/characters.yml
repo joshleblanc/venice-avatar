@@ -3,10 +3,10 @@
 one:
   adult: false
   external_created_at: 2025-06-29 18:41:36
-  description: MyText
-  name: MyString
-  share_url: MyString
-  slug: MyString
+  description: A brave warrior from the northern lands
+  name: Aria the Bold
+  share_url: https://example.com/characters/aria-the-bold
+  slug: aria-the-bold
   stats: 
   external_updated_at: 2025-06-29 18:41:36
   web_enabled: false
@@ -14,10 +14,10 @@ one:
 two:
   adult: false
   external_created_at: 2025-06-29 18:41:36
-  description: MyText
-  name: MyString
-  share_url: MyString
-  slug: MyString
+  description: A wise mage with ancient knowledge
+  name: Eldric the Wise
+  share_url: https://example.com/characters/eldric-the-wise
+  slug: eldric-the-wise
   stats: 
   external_updated_at: 2025-06-29 18:41:36
   web_enabled: false

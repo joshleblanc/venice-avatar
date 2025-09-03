@@ -1,0 +1,37 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+user_message:
+  conversation: one
+  user: one
+  role: "user"
+  content: "Hello there! (waves enthusiastically) How are you doing today?"
+  created_at: <%= 1.day.ago %>
+
+assistant_message:
+  conversation: one
+  user: one
+  role: "assistant"
+  content: "**smiles warmly** I'm doing well, thank you for asking! *thinks about the beautiful weather* What brings you here today?"
+  created_at: <%= 1.day.ago %>
+
+simple_user_message:
+  conversation: two
+  user: one
+  role: "user"
+  content: "Can you teach me magic?"
+  created_at: <%= 2.days.ago %>
+
+complex_assistant_message:
+  conversation: two
+  user: one
+  role: "assistant"
+  content: "[nods sagely] Of course, young one. **gestures to ancient tome** *recalls years of study* Magic requires patience and dedication. (opens book carefully) Let us begin with the basics."
+  created_at: <%= 2.days.ago %>
+
+auto_generated_message:
+  conversation: one
+  user: one
+  role: "assistant"
+  content: "I'll be right back!"
+  metadata: {"auto_generated": true, "reason": "user_stepping_away"}
+  created_at: <%= 1.hour.ago %>
