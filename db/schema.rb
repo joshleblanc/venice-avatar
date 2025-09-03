@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_10_165029) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -155,8 +155,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_10_165029) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "timezone"
-    t.string "preferred_image_model", default: "hidream"
-    t.string "preferred_text_model", default: "venice-uncensored"
+    t.string "preferred_image_model", default: "default"
+    t.string "preferred_text_model", default: "default"
     t.string "preferred_image_style", default: "Anime"
     t.string "venice_key"
     t.boolean "venice_key_valid"
