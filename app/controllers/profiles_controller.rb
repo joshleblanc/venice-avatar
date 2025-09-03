@@ -4,6 +4,10 @@ class ProfilesController < ApplicationController
   def show
     @user = Current.user
     authorize @user
+    
+    # Get the actual model IDs for the selected traits
+    @selected_text_model_id = @user.text_model
+    @selected_image_model_id = @user.image_model
   end
 
   def edit
