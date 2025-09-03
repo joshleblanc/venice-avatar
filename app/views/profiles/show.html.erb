@@ -44,13 +44,19 @@
           <div>
             <dt class="text-sm font-medium text-gray-500">Preferred Text Model</dt>
             <dd class="mt-1 text-sm text-gray-900">
-              <%= @user.preferred_text_model.titleize %>
+              <div class="font-medium"><%= @user.preferred_text_model.present? ? @user.preferred_text_model.titleize : "Default" %></div>
+              <% if @selected_text_model_id.present? %>
+                <div class="text-xs text-gray-600 mt-1">Model: <%= @selected_text_model_id %></div>
+              <% end %>
             </dd>
           </div>
           <div>
             <dt class="text-sm font-medium text-gray-500">Preferred Image Model</dt>
             <dd class="mt-1 text-sm text-gray-900">
-              <%= @user.preferred_image_model.titleize %>
+              <div class="font-medium"><%= @user.preferred_image_model.present? ? @user.preferred_image_model.titleize : "Default" %></div>
+              <% if @selected_image_model_id.present? %>
+                <div class="text-xs text-gray-600 mt-1">Model: <%= @selected_image_model_id %></div>
+              <% end %>
             </dd>
           </div>
 
