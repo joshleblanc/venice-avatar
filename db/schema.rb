@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_03_161100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -37,6 +37,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "character_schedules", force: :cascade do |t|
+    t.integer "character_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.string "schedule_type", null: false
+    t.json "trigger_conditions", null: false
+    t.integer "priority", default: 5, null: false
+    t.boolean "active", default: true, null: false
+    t.json "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["character_id", "active"], name: "index_character_schedules_on_character_id_and_active"
+    t.index ["character_id"], name: "index_character_schedules_on_character_id"
+    t.index ["priority"], name: "index_character_schedules_on_priority"
+    t.index ["schedule_type", "active"], name: "index_character_schedules_on_schedule_type_and_active"
   end
 
   create_table "characters", force: :cascade do |t|
@@ -167,6 +184,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "character_schedules", "characters"
   add_foreign_key "characters", "users"
   add_foreign_key "conversations", "characters"
   add_foreign_key "conversations", "users"
