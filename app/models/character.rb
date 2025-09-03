@@ -14,6 +14,9 @@ class Character < ApplicationRecord
 
   belongs_to :user, required: false
   has_many :conversations, dependent: :destroy
+  has_many :character_schedules, dependent: :destroy
+  
+  after_create :create_default_schedules
 
   scope :user_created, -> { where(user_created: true) }
   scope :venice_created, -> { where(user_created: false) }
@@ -46,5 +49,13 @@ class Character < ApplicationRecord
   def avatar_url
     return nil unless avatar.attached?
     Rails.application.routes.url_helpers.url_for(avatar)
+  end
+  
+  private
+  
+  def create_default_schedules
+    # Create default schedules after character creation
+    CharacterScheduleService.create_default_schedules_for_character(self)
+    CharacterScheduleService.create_personality_based_schedules(self)
   end
 end

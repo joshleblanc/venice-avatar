@@ -4,6 +4,11 @@ Rails.application.routes.draw do
       post :auto_generate
     end
     resources :conversations, only: [:create]
+    resources :character_schedules do
+      member do
+        patch :toggle
+      end
+    end
   end
 
   # Separate index for Venice-provided characters
