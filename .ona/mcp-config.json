@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "github": {
+      "name": "github",
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "ghcr.io/github/github-mcp-server"],
+      "disabled": false,
+      "timeout": 30
+    }
+  }
+}
