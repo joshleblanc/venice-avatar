@@ -10,6 +10,8 @@ class Conversation < ApplicationRecord
   has_one_attached :scene_image
 
   validates :character_id, presence: true
+  
+  store_accessor :metadata, :appearance, :location
 
   def current_scene_prompt
     metadata&.dig("current_scene_prompt") || generate_initial_scene_prompt
@@ -26,10 +28,20 @@ class Conversation < ApplicationRecord
   end
 
   def scene_prompt_diff
-    return nil if scene_prompt_histories.count < 2
+
+    return @scene_prompt_histories if @scene_prompt_histories
+   
+    if scene_prompt_histories.count < 2 
+      @scene_prompt_histories = nil
+      return nil 
+    end
+
     
     latest_two = scene_prompt_histories.order(created_at: :desc).limit(2)
-    return nil if latest_two.count < 2
+    if latest_two.count < 2 
+      @scene_prompt_histories = nil
+      return nil
+    end
     
     old_prompt = latest_two.second.prompt
     new_prompt = latest_two.first.prompt
@@ -48,7 +60,7 @@ class Conversation < ApplicationRecord
       changes: calculate_word_diff(old_words, new_words)
     }
     
-    diff
+    @scene_prompt_histories = diff
   end
 
   private

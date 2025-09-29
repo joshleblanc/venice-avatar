@@ -8,7 +8,7 @@ class GenerateImageJob < ApplicationJob
     style = user.image_style
 
     # Use the user's image model method which handles fallback logic
-    model = user.image_model(user)
+    model = user.image_model
 
     options = {
       model: model,

@@ -50,20 +50,21 @@ class User < ApplicationRecord
   end
 
   def text_model
-    traits = FetchTraitsJob.perform_now(self, "text") || {}
     if preferred_text_model.present?
       # Allow storing either a trait key or a raw model id
-      traits[preferred_text_model] || preferred_text_model
+     preferred_text_model
     else
+
+      traits = FetchTraitsJob.perform_now(self, "text") || {}
       traits["default"]
     end
   end
 
   def image_model
-    traits = FetchTraitsJob.perform_now(self, "image") || {}
     if preferred_image_model.present?
-      traits[preferred_image_model] || preferred_image_model
+      preferred_image_model
     else
+      traits = FetchTraitsJob.perform_now(self, "image") || {}
       traits["default"]
     end
   end

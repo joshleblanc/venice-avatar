@@ -1,5 +1,10 @@
-require "ostruct"
 class AiPromptGenerationService
+  class FakeResponse 
+    attr_accessor :content 
+    def initialize(content)
+      @content = content
+    end
+  end
   def initialize(conversation)
     @conversation = conversation
     @character = conversation.character
@@ -17,6 +22,13 @@ class AiPromptGenerationService
   end
 
   def store_scene_prompt(prompt, trigger: "unknown")
+    Rails.logger.info "Storing scene prompt: #{prompt}"
+    prompt = if prompt.respond_to? :content 
+               prompt.content.strip 
+             else 
+               prompt 
+             end
+
     # Store in conversation metadata for quick access
     metadata = @conversation.metadata || {}
     metadata["current_scene_prompt"] = prompt
@@ -60,9 +72,9 @@ class AiPromptGenerationService
       # Store the filtered prompt in the conversation or character state
       store_scene_prompt(filtered_prompt, trigger: "initial")
 
-      OpenStruct.new(content: filtered_prompt)
+      FakeResponse.new(filtered_prompt)
     rescue => e
-      Rails.logger.error "Failed to generate initial scene prompt: #{e.message}"
+      Rails.logger.error "Failed to generate initial scene prompt: #{e.message}, #{e.backtrace}"
       # Fallback to basic prompt
       fallback_initial_prompt
     end
