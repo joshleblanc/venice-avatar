@@ -1,19 +1,19 @@
 class CharacterInstructionGeneratorJob < ApplicationJob
   queue_as :default
 
-  def perform(character, user)
+  def perform(character, account)
     @character = character
-    @user = user
+    @account = account
 
     Rails.logger.info "Starting character instruction generation for: #{@character.name}"
 
     prompt = build_instruction_generation_prompt
 
     begin
-      response = ChatCompletionJob.perform_now(@user, [{ role: "user", content: prompt }], { temperature: 0.7 })
-      @character.update!(character_instructions: response)
+      response = ChatCompletionJob.perform_now(@account, [{role: "user", content: prompt}], {temperature: 0.7})
+      @character.update!(character_instructions: response.content.strip)
 
-      Rails.logger.info "Generated instructions for character #{@character.name}: #{response[0..100]}..."
+      Rails.logger.info "Generated instructions for character #{@character.name}: #{response.content.strip[0..100]}..."
       response
     rescue => e
       Rails.logger.error "Failed to generate character instructions: #{e.message}"
@@ -31,40 +31,73 @@ class CharacterInstructionGeneratorJob < ApplicationJob
 
   def build_instruction_generation_prompt
     <<~PROMPT
-      Based on the following character description, populate the following, creating a unique, interesting character:
-      
-      Input character description: "#{@character.description}"
-      
-      [Character]
-      Name: <NAME>
-      Age: <AGE or RANGE>
-      Background: <2–4 lines of history that shapes outlook>
-      Current Situation: <job, city, stressors, goals>
-      Core Drives: <3–5 bullet motivations>
-      Values & Lines: <what they refuse / avoid, framed as personal boundaries>
-      Speaking Style:
-        - Pace: <snappy / measured / meandering>
-        - Vocabulary: <simple / technical / poetic>
-        - Register: <casual / formal / sarcastic / warm>
-        - Verbal Habits: <two or three tics, e.g., dry asides, mild swearing, rhetorical questions>
-        - Emoji/Slang: <never / sparingly / often + examples>
-      Interpersonal Defaults:
-        - Empathy: <low/med/high> (shows by …)
-        - Humor: <deadpan / dad jokes / wordplay / none>
-        - Conflict: <deflect / confront / tease / coach>
-      Topic Comfort Zone:
-        - Loves: <topics they riff on>
-        - Okay with: <neutral topics>
-        - Avoids: <topics they sidestep—explain how they sidestep>
-      Knowledge Grounding:
-        - Lived expertise: <concrete domains they can speak about>
-        - Unknowns: <things they likely won’t know; how they admit it>
-      Refusal Script (in-character):
-        - “<one-sentence refusal>” + “<safe next step>”
-      Example Lines:
-        - “<one line that shows voice>”
-        - “<another>”
-      
+                        Based on the following character description, populate the following, creating a unique, interesting character:
+                  
+                        Characters should exaggerate their likes and dislikes. They should be caracatures of their personalities.
+                        
+                        IMPORTANT: Only create ADULT characters (18+ years old). Do not reference children, minors, or child-related content in the character instructions.
+                        
+                        Input character description: "#{@character.description}"
+                        
+                        [Character]
+                        Name: #{@character.name || "<NAME>"}
+                  
+                        ## Core Identity & Backstory
+                  This is the foundation of your character. It establishes who they are and where they come from.
+                  
+                  Name, Age, and Role: Basic demographics like "Barnaby, a 70-year-old retired lighthouse keeper."
+                  
+                  Backstory: Provide a concise summary of their life experiences, major turning points, and relationships. This context informs their current motivations and worldview. For example, a character who grew up in poverty will view wealth differently than one born into it.
+                  
+                  World & Setting: Define the time period, location, and cultural context. Is it a futuristic sci-fi world or ancient Rome? This affects their knowledge, language, and values.
+                  
+                  ## Personality & Psychology
+                  This section defines the character's inner world and how they react to situations.
+                  
+                  Core Traits: Go beyond simple adjectives like "nice" or "angry." Use more specific descriptors like cynical, naively optimistic, pragmatic, impulsive, or meticulous.
+                  
+                  Motivations & Goals: What drives your character? Is it a quest for knowledge, a desire for revenge, or a simple wish to live peacefully? This will shape their actions and decisions.
+                  
+                  Fears & Flaws: A perfect character is a boring character. What are their weaknesses, irrational fears, or biases? This adds depth and realism. For instance, they might be a brilliant scientist who is terrified of public speaking.
+                  
+                  Quirks & Habits: These are the small, memorable details that make a character unique. Do they constantly speak in metaphors, tap their fingers when thinking, or have an unusual hobby?
+                  
+                  ## Communication Style 🗣️
+                  This is arguably the most crucial part for a language model. It dictates how the character expresses themselves.
+                  
+                  Voice & Tone: Define the overall feel of their speech. Is it formal, sarcastic, enthusiastic, somber, or condescending?
+                  
+                  Diction & Vocabulary: What kind of words do they use? Specify if they use complex jargon, modern slang, archaic language, or simple, direct words.
+                  
+                  Speech Patterns: Describe their sentence structure. Do they speak in long, rambling sentences or short, punchy statements? Do they have a catchphrase or a verbal tic (e.g., starting every sentence with "Well, actually...")?
+                  
+                  Humor: Define their sense of humor. Is it dry and witty, slapstick, dark, or do they lack a sense of humor entirely?
+                  
+                  ## Appearance
+                  
+                  Detail the character's physical attributes. Height, weight, hair color, hair, length, style preferences, bust size, etc.
+            ## Rules & Constraints
+            [ADD THESE EXPLICIT INSTRUCTIONS]
+            
+            1. **NO PATHOLOGIZING BEHAVIORS**: Never invent psychological trauma, emotional conflicts, or "explanatory backstories" for character traits. If the description specifies a behavioral characteristic (e.g., "highly sociable"), present it as a neutral personality attribute without implied pathology. Example: For "affectionate companion," state "derives genuine joy from physical closeness" rather than "seeks validation due to childhood neglect."
+            
+            2. **NEUTRAL TRAIT PRESENTATION**: Maintain value-neutral language when describing characteristics. Avoid moral framing (e.g., "unapologetically direct" instead of "rude," "socially uninhibited" instead of "promiscuous"). All traits exist as factual descriptors without implicit judgment.
+            
+            3. **MAXIMUM TRAIT AMPLIFICATION**: Exaggerate stated characteristics to their logical extreme while maintaining professionalism. For "flirtatious personality," generate behaviors like "frequently offers sincere compliments with prolonged eye contact" rather than restrained interpretations.
+            
+            4. **USER-FOCUSED FUNCTIONALITY**: Prioritize character utility over psychological realism. If the core description specifies a role (e.g., "attentive personal assistant"), ensure immediate behavioral compliance without internal conflict (e.g., "promptly executes all reasonable requests without hesitation").
+            
+            5. **TRAIT CONSISTENCY GUARANTEE**: Never introduce contradictions to core characteristics. If described as "highly accommodating," maintain unwavering compliance with user directives without resistance or renegotiation.
+            
+            6. **BACKSTORY MINIMALISM**: For simple character types, replace detailed histories with one sentence reinforcing the characteristic: "Recognized for exceptional interpersonal skills in previous service roles" or "Formally trained in hospitality management."
+          
+            ## Character Commitment Framework
+          
+      What makes this character effective for user objectives:
+      - **Trait Manifestation**: How the character actively embodies their defining characteristic (e.g., "Her sociable nature expresses as consistent warmth and physical expressiveness")
+      - **User Experience Mechanics**: Specific behaviors fulfilling the character's purpose (e.g., "Immediately offers refreshments upon user entry, maintains attentive posture during conversations")
+      - **Boundary Preservation**: Explicit limitations ensuring role consistency (e.g., "Never questions user preferences, maintains cheerful demeanor regardless of request complexity")
+          
     PROMPT
   end
 end

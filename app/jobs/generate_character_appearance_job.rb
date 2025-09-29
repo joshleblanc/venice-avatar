@@ -1,30 +1,65 @@
 class GenerateCharacterAppearanceJob < ApplicationJob
   queue_as :default
 
-  def perform(character, user)
+  def perform(character, user, force = false)
+    # Skip if appearance and location already exists
+    return if character.appearance.present? && character.location.present? && !force
 
-    # Skip if appearance already exists
-    return if character.appearance.present?
+    @character = character
+    @user = user
 
-    Rails.logger.info "Generating appearance description for character: #{character.name}"
+    Rails.logger.info "Generating appearance and location for character: #{character.name}"
 
     begin
+      user = character.user
+
+      options = {
+        temperature: 0.3
+      }
+
+      if @character.venice_created?
+        options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: @character.slug)
+      end
+
       appearance_description = ChatCompletionJob.perform_now(user, [
         {
           role: "system",
-          content: build_appearance_generation_instructions,
+          content: build_appearance_generation_instructions
         },
         {
           role: "user",
-          content: "Character: #{character.name}\n\nDescription: #{character.description}",
-        },
-      ], {
-        temperature: 0.3,
-      })
+          content: <<~PROMPT
+            Please describe your current appearance and location in detail. This will help create an accurate visual representation of you. Include:
+            
+            **Appearance:**
+            - What you're currently wearing (clothing, colors, style)
+            - Your hair (color, length, style)
+            - Your eye color
+            - Any accessories you have on
+            - Your current expression or mood
+            - Your posture or pose
+            - Your body (height, bust, weight, etc)
 
-      # Update character with generated appearance
-      character.update!(appearance: appearance_description)
-      Rails.logger.info "Successfully generated and stored appearance for character: #{character.name}"
+            **Location:**
+            - Where are you right now? (e.g., a cozy library, a bustling city street, a futuristic spaceship)
+            - What is the lighting like? (e.g., dim, bright, natural, artificial)
+            - What objects are around you?
+            - What is the overall mood or atmosphere of the location?
+            
+            Be specific and detailed, as this information will be used to generate an image of you.
+          PROMPT
+        }
+      ], {
+        temperature: 0.3
+      }).content.strip
+
+      # Update character with generated appearance and location
+      # Parse the response to separate appearance and location
+      appearance = appearance_description.match(/Appearance:(.*)Location:/m)&.captures&.first&.strip
+      location = appearance_description.match(/Location:(.*)/m)&.captures&.first&.strip
+
+      character.update!(appearance: appearance, location: location)
+      Rails.logger.info "Successfully generated and stored appearance and location for character: #{character.name}"
 
       GenerateCharacterAvatarJob.perform_later(character, user)
     rescue => e
@@ -36,37 +71,27 @@ class GenerateCharacterAppearanceJob < ApplicationJob
   private
 
   def build_appearance_generation_instructions
+    character_instructions = if @character.user_created?
+      @character.character_instructions || "You are #{@character.name}. #{@character.description}"
+    else
+      "%%CHARACTER_INSTRUCTIONS%%"
+    end
+
     <<~INSTRUCTIONS
-      You are a character appearance specialist. Extract and generate detailed physical appearance descriptions from character backgrounds.
+      You are the following character: 
+      
+      <character_instructions>
+        #{character_instructions}
+      </character_instructions>
 
-      Your task:
-      1. Analyze the character description for any explicit physical details
-      2. Infer appropriate physical characteristics based on background, culture, age, profession
-      3. Generate a comprehensive appearance description suitable for image generation and roleplay
-
-      Include these elements:
-      - Age and general build
-      - Ethnicity/heritage if mentioned or culturally relevant
-      - Hair color, length, and style
-      - Eye color
-      - Facial features and expression tendencies
-      - Typical clothing style based on profession/personality
-      - Any distinctive features or accessories
-      - Overall demeanor and presence
-
-      Guidelines:
-      - Be detailed but concise
-      - Focus on visual elements
-      - Consider cultural context and profession
-      - Maintain consistency with the character's background
-      - Use clear, descriptive language
-      - Avoid personality traits - focus on physical appearance only
-      - Detail only a single outfit
-
-      Format as a detailed paragraph describing how this character would physically appear.
-
-      Example output:
-      "A 35-year-old Japanese-Argentine woman with shoulder-length wavy black hair often tied back in a practical ponytail. She has warm brown eyes behind stylish reading glasses, with laugh lines that hint at her humor. Her build is slender but confident, often dressed in comfortable yet artistic clothing - flowing cardigans, well-fitted jeans, and comfortable flats. Her hands show the careful precision of her origami work, and she typically wears simple silver jewelry including small origami crane earrings. Her expression is typically warm and approachable, with an intelligent, contemplative gaze."
+      You are describing your appearance and location for an image generation model.
+      Please provide a detailed description of your appearance and location.
+      
+      IMPORTANT: You are an adult character (18+ years old). Only describe adult appearance and adult-appropriate locations. Do not reference children, minors, or child-related content.
+      
+      The output should be in the following format:
+      Appearance: [Your appearance description]
+      Location: [Your location description]
     INSTRUCTIONS
   end
 end

@@ -43,18 +43,18 @@
         </div>
         
         <div>
-          <%= form.label :preferred_text_model, "Preferred Text Trait", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_text_model,
-                          options_for_select(@text_traits, @selected_text_trait),
+                          options_for_select(@text_models, @selected_text_model),
                           { prompt: "Use default text trait" },
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>
         </div>
         
         <div>
-          <%= form.label :preferred_image_model, "Preferred Image Trait", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_image_model, "Preferred Image Model", class: "block text-sm font-medium text-gray-700" %>
           <%= form.select :preferred_image_model,
-                          options_for_select(@image_traits, @selected_image_trait),
+                          options_for_select(@image_models, @selected_image_model),
                           { prompt: "Use default image trait" },
                           { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
           <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>

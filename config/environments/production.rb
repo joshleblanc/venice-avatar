@@ -22,7 +22,7 @@ Rails.application.configure do
   # config.asset_host = "http://assets.example.com"
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  config.active_storage.service = :digitalocean_spaces
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -61,13 +61,10 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "avatar.jleb.dev" }
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
-  config.action_mailer.smtp_settings = {
-    user_name: Rails.application.credentials.dig(:smtp, :user_name),
-    password: Rails.application.credentials.dig(:smtp, :password),
-    address: "smtp.example.com",
-    port: 587,
-    authentication: :plain,
-  }
+
+
+  config.action_mailer.delivery_method = :mailpace
+  config.action_mailer.mailpace_settings = {api_token: Rails.application.credentials.dig(:mailpace, :api_token)}
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

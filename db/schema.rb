@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_26_185220) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -57,6 +57,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
     t.binary "embedding"
     t.boolean "generating", default: false
     t.text "appearance"
+    t.text "location"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
     t.index ["user_created"], name: "index_characters_on_user_created"
     t.index ["user_id"], name: "index_characters_on_user_id"
@@ -73,6 +74,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
     t.json "metadata"
     t.boolean "character_away", default: false, null: false
     t.integer "user_id", null: false
+    t.integer "seed"
     t.index ["character_away"], name: "index_conversations_on_character_away"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
@@ -81,7 +83,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
 
   create_table "messages", force: :cascade do |t|
     t.integer "conversation_id", null: false
-    t.text "content", null: false
+    t.text "content"
     t.string "role", null: false
     t.json "metadata"
     t.datetime "created_at", null: false
@@ -91,6 +93,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_03_154611) do
     t.text "followup_context"
     t.string "followup_reason"
     t.integer "user_id", null: false
+    t.json "tool_calls"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["created_at"], name: "index_messages_on_created_at"
     t.index ["role"], name: "index_messages_on_role"

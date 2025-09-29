@@ -15,7 +15,8 @@ class GenerateCharacterAvatarJob < ApplicationJob
     prompt = build_headshot_prompt_from_appearance(character)
 
     begin
-      base64_data = GenerateImageJob.perform_now(user, prompt, {
+      user = character.user
+      base64_data = GenerateImageJob.perform_now(user, user, prompt, {
         width: 512,
         height: 512,
       })

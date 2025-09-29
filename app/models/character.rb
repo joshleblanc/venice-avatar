@@ -1,8 +1,6 @@
 class Character < ApplicationRecord
   broadcasts_refreshes
 
-  has_neighbors :embedding
-
   acts_as_taggable_on :tags
 
   # Avatar for character headshot
@@ -19,11 +17,7 @@ class Character < ApplicationRecord
   scope :venice_created, -> { where(user_created: false) }
 
   def requires_description?
-    user_created? || generating?
-  end
-
-  def user_created?
-    user_created == true
+    user_created? && !generating?
   end
 
   def venice_created?

@@ -20,9 +20,9 @@ class GenerateFollowupMessageJob < ApplicationJob
 
       # Save assistant follow-up message
       assistant_msg = conversation.messages.create!(
-        content: chat_response,
+        content: chat_response.content.strip,
         role: "assistant",
-        user: conversation.user,
+        user: conversation.user
       )
 
       # Evolve the scene prompt based on the follow-up message
@@ -44,7 +44,7 @@ class GenerateFollowupMessageJob < ApplicationJob
       conversation.messages.create!(
         content: "I'm back! Sorry for the delay.",
         role: "assistant",
-        user: conversation.user,
+        user: conversation.user
       )
     ensure
       conversation.update(generating_reply: false)
@@ -58,7 +58,7 @@ class GenerateFollowupMessageJob < ApplicationJob
     messages = conversation.messages.order(:created_at).map do |msg|
       {
         role: msg.role,
-        content: msg.full_content_for_ai,
+        content: msg.full_content_for_ai
       }
     end
 
@@ -71,7 +71,7 @@ class GenerateFollowupMessageJob < ApplicationJob
                "The user is looking at you through their phone screen while you text back and forth. " \
                "The character previously indicated they would return after: #{followup_context[:context]}. " \
                "Generate a natural follow-up message showing the character returning or continuing the conversation. " \
-               "Reason for follow-up: #{followup_context[:reason]}",
+               "Reason for follow-up: #{followup_context[:reason]}"
     }
 
     options = {}
@@ -79,7 +79,7 @@ class GenerateFollowupMessageJob < ApplicationJob
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
 
-    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.text_model) || "I'm back!"
+    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.text_model || "I'm back!"
   end
 
   def schedule_followup_message(conversation, message, followup_intent)
@@ -90,12 +90,12 @@ class GenerateFollowupMessageJob < ApplicationJob
       has_pending_followup: true,
       followup_scheduled_at: scheduled_time,
       followup_context: followup_intent[:context],
-      followup_reason: followup_intent[:reason],
+      followup_reason: followup_intent[:reason]
     )
 
     # Schedule the next follow-up job
     GenerateFollowupMessageJob.set(wait_until: scheduled_time)
-                              .perform_later(conversation, followup_intent)
+      .perform_later(conversation, followup_intent)
 
     Rails.logger.info "Scheduled follow-up message for conversation #{conversation.id} at #{scheduled_time}"
   end

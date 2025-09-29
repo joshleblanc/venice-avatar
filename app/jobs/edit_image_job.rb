@@ -1,12 +1,16 @@
 class EditImageJob < ApplicationJob
   queue_as :default
 
-  def perform(user, base64_image, edit_prompt)
-    Rails.logger.info "Starting image edit job for user: #{user.id}"
+  # Accepts an Account
+  def perform(account, base64_image, edit_prompt)
+    Rails.logger.info "Starting image edit job for account: #{account.id}"
     Rails.logger.info "Edit prompt: #{edit_prompt}"
     Rails.logger.info "Base64 image length: #{base64_image.length}"
 
-    venice_client = VeniceClient::ImageApi.new(user.api_client)
+    client = account.api_client
+    return unless client
+
+    venice_client = VeniceClient::ImageApi.new(client)
 
     file = venice_client.edit_image({
       edit_image_request: {

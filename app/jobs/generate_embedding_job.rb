@@ -1,10 +1,12 @@
 class GenerateEmbeddingJob < ApplicationJob
-  def perform(user, text)
-    return unless user.venice_key.present?
+  # Accepts an Account
+  def perform(account, text)
+    client = account.api_client
+    return unless client
 
-    client = VeniceClient::EmbeddingsApi.new(user.api_client)
+    api = VeniceClient::EmbeddingsApi.new(client)
 
-    embedding = client.create_embedding({
+    embedding = api.create_embedding({
       model: "text-embedding-bge-m3",
       input: text,
       encoding_format: "float",

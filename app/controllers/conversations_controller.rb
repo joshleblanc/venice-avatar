@@ -72,7 +72,7 @@ class ConversationsController < ApplicationController
     @conversation.user = current_user
 
     if @conversation.save
-      InitializeSceneJob.perform_later(@conversation)
+      GenerateOpeningMessageJob.perform_later(@conversation)
       redirect_to @conversation
     else
       redirect_to root_path, alert: "Failed to create conversation"

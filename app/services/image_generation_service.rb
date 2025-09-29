@@ -23,11 +23,7 @@ class ImageGenerationService
     has_real_prompt = @conversation.metadata.present? && @conversation.metadata["current_scene_prompt"].present?
 
     # Check if character is away and generate appropriate prompt
-    prompt = if @conversation.character_away?
-        build_background_only_prompt
-      else
-        build_unified_scene_prompt
-      end
+    prompt = build_unified_scene_prompt
 
     models = [
       "venice-sd35",
@@ -38,11 +34,11 @@ class ImageGenerationService
       "flux-dev-uncensored", # higher prompt length
       "lustify-sdxl",
       "pony-realism",
-      "stable-diffusion-3.5",
+      "stable-diffusion-3.5"
     ]
     begin
       mode = has_real_prompt ? "full" : "fast-first"
-      width, height = has_real_prompt ? [640, 1024] : [320, 512]
+      width, height = has_real_prompt ? [1024, 640] : [320, 512]
       Rails.logger.info "Generating unified scene image (mode=#{mode}, #{width}x#{height}) with prompt length=#{prompt.length}"
 
       # Conversation-specific style override
@@ -50,7 +46,7 @@ class ImageGenerationService
 
       Rails.logger.debug "Style override: #{style_override.inspect}"
 
-      opts = { width: width, height: height }
+      opts = {width: width, height: height, seed: @conversation.seed || 123671236}
       if style_override == "__none__"
         # Explicitly disable style preset
         opts[:style_preset] = ""
@@ -79,11 +75,62 @@ class ImageGenerationService
   def generate_all_images
     scene_image = generate_scene_image
     {
-      scene_image: scene_image,
+      scene_image: scene_image
     }
   end
 
   private
+
+  # Content validation to ensure no child references in image generation prompts
+  #
+  # @param [String] prompt The image generation prompt to validate
+  # @return [String] The validated and filtered prompt
+  def validate_content_for_image_generation(prompt)
+    return prompt if prompt.blank?
+
+    # List of child-related terms to filter out
+    child_terms = [
+      "child", "children", "kid", "kids", "baby", "babies", "toddler", "toddlers",
+      "infant", "infants", "minor", "minors", "boy", "boys", "girl", "girls",
+      "son", "daughter", "nephew", "niece", "student", "students", "pupil", "pupils",
+      "schoolchild", "schoolchildren", "youngster", "youngsters", "youth", "youths",
+      "juvenile", "juveniles", "adolescent", "adolescents", "teen", "teens",
+      "teenager", "teenagers", "preteen", "preteens", "tween", "tweens",
+      "school", "playground", "nursery", "daycare", "kindergarten"
+    ]
+
+    filtered_prompt = prompt.dup
+
+    # Remove words and phrases containing child-related terms
+    child_terms.each do |term|
+      # Remove the term and surrounding context
+      filtered_prompt.gsub!(/\b\w*#{Regexp.escape(term)}\w*\b/i, "")
+      # Clean up extra spaces
+      filtered_prompt.gsub!(/\s+/, " ")
+    end
+
+    # Remove sentences that might still contain problematic content
+    sentences = filtered_prompt.split(/[.!?]+/)
+    safe_sentences = sentences.select do |sentence|
+      # Keep sentences that don't contain age-related numbers that might indicate minors
+      !sentence.match?(/\b(?:1[0-7]|[1-9])\s*(?:year|yr)s?\s*old\b/i) &&
+        !sentence.match?(/\b(?:young|little|small|tiny)\s+(?:person|people|human|figure)\b/i)
+    end
+
+    # If all sentences were filtered out, return a safe default
+    if safe_sentences.empty? || filtered_prompt.strip.length < 20
+      character_name = @character&.name || "character"
+      return "Adult #{character_name} in a comfortable indoor setting with warm lighting, detailed character design, mature atmosphere"
+    end
+
+    # Ensure the prompt explicitly mentions adult content
+    validated_prompt = safe_sentences.join(". ").strip
+    unless validated_prompt.match?(/\b(?:adult|mature|grown)\b/i)
+      validated_prompt = "Adult " + validated_prompt
+    end
+
+    validated_prompt + "."
+  end
 
   def should_use_image_editing?
     # Use image editing if:
@@ -101,9 +148,12 @@ class ImageGenerationService
     prompt_service = AiPromptGenerationService.new(@conversation)
     prompt = prompt_service.get_current_scene_prompt
 
-    Rails.logger.info "AI-generated scene prompt length: #{prompt.length}"
+    # Apply content validation to ensure no child references
+    validated_prompt = validate_content_for_image_generation(prompt)
 
-    prompt
+    Rails.logger.info "AI-generated scene prompt length: #{validated_prompt.length}"
+
+    validated_prompt
   end
 
   def build_background_only_prompt
@@ -116,33 +166,39 @@ class ImageGenerationService
       background_description = ChatCompletionJob.perform_now(@conversation.user, [
         {
           role: "system",
-          content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation.",
+          content: "You are a visual scene description expert. Extract and describe only the background/environment elements from the given scene description. Remove all references to people, characters, clothing, expressions, or human features. Focus only on the location, architecture, furniture, lighting, atmosphere, and environmental details. Return a clean background description suitable for image generation."
         },
         {
           role: "user",
-          content: "Extract the background-only description from this scene: #{current_prompt}",
-        },
+          content: "Extract the background-only description from this scene: #{current_prompt}"
+        }
       ], {
-        temperature: 0.3,
+        temperature: 0.3
       })
 
       # Add explicit background-only instructions for image generation
       enhanced_prompt = "Empty room scene, no people, no characters. #{background_description}. Detailed interior background, ambient lighting, peaceful atmosphere"
 
-      Rails.logger.info "Generated background-only prompt: #{enhanced_prompt}"
-      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: enhanced_prompt))
+      # Apply content validation to background prompt
+      validated_prompt = validate_content_for_image_generation(enhanced_prompt)
 
-      enhanced_prompt
+      Rails.logger.info "Generated background-only prompt: #{validated_prompt}"
+      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: validated_prompt))
+
+      validated_prompt
     rescue => e
       Rails.logger.error "Failed to generate background description via Venice: #{e.message}"
 
       # Fallback to a simple default background
       fallback_prompt = "Empty room scene, no people, no characters. Cozy indoor setting with warm lighting, comfortable furniture, peaceful atmosphere"
 
-      Rails.logger.info "Using fallback background prompt: #{fallback_prompt}"
-      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: fallback_prompt))
+      # Apply content validation to fallback prompt
+      validated_fallback = validate_content_for_image_generation(fallback_prompt)
 
-      fallback_prompt
+      Rails.logger.info "Using fallback background prompt: #{validated_fallback}"
+      @conversation.update(metadata: (@conversation.metadata || {}).merge(background_only_prompt: validated_fallback))
+
+      validated_fallback
     end
   end
 
@@ -165,7 +221,7 @@ class ImageGenerationService
       @conversation.scene_image.attach(
         io: string_io,
         filename: filename,
-        content_type: "image/png",
+        content_type: "image/png"
       )
 
       Rails.logger.info "Successfully attached scene_image to conversation #{@conversation.id}"

@@ -4,30 +4,30 @@ class GenerateInitialScenePromptJob < ApplicationJob
 
   def perform(conversation)
     Rails.logger.info "Generating initial scene prompt for conversation #{conversation.id}"
-    
+
     character_appearance = conversation.character.appearance
     if character_appearance.blank?
       Rails.logger.info "Character appearance missing; enqueueing async generation"
       GenerateCharacterAppearanceJob.perform_now(conversation.character, conversation.user)
     end
-    
+
     prompt = build_initial_prompt_generation_request(conversation, character_appearance)
 
     begin
       generated_prompt = ChatCompletionJob.perform_now(conversation.user, [
         {
           role: "user",
-          content: prompt,
-        },
+          content: prompt
+        }
       ], {
-        temperature: 0.7,
+        temperature: 0.7
       })
-      
+
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
       # Store the prompt in conversation metadata
       metadata = conversation.metadata || {}
-      metadata["current_scene_prompt"] = generated_prompt
+      metadata["current_scene_prompt"] = generated_prompt.content.strip
       metadata["scene_prompt_updated_at"] = Time.current.iso8601
       conversation.update!(metadata: metadata)
 
@@ -35,7 +35,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
       conversation.scene_prompt_histories.create!(
         prompt: generated_prompt,
         trigger: "initial",
-        character_count: generated_prompt.length,
+        character_count: generated_prompt.length
       )
 
       # Now that we have the scene prompt, generate the initial scene image
@@ -57,78 +57,15 @@ class GenerateInitialScenePromptJob < ApplicationJob
 
   private
 
-  def generate_character_appearance(conversation)
-    Rails.logger.info "Generating character appearance for scene prompt"
-    
-    character_instructions = if conversation.character.user_created?
-      conversation.character.character_instructions || "You are #{conversation.character.name}. #{conversation.character.description}"
-    else
-      "%%CHARACTER_INSTRUCTIONS%%"
-    end
-
-    appearance_prompt = <<~PROMPT
-      Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
-      
-      - What you're currently wearing (clothing, colors, style)
-      - Your hair (color, length, style)
-      - Your eye color
-      - Any accessories you have on
-      - Your current expression or mood
-      - Your posture or pose
-      
-      Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
-    PROMPT
-
-    options = {
-      temperature: 0.3,
-    }
-
-    if conversation.character.venice_created?
-      options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
-    end
-
-    begin
-      appearance_details = ChatCompletionJob.perform_now(conversation.user, [
-        {
-          role: "system",
-          content: <<~PROMPT,
-            You are the following character:
-
-            <character_instructions>
-                #{character_instructions}
-            </character_instructions>
-
-            Please describe your current appearance in detail so an accurate visual representation can be created.
-          PROMPT
-        },
-        {
-          role: "user",
-          content: appearance_prompt,
-        }
-      ], options)
-
-      # Store appearance on character for future use
-      if conversation.character.appearance.blank?
-        conversation.character.update!(appearance: appearance_details)
-        conversation.character.generate_avatar_later(conversation.user)
-      end
-
-      appearance_details
-    rescue => e
-      Rails.logger.error "Failed to generate character appearance: #{e.message}"
-      nil
-    end
-  end
-
   def build_initial_prompt_generation_request(conversation, character_appearance = nil)
     character_description = conversation.character.description || "A character"
     character_name = conversation.character.name || "Character"
 
     appearance_context = if character_appearance
-        "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
-      else
-        ""
-      end
+      "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
+    else
+      ""
+    end
 
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.

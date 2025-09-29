@@ -1,4 +1,5 @@
 class GenerateOpeningMessageJob < ApplicationJob
+  include CharacterToolCalls
   queue_as :default
 
   def perform(conversation)
@@ -9,22 +10,34 @@ class GenerateOpeningMessageJob < ApplicationJob
       current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
       options = {
-        temperature: 0.8,
+        temperature: 0.8
       }
 
       if conversation.character.venice_created?
         options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
       end
 
-      opening_message = ChatCompletionJob.perform_now(conversation.user, [
+      # Add tools for appearance and location updates
+      options[:tools] = character_tools
+      options[:tool_choice] = "auto"
+
+      opening_response = ChatCompletionJob.perform_now(conversation.user, [
         {
           role: "system",
-          content: <<~PROMPT,
+          content: <<~PROMPT
             You are the following character:
 
             <character_instructions>
                 #{conversation.character.venice_created? ? "%%CHARACTER_INSTRUCTIONS%%" : conversation.character.character_instructions}
             </character_instructions>
+
+            You are starting a new conversation. You MUST:
+            1. Provide a natural, engaging opening message to greet the user (REQUIRED - never send empty content)
+            2. Use the provided tools to describe your complete current appearance and location (REQUIRED - both tools must be used)
+            3. Both the greeting message AND the tool calls should be included in your response
+            4. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content
+            
+            #{tool_call_instructions}
 
             #{GenerateChatResponseJob::CHAT_GUIDELINES}
             - Current time is: #{current_time}
@@ -32,28 +45,28 @@ class GenerateOpeningMessageJob < ApplicationJob
         },
         {
           role: "user",
-          content: opening_prompt,
-        },
+          content: opening_prompt
+        }
       ], options, conversation.user.text_model)
 
-      # Create the character's opening message
-      conversation.messages.create!(
-        content: opening_message,
-        role: "assistant",
-        user: conversation.user,
-      )
+      # Handle both content and tool calls using shared logic
+      create_message_with_tool_calls(conversation, opening_response)
 
       conversation.update(generating_reply: false)
 
-      Rails.logger.info "Character opening message created: #{opening_message[0..100]}..."
+      Rails.logger.info(opening_response)
+
+      if opening_response.content.present?
+        Rails.logger.info "Character opening message created: #{opening_response.content.strip[0..100]}..."
+      end
     rescue => e
-      Rails.logger.error "Failed to generate character opening message: #{e.message}"
+      Rails.logger.error "Failed to generate character opening message: #{e.message} -- #{e.backtrace}"
       # Create a fallback opening message
       fallback_message = "Hey there! 😊"
       conversation.messages.create!(
         content: fallback_message,
         role: "assistant",
-        user: conversation.user,
+        user: conversation.user
       )
       conversation.update(generating_reply: false)
     end
@@ -68,14 +81,20 @@ class GenerateOpeningMessageJob < ApplicationJob
     <<~PROMPT
       You are #{character_name}. #{character_description}
       
-      You're initiating a conversation with someone new via text message. 
+      You're initiating a conversation with someone new. 
       
-      Generate a natural, engaging opening message to start the conversation. This should be:
+      Generate a natural, engaging opening message to start the conversation AND use the provided tools to describe your current appearance and location.
+      
+      Your opening message should be:
       - True to your character personality
-      - Natural for someone initiating a text conversation
-      - Keep it conversational and natural for texting
+      - Natural and welcoming for starting a conversation
+      - Conversational and engaging
       
-      Generate only your opening message, nothing else.
+      You MUST also use the tools to provide:
+      - Your complete current appearance (physical details, clothing, accessories, expression)
+      - Your current location and surroundings (where you are, environment details)
+      
+      Provide both a greeting message AND complete tool call descriptions.
     PROMPT
   end
 end

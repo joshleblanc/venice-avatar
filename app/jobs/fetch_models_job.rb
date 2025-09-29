@@ -1,11 +1,12 @@
 class FetchModelsJob < ApplicationJob
+  # Accepts an Account
   def perform(user, type)
-    Rails.cache.fetch("venice_models/#{type}", expires_in: 1.hour) do 
-      return unless user.venice_key.present?
+    Rails.cache.fetch("venice_models/#{type}", expires_in: 1.hour) do
+      client = user.api_client
+      return unless client
 
-      models_api = VeniceClient::ModelsApi.new(user.api_client)
-
-      models_api.list_models(type: type).data.reject { _1.model_spec.traits.empty? }
+      models_api = VeniceClient::ModelsApi.new(client)
+      models_api.list_models(type: type).data
     end
   end
 end
