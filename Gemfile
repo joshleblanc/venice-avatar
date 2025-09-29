@@ -73,3 +73,5 @@ gem "neighbor", "~> 0.6.0"
 gem "sqlite-vec", "~> 0.1.6"
 
 gem "pundit", "~> 2.5"
+
+gem "mailpace-rails", "~> 0.4.3"
