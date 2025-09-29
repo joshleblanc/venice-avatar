@@ -75,3 +75,5 @@ gem "sqlite-vec", "~> 0.1.6"
 gem "pundit", "~> 2.5"
 
 gem "mailpace-rails", "~> 0.4.3"
+
+gem "aws-sdk-s3", "~> 1.199"
