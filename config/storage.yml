@@ -13,7 +13,7 @@ digitalocean_spaces:
   secret_access_key: <%= Rails.application.credentials.dig(:digitalocean_spaces, :secret_access_key) %>
   region: tor1
   endpoint: 'https://tor1.digitaloceanspaces.com'
-  bucket: venice-storage-production
+  bucket: venice-avatar-production
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
