@@ -13,16 +13,13 @@ digitalocean_spaces:
   secret_access_key: <%= Rails.application.credentials.dig(:digitalocean_spaces, :secret_access_key) %>
   region: tor1
   endpoint: 'https://tor1.digitaloceanspaces.com'
-  bucket: venice-avatar-production
+  bucket: venice-storage-production
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
 #   service: GCS
 #   project: your_project
 #   credentials: <%= Rails.root.join("path/to/gcs.keyfile") %>
-oailpace:
-  # https://app.mailpace.com/ -> API Tokens
-  api_token: '82165723-e93f-4853-8ad7-4af99916a1cd'
 
 #   bucket: your_own_bucket-<%= Rails.env %>
 
