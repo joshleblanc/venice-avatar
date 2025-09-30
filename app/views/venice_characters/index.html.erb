@@ -5,6 +5,24 @@
 
   <%= render "shared/character_tabs", active: :venice %>
 
+  <% if @available_tags.any? %>
+    <div class="bg-white border rounded-lg p-4 mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Tag</label>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to venice_characters_path(filter: @filter, sort: @sort),
+                    class: "px-3 py-1.5 rounded-full text-sm font-medium transition-colors #{@selected_tag.blank? ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" do %>
+          All
+        <% end %>
+        <% @available_tags.each do |tag| %>
+          <%= link_to venice_characters_path(tag: tag.name, filter: @filter, sort: @sort),
+                      class: "px-3 py-1.5 rounded-full text-sm font-medium transition-colors #{@selected_tag == tag.name ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}" do %>
+            <%= tag.name %> (<%= tag.taggings_count %>)
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="bg-white border rounded-lg p-4 mb-6">
     <%= form_with url: venice_characters_path, method: :get, local: true, class: "flex flex-wrap items-center gap-4" do |f| %>
       <div>

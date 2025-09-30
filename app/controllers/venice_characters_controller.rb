@@ -5,6 +5,13 @@ class VeniceCharactersController < ApplicationController
 
     scope = policy_scope(Character.where(user_created: false))
 
+    # Get all available tags for venice characters (only tags with more than 1 instance)
+    @available_tags = Character.where(user_created: false).tag_counts_on(:tags).where("taggings_count > 10").order(:name)
+    @selected_tag = params[:tag]
+
+    # Filter by tag if provided
+    scope = scope.tagged_with(@selected_tag) if @selected_tag.present?
+
     # Filter: all | adult | non_adult
     allowed_filters = %w[all adult non_adult]
     @filter = allowed_filters.include?(params[:filter]) ? params[:filter] : "all"
