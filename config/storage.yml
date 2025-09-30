@@ -20,9 +20,6 @@ digitalocean_spaces:
 #   service: GCS
 #   project: your_project
 #   credentials: <%= Rails.root.join("path/to/gcs.keyfile") %>
-oailpace:
-  # https://app.mailpace.com/ -> API Tokens
-  api_token: '82165723-e93f-4853-8ad7-4af99916a1cd'
 
 #   bucket: your_own_bucket-<%= Rails.env %>
 

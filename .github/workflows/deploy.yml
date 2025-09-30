@@ -41,4 +41,4 @@ jobs:
             ${{ secrets.BUILDER_SSH_PRIVATE_KEY }}
 
       - name: Deploy with Kamal
-        run: kamal deploy
+        run: kamal setup
