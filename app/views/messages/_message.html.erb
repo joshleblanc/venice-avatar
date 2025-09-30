@@ -12,37 +12,11 @@
           <% end %>
         </div>
         <span class="text-xs text-gray-500"><%= message.conversation.character.name %></span>
-        <% if message.has_actions_or_thoughts? %>
-          <div>
-            <button type="button" 
-                    class="ml-2 w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                    data-action="click->collapse#toggle"
-                    data-collapse-target="button"
-                    title="Show actions/thoughts">
-              <!-- Brain icon SVG -->
-              <svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 1.74.5 3.37 1.41 4.84.91 1.47 2.2 2.59 3.59 3.16v3c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-3c1.39-.57 2.68-1.69 3.59-3.16C19.5 12.37 20 10.74 20 9c0-3.87-3.13-7-7-7zm-2 14v1h4v-1c-1.33.17-2.67.17-4 0zm5.5-4.5c-.83 1.33-2 2.17-3.5 2.5v-2c0-.55-.45-1-1-1s-1 .45-1 1v2c-1.5-.33-2.67-1.17-3.5-2.5C5.67 10.67 5.33 9.83 5.33 9c0-3.67 2.67-6.33 6.67-6.33S18.67 5.33 18.67 9c0 .83-.34 1.67-1.17 2.5z"/>
-              </svg>
-            </button>
-          </div>
-        <% end %>
       </div>
     <% end %>
-    
-    <!-- Clean text message content -->
-    <p class="text-sm whitespace-pre-wrap"><%= format_message_content(message.clean_text) %></p>
-    
-    <!-- Actions and thoughts (collapsible) -->
-    <% if message.has_actions_or_thoughts? %>
-      <div class="hidden mt-2 p-2 rounded <%= message.role == "user" ? "bg-blue-700 bg-opacity-50" : "bg-gray-50" %>" data-collapse-target="content">
-        <% message.actions_and_thoughts.each do |item| %>
-          <div class="text-xs <%= message.role == "user" ? "text-blue-100" : "text-gray-600" %> mb-1">
-            <span class="font-medium"><%= item[:type].capitalize %>:</span>
-            <em><%= item[:text] %></em>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
+
+    <!-- Message content with inline highlighted actions/thoughts -->
+    <p class="text-sm whitespace-pre-wrap"><%= message.formatted_content.html_safe %></p>
     
     <!-- BRB indicator for auto-generated "brb" messages -->
     <% if message.role == "assistant" && message.auto_generated? && message.conversation.character_away? %>

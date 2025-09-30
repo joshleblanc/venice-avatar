@@ -120,15 +120,6 @@
           <div class="text-xs text-gray-500">No scene prompt history available</div>
         <% end %>
 
-        <div class="bg-white border rounded p-3 text-xs">
-          <h4 class="font-semibold mb-2">Current Appearance Prompt</h4>
-          <% if @conversation.character.appearance.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.character.appearance %></div>
-          <% else %>
-            <div class="text-xs text-gray-500">Appearance not generated</div>
-          <% end %>
-        </div>
-
         <div class="bg-white border rounded p-3 text-xs mt-4">
           <h4 class="font-semibold mb-2">Current Background Prompt</h4>
           <% if @conversation.character.character_instructions.present? %>
@@ -152,6 +143,24 @@
           <% end %>
         </div>
 
-        
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Appearance</h4>
+          <% if @conversation.appearance.present? %>
+            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.appearance %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">No appearance set</div>
+          <% end %>
+        </div>
+
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Location</h4>
+          <% if @conversation.location.present? %>
+            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.location %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">No location set</div>
+          <% end %>
+        </div>
+
+
       </div>
     <% end %>

@@ -34,7 +34,7 @@ class Character < ApplicationRecord
   end
 
   def generate_appearance_later(user)
-    GenerateCharacterAppearanceJob.perform_later(self, user)
+    #GenerateCharacterAppearanceJob.perform_later(self, user)
   end
 
   def avatar_url

@@ -14,19 +14,26 @@ class Message < ApplicationRecord
     @parsed_content ||= parse_message_content
   end
 
-  # Get only the clean text without action descriptions
-  def clean_text
-    parsed_content[:clean_text]
-  end
+  # Get formatted content with inline highlighting for actions/thoughts
+  def formatted_content
+    return content if content.blank?
 
-  # Get only the action descriptions and internal thoughts
-  def actions_and_thoughts
-    parsed_content[:actions_and_thoughts]
-  end
+    formatted = content.dup
 
-  # Check if message has any action descriptions or internal thoughts
-  def has_actions_or_thoughts?
-    actions_and_thoughts.any?
+    # Wrap different patterns with span tags for styling
+    # Single asterisks for thoughts (green)
+    formatted.gsub!(/\*([^*]+)\*/, '<span class="text-green-600 italic">\1</span>')
+
+    # Double asterisks for actions (amber/yellow)
+    formatted.gsub!(/\*\*([^*]+)\*\*/, '<span class="text-amber-600 font-medium">\1</span>')
+
+    # Square brackets for actions (blue)
+    formatted.gsub!(/\[([^\]]+)\]/, '<span class="text-blue-600 font-medium">\1</span>')
+
+    # Parentheses for actions (purple)
+    formatted.gsub!(/\(([^)]+)\)/, '<span class="text-purple-600 italic">\1</span>')
+
+    formatted
   end
 
   # Get the full content for AI analysis (includes everything)

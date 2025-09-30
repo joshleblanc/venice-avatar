@@ -92,13 +92,14 @@ class AiPromptGenerationService
       # Generate scene based on fresh character descriptions
       scene_prompt = generate_scene_from_character_description(current_appearance, current_location, new_message_content)
 
+      debugger
       Rails.logger.info "Generated fresh scene prompt: #{scene_prompt}"
 
       # Filter out any child content before storing
-      filtered_scene_prompt = filter_child_content(scene_prompt)
+      # filtered_scene_prompt = filter_child_content(scene_prompt)
 
       # Store the filtered prompt
-      store_scene_prompt(filtered_scene_prompt, trigger: "character_description")
+      store_scene_prompt(scene_response.content.strip, trigger: "character_description")
 
       filtered_scene_prompt
     rescue => e
@@ -141,10 +142,12 @@ class AiPromptGenerationService
       })
 
       # Enforce present-state description
-      scene_response = enforce_present_state(scene_response.content.strip)
+      # scene_response = enforce_present_state(scene_response.content.strip)
 
+      Rails.logger.info "BEFORE: #{scene_response.content.strip}"
       # Filter out any child content
-      filtered_scene_response = filter_child_content(scene_response)
+      filtered_scene_response = filter_child_content(scene_response.content.strip)
+      Rails.logger.info "AFTER: #{filtered_scene_response}"
 
       Rails.logger.info "Generated scene from character descriptions: #{filtered_scene_response[0..100]}..."
       filtered_scene_response
@@ -516,12 +519,47 @@ class AiPromptGenerationService
 
   def build_scene_from_descriptions_prompt(current_appearance, current_location, context)
     <<~PROMPT
-      You will receive an appearance description and a location description, as well as the last 2 messages description the scene. Generate cohesive image prompt optimized for AI image generators (e.g., MidJourney, DALL-E). Prioritize vivid sensory details, logical spatial integration, and avoid redundancy. Output ONLY the final prompt with no explanations:
-      If the context requires additional subjects, invest a generic standin.
-      Appearance: #{current_appearance}
-      Location: #{current_location}
-      Message: #{context.first}
-      Reply: #{context.second}      
+      You are creating an image generation prompt for a visual novel scene. You will receive:
+      1. A BASELINE appearance description (current stable appearance)
+      2. A BASELINE location description (current stable location)
+      3. Recent conversation messages that may indicate changes
+
+      CRITICAL RULES FOR CONSISTENCY:
+      - The appearance and location descriptions are your BASELINE - use them as-is unless the recent messages EXPLICITLY contradict them
+      - PRESERVE ALL DETAILS from the baseline appearance/location that are not explicitly changed:
+        * Clothing items and their colors (e.g., "red dress", "leather jacket") - keep exactly as described unless the character mentions changing clothes
+        * Accessories (jewelry, glasses, hats, etc.) - keep unless explicitly removed/changed
+        * Hair style/color - keep exactly as described
+        * Physical features - keep exactly as described
+        * Environment details (furniture, lighting, decorations) - keep exactly as described unless location changes
+      - ONLY modify details if the recent messages explicitly indicate a change (e.g., "takes off jacket", "moves to the bedroom", "eyes widen in surprise")
+      - If messages mention emotion/expression changes, update ONLY the expression/pose, not clothing or environment
+      - If no changes are mentioned, use the baseline descriptions verbatim
+      - NEVER include dialogue, speech, or quoted text in the prompt
+      - ALWAYS include the full location/environment description - this is mandatory
+
+      BASELINE APPEARANCE (use exactly as written unless contradicted):
+      #{current_appearance}
+
+      BASELINE LOCATION (use exactly as written unless contradicted):
+      #{current_location}
+
+      RECENT MESSAGES (only update details explicitly mentioned here):
+      User: #{context.first}
+      Character: #{context.second}
+
+      Generate a single cohesive image generation prompt that:
+      1. Uses the baseline appearance/location descriptions as the foundation
+      2. Only modifies specific details that are explicitly changed in the recent messages
+      3. Maintains all stable visual elements (clothing, environment, etc.) exactly as described in the baseline
+      4. MUST include complete location/environment details
+      5. MUST NOT include any dialogue, speech, or quotes
+      6. Describes only visual elements (what can be seen in a still image)
+      7. Is optimized for AI image generators with vivid, specific visual details
+      8. Is under 1500 characters
+      9. Does not include explanations, only the final prompt
+
+      Output ONLY the final image generation prompt:
     PROMPT
   end
 
@@ -654,7 +692,7 @@ class AiPromptGenerationService
     child_terms = [
       "child", "children", "kid", "kids", "baby", "babies", "toddler", "toddlers",
       "infant", "infants", "minor", "minors", "boy", "boys", "girl", "girls",
-      "son", "daughter", "nephew", "niece", "student", "students", "pupil", "pupils",
+      "son", "daughter", "nephew", "niece", "student", "students",
       "schoolchild", "schoolchildren", "youngster", "youngsters", "youth", "youths",
       "juvenile", "juveniles", "adolescent", "adolescents", "teen", "teens",
       "teenager", "teenagers", "preteen", "preteens", "tween", "tweens"

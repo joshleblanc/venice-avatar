@@ -21,7 +21,7 @@ class GenerateCharacterJob < ApplicationJob
 
     character.save!
 
-    GenerateCharacterAppearanceJob.perform_later(character, @user)
+    #GenerateCharacterAppearanceJob.perform_later(character, @user)
 
     CharacterInstructionGeneratorJob.perform_later(character, @user)
     Rails.logger.info "Auto-generated character: #{character.name}"
