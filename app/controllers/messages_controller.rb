@@ -1,5 +1,6 @@
 class MessagesController < ApplicationController
   before_action :set_conversation, only: [:create]
+  before_action :set_message, only: [:edit, :update, :destroy]
 
   def create
     @message = @conversation.messages.build(content: message_params[:content], role: "user", user: current_user)
@@ -28,11 +29,40 @@ class MessagesController < ApplicationController
     end
   end
 
+  def edit
+    authorize @message
+  end
+
+  def update
+    authorize @message
+    if @message.update(message_params)
+      redirect_to @message.conversation, notice: "Message updated successfully"
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    authorize @message
+    conversation = @message.conversation
+    @message.destroy
+    respond_to do |format|
+      format.turbo_stream {
+        render turbo_stream: turbo_stream.remove("message_#{@message.id}")
+      }
+      format.html { redirect_to conversation, notice: "Message deleted successfully" }
+    end
+  end
+
   private
 
   def set_conversation
     @conversation = Conversation.find(params[:conversation_id])
     authorize @conversation
+  end
+
+  def set_message
+    @message = Message.find(params[:id])
   end
 
   def message_params

@@ -1,4 +1,4 @@
-<div class="flex <%= message.role == "user" ? "justify-end" : "justify-start" %> mb-4" data-controller="collapse">
+<div id="message_<%= message.id %>" class="flex <%= message.role == "user" ? "justify-end" : "justify-start" %> mb-4" data-controller="collapse">
   <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg <%= message.role == "user" ? "bg-blue-600 text-white" : "bg-white text-gray-800 shadow-sm border" %>">
     <% if message.role == "assistant" %>
       <div class="flex items-center mb-1">
@@ -16,7 +16,8 @@
     <% end %>
 
     <!-- Message content with inline highlighted actions/thoughts -->
-    <p class="text-sm whitespace-pre-wrap"><%= message.formatted_content.html_safe %></p>
+    <%= turbo_frame_tag "message_content_#{message.id}" do %>
+      <p class="text-sm whitespace-pre-wrap"><%= message.formatted_content.html_safe %></p>
     
     <!-- BRB indicator for auto-generated "brb" messages -->
     <% if message.role == "assistant" && message.auto_generated? && message.conversation.character_away? %>
@@ -45,8 +46,24 @@
       </div>
     <% end %>
     
-    <div class="text-xs <%= message.role == "user" ? "text-blue-200" : "text-gray-400" %> mt-1">
-      <%= time_ago_in_words(message.created_at) %> ago
+    <div class="flex items-center justify-between mt-1">
+      <div class="text-xs <%= message.role == "user" ? "text-blue-200" : "text-gray-400" %>">
+        <%= time_ago_in_words(message.created_at) %> ago
+      </div>
+      <div class="flex gap-2 ml-3">
+        <%= link_to edit_conversation_message_path(message.conversation, message), class: "text-xs #{ message.role == 'user' ? 'text-blue-200 hover:text-white' : 'text-gray-400 hover:text-gray-600' }" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        <% end %>
+        <%= button_to conversation_message_path(message.conversation, message), method: :delete, data: { turbo_confirm: "Are you sure you want to delete this message?" }, class: "text-xs #{ message.role == 'user' ? 'text-blue-200 hover:text-white' : 'text-gray-400 hover:text-gray-600' }" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        <% end %>
+      </div>
     </div>
+    <% end %>
+
   </div>
 </div>

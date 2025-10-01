@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       post :regenerate_scene
       patch :image_style
     end
-    resources :messages, only: [:create]
+    resources :messages, only: [:create, :edit, :update, :destroy]
   end
 
   resource :session
