@@ -50,6 +50,17 @@
         </p>
       </div>
 
+      <div>
+        <%= form.label :scenario_context, "Scenario Context (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.text_area :scenario_context,
+                           rows: 4,
+                           placeholder: "Describe the type of scenarios, settings, or situations you plan to explore with this character. This helps ensure they're comfortable and appropriate for your intended roleplay scenarios.",
+                           class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+        <p class="mt-1 text-sm text-gray-500">
+          Examples: "Medieval fantasy adventures", "Modern detective mysteries", "Sci-fi space exploration", "Dark psychological thriller scenarios"
+        </p>
+      </div>
+
       <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
         <div class="flex">
           <div class="flex-shrink-0">

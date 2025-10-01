@@ -47,10 +47,21 @@ class GenerateCharacterJob < ApplicationJob
     # Get a diverse set of existing names to avoid repetition
     existing_names = Character.user_created.where(user: @user).pluck(:name).map { |name| name&.split&.first }.compact.uniq.last(20)
 
+    scenario_context_section = if @character.scenario_context.present?
+      <<~SCENARIO
+        
+        SCENARIO CONTEXT: This character will be used in scenarios involving: "#{@character.scenario_context}"
+        
+        IMPORTANT: Create a character who would naturally fit into and be comfortable with these scenarios. Their personality, background, and values should align with participating in the described scenarios without internal conflict.
+      SCENARIO
+    else
+      ""
+    end
+
     <<~PROMPT
       Generate a unique and interesting character concept for a roleplay AI. Create someone with depth and personality that would be engaging to talk to.
       
-      IMPORTANT: Only create ADULT characters (18+ years old). Do not create characters that are children, minors, teenagers, or reference child-related content.
+      IMPORTANT: Only create ADULT characters (18+ years old). Do not create characters that are children, minors, teenagers, or reference child-related content.#{scenario_context_section}
 
       IMPORTANT NAMING REQUIREMENTS:
       - Use diverse, culturally varied names from different backgrounds

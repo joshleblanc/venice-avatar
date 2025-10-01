@@ -1,0 +1,5 @@
+=> Booting Puma
+=> Rails 8.0.3 application starting in development 
+=> Run `bin/rails server --help` for more startup options
+A server is already running (pid: 3595, file: /workspaces/venice-array/tmp/pids/server.pid).
+Exiting

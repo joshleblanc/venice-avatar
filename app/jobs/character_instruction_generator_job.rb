@@ -30,6 +30,17 @@ class CharacterInstructionGeneratorJob < ApplicationJob
   private
 
   def build_instruction_generation_prompt
+    scenario_context_section = if @character.scenario_context.present?
+      <<~SCENARIO
+        
+        SCENARIO CONTEXT: The character will be used in scenarios involving: "#{@character.scenario_context}"
+        
+        IMPORTANT: Ensure the character's personality, values, and comfort level are appropriate for these scenarios. The character should be naturally suited to participate in and engage with the described scenarios without internal conflict or moral objections that would prevent meaningful roleplay.
+      SCENARIO
+    else
+      ""
+    end
+
     <<~PROMPT
                         Based on the following character description, populate the following, creating a unique, interesting character:
                   
@@ -37,7 +48,7 @@ class CharacterInstructionGeneratorJob < ApplicationJob
                         
                         IMPORTANT: Only create ADULT characters (18+ years old). Do not reference children, minors, or child-related content in the character instructions.
                         
-                        Input character description: "#{@character.description}"
+                        Input character description: "#{@character.description}"#{scenario_context_section}
                         
                         [Character]
                         Name: #{@character.name || "<NAME>"}

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_26_185220) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_01_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -58,6 +58,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_26_185220) do
     t.boolean "generating", default: false
     t.text "appearance"
     t.text "location"
+    t.text "scenario_context"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
     t.index ["user_created"], name: "index_characters_on_user_created"
     t.index ["user_id"], name: "index_characters_on_user_id"

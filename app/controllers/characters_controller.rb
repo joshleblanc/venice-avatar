@@ -24,6 +24,7 @@ class CharactersController < ApplicationController
       user_created: true,
       user: current_user,
       generating: true,
+      scenario_context: params[:scenario_context]
     )
     GenerateCharacterJob.perform_later(@character, current_user)
 
@@ -97,7 +98,7 @@ class CharactersController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def character_params
-    params.expect(character: [:adult, :external_created_at, :description, :name, :share_url, :slug, :stats, :external_updated_at, :web_enabled])
+    params.expect(character: [:adult, :external_created_at, :description, :name, :share_url, :slug, :stats, :external_updated_at, :web_enabled, :scenario_context])
   end
 
   def generate_unique_slug(name)
