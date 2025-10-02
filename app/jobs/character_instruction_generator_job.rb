@@ -31,12 +31,35 @@ class CharacterInstructionGeneratorJob < ApplicationJob
 
   def build_instruction_generation_prompt
     scenario_context_section = if @character.scenario_context.present?
-      <<~SCENARIO
-        
-        SCENARIO CONTEXT: The character will be used in scenarios involving: "#{@character.scenario_context}"
-        
-        IMPORTANT: Ensure the character's personality, values, and comfort level are appropriate for these scenarios. The character should be naturally suited to participate in and engage with the described scenarios without internal conflict or moral objections that would prevent meaningful roleplay.
-      SCENARIO
+      scenario_text = @character.scenario_context
+      
+      # Check if this is a detailed scenario with character assignments
+      has_character_details = scenario_text.length > 200 || 
+                             scenario_text.match?(/\b(character|role|you are|you play)\b/i)
+      
+      if has_character_details
+        <<~SCENARIO
+          
+          SCENARIO CONTEXT: This character is designed for the following specific scenario:
+          
+          "#{scenario_text}"
+          
+          CRITICAL INSTRUCTIONS:
+          - The character's personality and instructions MUST align perfectly with their role in this scenario
+          - If the scenario describes the character's personality, traits, or behavior, incorporate those EXACTLY
+          - The character should be naturally comfortable and enthusiastic about participating in this scenario
+          - Ensure the character's communication style matches what's implied or stated in the scenario
+          - If the scenario mentions the user's role, the character should be aware of and responsive to that dynamic
+          - Remove any internal conflicts or hesitations that would prevent the character from fully engaging in the scenario
+        SCENARIO
+      else
+        <<~SCENARIO
+          
+          SCENARIO CONTEXT: The character will be used in scenarios involving: "#{scenario_text}"
+          
+          IMPORTANT: Ensure the character's personality, values, and comfort level are appropriate for these scenarios. The character should be naturally suited to participate in and engage with the described scenarios without internal conflict or moral objections that would prevent meaningful roleplay.
+        SCENARIO
+      end
     else
       ""
     end

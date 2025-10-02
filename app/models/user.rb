@@ -9,6 +9,11 @@ class User < ApplicationRecord
 
   validate :venice_key_must_be_valid
 
+  after_initialize do
+    self.venice_key ||= ENV["VENICE_API_KEY"] if Rails.env.development?
+    self.admin = true if Rails.env.development?
+  end
+
   def venice_key_must_be_valid
     if balances.nil?
       self.venice_key_valid = false
@@ -39,7 +44,7 @@ class User < ApplicationRecord
     (venice_key.length - 4).times.map { "*" }.join + venice_key.last(4)
   end
 
-  def image_style 
+  def image_style
     if preferred_image_style.nil?
       "Anime"
     elsif preferred_image_style.blank?
@@ -51,7 +56,7 @@ class User < ApplicationRecord
 
   def text_model
     if preferred_text_model.present?
-      # Allow storing either a trait key or a raw model id
+     # Allow storing either a trait key or a raw model id
      preferred_text_model
     else
 

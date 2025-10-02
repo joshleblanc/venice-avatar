@@ -22,12 +22,25 @@
     <%= form_with url: auto_generate_characters_path, method: :post, local: true, class: "space-y-4" do |form| %>
       <div>
         <%= form.label :scenario_context, "Scenario Context (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-        <%= form.text_area :scenario_context,
-                           rows: 3,
-                           placeholder: "Describe the type of scenarios you plan to explore with this character (e.g., 'Medieval fantasy adventures', 'Modern detective mysteries', 'Sci-fi space exploration')",
-                           class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" %>
+        <div class="relative">
+          <%= form.text_area :scenario_context,
+                             rows: 3,
+                             id: "auto_scenario_context_field",
+                             placeholder: "Describe the type of scenarios you plan to explore with this character (e.g., 'Medieval fantasy adventures', 'Modern detective mysteries', 'Sci-fi space exploration')",
+                             class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" %>
+          <button type="button"
+                  id="auto_enhance_scenario_btn"
+                  onclick="enhanceAutoScenario()"
+                  class="absolute bottom-2 right-2 px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Use AI to enhance and expand your scenario description">
+            ✨ Enhance with AI
+          </button>
+        </div>
         <p class="mt-1 text-sm text-gray-500">
           This helps ensure the generated character is appropriate for your intended scenarios.
+        </p>
+        <p class="mt-1 text-sm text-purple-600">
+          💡 Try the "Enhance with AI" button to expand a brief idea into a detailed scenario!
         </p>
       </div>
       <div class="flex justify-end space-x-3">
@@ -45,6 +58,54 @@
     function toggleAutoGenerateForm() {
       const form = document.getElementById('autoGenerateForm');
       form.classList.toggle('hidden');
+    }
+    
+    async function enhanceAutoScenario() {
+      const textarea = document.getElementById('auto_scenario_context_field');
+      const button = document.getElementById('auto_enhance_scenario_btn');
+      const prompt = textarea.value.trim();
+      
+      if (!prompt) {
+        alert('Please enter a brief scenario idea first (e.g., "a spicy rooftop romance")');
+        return;
+      }
+      
+      // Disable button and show loading state
+      button.disabled = true;
+      const originalText = button.innerHTML;
+      button.innerHTML = '⏳ Enhancing...';
+      
+      try {
+        const response = await fetch('<%= enhance_scenario_characters_path %>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+          },
+          body: JSON.stringify({ prompt: prompt })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to enhance scenario');
+        }
+        
+        const data = await response.json();
+        
+        // Update the scenario field with the enhanced version
+        textarea.value = data.scenario;
+        
+        // Auto-resize textarea if needed
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        
+      } catch (error) {
+        console.error('Error enhancing scenario:', error);
+        alert('Failed to enhance scenario. Please try again.');
+      } finally {
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = originalText;
+      }
     }
   </script>
 

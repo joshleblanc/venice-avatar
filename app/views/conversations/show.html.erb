@@ -161,6 +161,15 @@
           <% end %>
         </div>
 
+        <div class="bg-white border rounded p-3 text-xs mt-4">
+          <h4 class="font-semibold mb-2">Scenario Context</h4>
+          <% if @conversation.character.scenario_context.present? %>
+            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.character.scenario_context %></div>
+          <% else %>
+            <div class="text-xs text-gray-500">No scenario context set</div>
+          <% end %>
+        </div>
+
 
       </div>
     <% end %>

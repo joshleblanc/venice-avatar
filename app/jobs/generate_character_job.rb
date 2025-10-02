@@ -48,12 +48,36 @@ class GenerateCharacterJob < ApplicationJob
     existing_names = Character.user_created.where(user: @user).pluck(:name).map { |name| name&.split&.first }.compact.uniq.last(20)
 
     scenario_context_section = if @character.scenario_context.present?
-      <<~SCENARIO
-        
-        SCENARIO CONTEXT: This character will be used in scenarios involving: "#{@character.scenario_context}"
-        
-        IMPORTANT: Create a character who would naturally fit into and be comfortable with these scenarios. Their personality, background, and values should align with participating in the described scenarios without internal conflict.
-      SCENARIO
+      # Check if the scenario mentions specific character roles or names
+      scenario_text = @character.scenario_context
+      
+      # Try to detect if this is a detailed scenario with character assignments
+      has_character_details = scenario_text.length > 200 || 
+                             scenario_text.match?(/\b(character|role|you are|you play)\b/i)
+      
+      if has_character_details
+        <<~SCENARIO
+          
+          SCENARIO CONTEXT: This character will be used in the following scenario:
+          
+          "#{scenario_text}"
+          
+          IMPORTANT INSTRUCTIONS:
+          - If the scenario describes a specific character (with a name, role, or personality), create that EXACT character
+          - Extract the character's name if mentioned, or create an appropriate name based on their role
+          - Match the character's personality, background, and traits to what's described in the scenario
+          - Ensure the character description aligns perfectly with their role in the scenario
+          - If the scenario mentions the user's role, acknowledge it but focus on creating the AI character
+          - The character should be naturally comfortable and appropriate for this specific scenario
+        SCENARIO
+      else
+        <<~SCENARIO
+          
+          SCENARIO CONTEXT: This character will be used in scenarios involving: "#{scenario_text}"
+          
+          IMPORTANT: Create a character who would naturally fit into and be comfortable with these scenarios. Their personality, background, and values should align with participating in the described scenarios without internal conflict.
+        SCENARIO
+      end
     else
       ""
     end
