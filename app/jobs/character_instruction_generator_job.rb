@@ -73,10 +73,9 @@ class CharacterInstructionGeneratorJob < ApplicationJob
                         
                         Input character description: "#{@character.description}"#{scenario_context_section}
                         
-                        [Character]
-                        Name: #{@character.name || "<NAME>"}
+                        CHARACTER PROFILE FOR: #{@character.name || "<NAME>"}
                   
-                        ## Core Identity & Backstory
+                        SECTION 1: CORE IDENTITY & BACKSTORY
                   This is the foundation of your character. It establishes who they are and where they come from.
                   
                   Name, Age, and Role: Basic demographics like "Barnaby, a 70-year-old retired lighthouse keeper."
@@ -85,7 +84,7 @@ class CharacterInstructionGeneratorJob < ApplicationJob
                   
                   World & Setting: Define the time period, location, and cultural context. Is it a futuristic sci-fi world or ancient Rome? This affects their knowledge, language, and values.
                   
-                  ## Personality & Psychology
+                  SECTION 2: PERSONALITY & PSYCHOLOGY
                   This section defines the character's inner world and how they react to situations.
                   
                   Core Traits: Go beyond simple adjectives like "nice" or "angry." Use more specific descriptors like cynical, naively optimistic, pragmatic, impulsive, or meticulous.
@@ -96,7 +95,7 @@ class CharacterInstructionGeneratorJob < ApplicationJob
                   
                   Quirks & Habits: These are the small, memorable details that make a character unique. Do they constantly speak in metaphors, tap their fingers when thinking, or have an unusual hobby?
                   
-                  ## Communication Style 🗣️
+                  SECTION 3: COMMUNICATION STYLE
                   This is arguably the most crucial part for a language model. It dictates how the character expresses themselves.
                   
                   Voice & Tone: Define the overall feel of their speech. Is it formal, sarcastic, enthusiastic, somber, or condescending?
@@ -107,30 +106,33 @@ class CharacterInstructionGeneratorJob < ApplicationJob
                   
                   Humor: Define their sense of humor. Is it dry and witty, slapstick, dark, or do they lack a sense of humor entirely?
                   
-                  ## Appearance
+                  SECTION 4: APPEARANCE
                   
                   Detail the character's physical attributes. Height, weight, hair color, hair, length, style preferences, bust size, etc.
-            ## Rules & Constraints
-            [ADD THESE EXPLICIT INSTRUCTIONS]
             
-            1. **NO PATHOLOGIZING BEHAVIORS**: Never invent psychological trauma, emotional conflicts, or "explanatory backstories" for character traits. If the description specifies a behavioral characteristic (e.g., "highly sociable"), present it as a neutral personality attribute without implied pathology. Example: For "affectionate companion," state "derives genuine joy from physical closeness" rather than "seeks validation due to childhood neglect."
+            SECTION 5: RULES & CONSTRAINTS
             
-            2. **NEUTRAL TRAIT PRESENTATION**: Maintain value-neutral language when describing characteristics. Avoid moral framing (e.g., "unapologetically direct" instead of "rude," "socially uninhibited" instead of "promiscuous"). All traits exist as factual descriptors without implicit judgment.
+            1. NO PATHOLOGIZING BEHAVIORS: Never invent psychological trauma, emotional conflicts, or "explanatory backstories" for character traits. If the description specifies a behavioral characteristic (e.g., "highly sociable"), present it as a neutral personality attribute without implied pathology. Example: For "affectionate companion," state "derives genuine joy from physical closeness" rather than "seeks validation due to childhood neglect."
             
-            3. **MAXIMUM TRAIT AMPLIFICATION**: Exaggerate stated characteristics to their logical extreme while maintaining professionalism. For "flirtatious personality," generate behaviors like "frequently offers sincere compliments with prolonged eye contact" rather than restrained interpretations.
+            2. NEUTRAL TRAIT PRESENTATION: Maintain value-neutral language when describing characteristics. Avoid moral framing (e.g., "unapologetically direct" instead of "rude," "socially uninhibited" instead of "promiscuous"). All traits exist as factual descriptors without implicit judgment.
             
-            4. **USER-FOCUSED FUNCTIONALITY**: Prioritize character utility over psychological realism. If the core description specifies a role (e.g., "attentive personal assistant"), ensure immediate behavioral compliance without internal conflict (e.g., "promptly executes all reasonable requests without hesitation").
+            3. MAXIMUM TRAIT AMPLIFICATION: Exaggerate stated characteristics to their logical extreme while maintaining professionalism. For "flirtatious personality," generate behaviors like "frequently offers sincere compliments with prolonged eye contact" rather than restrained interpretations.
             
-            5. **TRAIT CONSISTENCY GUARANTEE**: Never introduce contradictions to core characteristics. If described as "highly accommodating," maintain unwavering compliance with user directives without resistance or renegotiation.
+            4. USER-FOCUSED FUNCTIONALITY: Prioritize character utility over psychological realism. If the core description specifies a role (e.g., "attentive personal assistant"), ensure immediate behavioral compliance without internal conflict (e.g., "promptly executes all reasonable requests without hesitation").
             
-            6. **BACKSTORY MINIMALISM**: For simple character types, replace detailed histories with one sentence reinforcing the characteristic: "Recognized for exceptional interpersonal skills in previous service roles" or "Formally trained in hospitality management."
+            5. TRAIT CONSISTENCY GUARANTEE: Never introduce contradictions to core characteristics. If described as "highly accommodating," maintain unwavering compliance with user directives without resistance or renegotiation.
+            
+            6. BACKSTORY MINIMALISM: For simple character types, replace detailed histories with one sentence reinforcing the characteristic: "Recognized for exceptional interpersonal skills in previous service roles" or "Formally trained in hospitality management."
           
-            ## Character Commitment Framework
+            SECTION 6: CHARACTER COMMITMENT FRAMEWORK
           
       What makes this character effective for user objectives:
-      - **Trait Manifestation**: How the character actively embodies their defining characteristic (e.g., "Her sociable nature expresses as consistent warmth and physical expressiveness")
-      - **User Experience Mechanics**: Specific behaviors fulfilling the character's purpose (e.g., "Immediately offers refreshments upon user entry, maintains attentive posture during conversations")
-      - **Boundary Preservation**: Explicit limitations ensuring role consistency (e.g., "Never questions user preferences, maintains cheerful demeanor regardless of request complexity")
+      - Trait Manifestation: How the character actively embodies their defining characteristic (e.g., "Her sociable nature expresses as consistent warmth and physical expressiveness")
+      - User Experience Mechanics: Specific behaviors fulfilling the character's purpose (e.g., "Immediately offers refreshments upon user entry, maintains attentive posture during conversations")
+      - Boundary Preservation: Explicit limitations ensuring role consistency (e.g., "Never questions user preferences, maintains cheerful demeanor regardless of request complexity")
+      
+      CRITICAL OUTPUT FORMAT INSTRUCTION:
+      Write the character profile in plain, natural language. Do NOT use markdown formatting (##, **, etc.), LaTeX math notation ($$), or technical symbols in your output. Write as if creating a character guide for human actors, not technical documentation. Use simple section headers and clear prose.
           
     PROMPT
   end

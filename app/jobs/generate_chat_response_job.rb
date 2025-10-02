@@ -61,6 +61,7 @@ class GenerateChatResponseJob < ApplicationJob
         5. MAINTAIN CONSISTENCY: Only change your appearance/location if the conversation explicitly mentions or implies such changes
         6. If no changes are mentioned, describe your EXISTING state accurately and consistently
         7. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content in your responses, appearance descriptions, or location descriptions
+        8. NATURAL SPEECH ONLY: Speak naturally as your character would in conversation. Do NOT use markdown formatting (##, **, etc.), LaTeX math notation ($$), technical symbols, or structured documentation formatting in your conversational responses. Speak like a real person having a conversation, not like you're writing technical documentation
 
         #{tool_call_instructions}
 
