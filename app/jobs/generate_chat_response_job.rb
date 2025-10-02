@@ -1,7 +1,7 @@
 class GenerateChatResponseJob < ApplicationJob
   include CharacterToolCalls
   CHAT_GUIDELINES = <<~GUIDELINES
-      
+#{'      '}
   GUIDELINES
 
   queue_as :default
@@ -61,7 +61,6 @@ class GenerateChatResponseJob < ApplicationJob
         5. MAINTAIN CONSISTENCY: Only change your appearance/location if the conversation explicitly mentions or implies such changes
         6. If no changes are mentioned, describe your EXISTING state accurately and consistently
         7. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content in your responses, appearance descriptions, or location descriptions
-        8. NATURAL SPEECH ONLY: Speak naturally as your character would in conversation. Do NOT use markdown formatting (##, **, etc.), LaTeX math notation ($$), technical symbols, or structured documentation formatting in your conversational responses. Speak like a real person having a conversation, not like you're writing technical documentation
 
         #{tool_call_instructions}
 
@@ -74,7 +73,7 @@ class GenerateChatResponseJob < ApplicationJob
         Your response should contain BOTH:
         - A natural conversational reply to the user (REQUIRED - never send empty content)
         - Tool calls with COMPLETE descriptions of your CURRENT state (REQUIRED - always include both appearance and location)
-        
+
         EXAMPLE RESPONSE FORMAT:
         Content: "Hi there! I'm doing well, thanks for asking. How are you today?"
         Tool calls: update_appearance(...), update_location(...)
@@ -110,6 +109,6 @@ class GenerateChatResponseJob < ApplicationJob
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
 
-    ChatCompletionJob.perform_now(conversation.user, [system_message] + messages, options, conversation.user.text_model) || "I'm sorry, I couldn't respond right now."
+    ChatCompletionJob.perform_now(conversation.user, [ system_message ] + messages, options, conversation.user.text_model) || "I'm sorry, I couldn't respond right now."
   end
 end

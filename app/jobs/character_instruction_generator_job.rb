@@ -131,7 +131,6 @@ class CharacterInstructionGeneratorJob < ApplicationJob
       - User Experience Mechanics: Specific behaviors fulfilling the character's purpose (e.g., "Immediately offers refreshments upon user entry, maintains attentive posture during conversations")
       - Boundary Preservation: Explicit limitations ensuring role consistency (e.g., "Never questions user preferences, maintains cheerful demeanor regardless of request complexity")
       
-      CRITICAL OUTPUT FORMAT INSTRUCTION:
       Write the character profile in plain, natural language. Do NOT use markdown formatting (##, **, etc.), LaTeX math notation ($$), or technical symbols in your output. Write as if creating a character guide for human actors, not technical documentation. Use simple section headers and clear prose.
           
     PROMPT

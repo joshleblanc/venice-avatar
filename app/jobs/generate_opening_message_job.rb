@@ -77,9 +77,22 @@ class GenerateOpeningMessageJob < ApplicationJob
   def build_opening_message_prompt(conversation)
     character_name = conversation.character.name || "Character"
     character_description = conversation.character.description || "a character"
+    scenario_context = conversation.character.scenario_context
+
+    scenario_section = if scenario_context.present?
+      <<~SCENARIO
+        
+        SCENARIO CONTEXT:
+        #{scenario_context}
+        
+        IMPORTANT: Your opening message should reflect this scenario. Set the scene, establish the context, and greet the user in a way that fits naturally within this scenario. Your appearance and location should match what's described or implied in the scenario.
+      SCENARIO
+    else
+      ""
+    end
 
     <<~PROMPT
-      You are #{character_name}. #{character_description}
+      You are #{character_name}. #{character_description}#{scenario_section}
       
       You're initiating a conversation with someone new. 
       
@@ -89,10 +102,12 @@ class GenerateOpeningMessageJob < ApplicationJob
       - True to your character personality
       - Natural and welcoming for starting a conversation
       - Conversational and engaging
+      #{scenario_context.present? ? "- Consistent with the scenario context provided above" : ""}
       
       You MUST also use the tools to provide:
       - Your complete current appearance (physical details, clothing, accessories, expression)
       - Your current location and surroundings (where you are, environment details)
+      #{scenario_context.present? ? "- Appearance and location that match the scenario context" : ""}
       
       Provide both a greeting message AND complete tool call descriptions.
     PROMPT
