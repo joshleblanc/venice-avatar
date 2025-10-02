@@ -43,6 +43,8 @@ class CharactersController < ApplicationController
   def enhance_scenario
     authorize Character
     prompt_text = params[:prompt]
+    character_name = params[:name]
+    character_description = params[:description]
 
     if prompt_text.blank?
       render json: { error: "Prompt cannot be empty" }, status: :unprocessable_entity
@@ -50,7 +52,7 @@ class CharactersController < ApplicationController
     end
 
     begin
-      enhanced_scenario = generate_enhanced_scenario(prompt_text)
+      enhanced_scenario = generate_enhanced_scenario(prompt_text, character_name, character_description)
       render json: { 
         scenario: enhanced_scenario[:scenario],
         character_name: enhanced_scenario[:character_name]
@@ -58,6 +60,30 @@ class CharactersController < ApplicationController
     rescue => e
       Rails.logger.error "Failed to enhance scenario: #{e.message}"
       render json: { error: "Failed to enhance scenario. Please try again." }, status: :internal_server_error
+    end
+  end
+
+  # POST /characters/enhance_description
+  def enhance_description
+    authorize Character
+    prompt_text = params[:prompt]
+    character_name = params[:name]
+    scenario_context = params[:scenario]
+
+    if prompt_text.blank?
+      render json: { error: "Prompt cannot be empty" }, status: :unprocessable_entity
+      return
+    end
+
+    begin
+      enhanced_description = generate_enhanced_description(prompt_text, character_name, scenario_context)
+      render json: { 
+        description: enhanced_description[:description],
+        character_name: enhanced_description[:character_name]
+      }
+    rescue => e
+      Rails.logger.error "Failed to enhance description: #{e.message}"
+      render json: { error: "Failed to enhance description. Please try again." }, status: :internal_server_error
     end
   end
 
@@ -136,11 +162,92 @@ class CharactersController < ApplicationController
     slug
   end
 
-  def generate_enhanced_scenario(prompt_text)
+  def generate_enhanced_description(prompt_text, character_name = nil, scenario_context = nil)
+    context_section = ""
+    
+    if character_name.present? || scenario_context.present?
+      context_section = "\n\nEXISTING CHARACTER INFORMATION:"
+      context_section += "\nCharacter Name: #{character_name}" if character_name.present?
+      context_section += "\nScenario Context: #{scenario_context}" if scenario_context.present?
+      context_section += "\n\nIMPORTANT: Use this existing information to create a character description that fits the name and scenario. The description should complement and enhance what's already defined."
+    end
+
+    enhancement_prompt = <<~PROMPT
+      You are a creative character designer for roleplay AI. The user has provided a brief character idea, and you need to expand it into a detailed, engaging character description.
+
+      User's prompt: "#{prompt_text}"#{context_section}
+
+      Create a detailed character description based on this prompt. The description should:
+      1. Define the character's background, personality, and key traits
+      2. Include specific, concrete details that make the character unique and memorable
+      3. Describe their interests, quirks, and what makes them engaging to interact with
+      4. Be appropriate for adult roleplay (18+)
+      5. Match the tone and style implied by the user's prompt
+      6. Be written in a narrative style that brings the character to life
+      #{character_name.present? || scenario_context.present? ? "7. Incorporate and build upon the existing character information provided above" : ""}
+
+      IMPORTANT: Focus on WHO the character is - their personality, background, interests, and what makes them unique. Write in third person or as a character profile.
+
+      #{character_name.present? ? "Use the character name '#{character_name}' in the description." : "If the prompt mentions a specific name, extract it. Otherwise, suggest an appropriate name."}
+
+      Format your response exactly like this:
+      CHARACTER_NAME: [Name of the character]
+      DESCRIPTION: [The detailed character description]
+
+      Example:
+      CHARACTER_NAME: Marcus Chen
+      DESCRIPTION: Marcus is a former street artist turned art therapist who uses creativity to help people process difficult emotions. At 32, he has an easygoing confidence that comes from years of navigating both the underground art scene and formal psychology training. He's passionate about finding beauty in unexpected places and believes that everyone has an artist inside them waiting to be discovered. Marcus has a habit of sketching on napkins during conversations and often speaks in visual metaphors. He's warm and encouraging, with a playful sense of humor that helps people feel comfortable opening up. His studio apartment is filled with half-finished canvases and plants he's named after famous artists.
+
+      Make it vivid and true to the user's vision!
+    PROMPT
+
+    response = ChatCompletionJob.perform_now(
+      current_user,
+      [{ role: "user", content: enhancement_prompt }],
+      { temperature: 0.8 }
+    )
+
+    content = response.content.strip
+    
+    # Parse the response
+    character_name = nil
+    description = nil
+
+    lines = content.split("\n")
+    current_section = nil
+
+    lines.each do |line|
+      if line.start_with?("CHARACTER_NAME:")
+        character_name = line.sub("CHARACTER_NAME:", "").strip
+        current_section = :character_name
+      elsif line.start_with?("DESCRIPTION:")
+        description = line.sub("DESCRIPTION:", "").strip
+        current_section = :description
+      elsif current_section == :description && line.strip.present?
+        description += "\n" + line
+      end
+    end
+
+    {
+      description: description&.strip || content,
+      character_name: character_name
+    }
+  end
+
+  def generate_enhanced_scenario(prompt_text, character_name = nil, character_description = nil)
+    context_section = ""
+    
+    if character_name.present? || character_description.present?
+      context_section = "\n\nEXISTING CHARACTER INFORMATION:"
+      context_section += "\nCharacter Name: #{character_name}" if character_name.present?
+      context_section += "\nCharacter Description: #{character_description}" if character_description.present?
+      context_section += "\n\nIMPORTANT: Use this existing character information to create a scenario that fits THIS specific character. The scenario should complement and enhance what's already defined about the character."
+    end
+
     enhancement_prompt = <<~PROMPT
       You are a creative scenario generator for roleplay AI characters. The user has provided a brief prompt, and you need to expand it into a detailed scenario description that will be used to create a character.
 
-      User's prompt: "#{prompt_text}"
+      User's prompt: "#{prompt_text}"#{context_section}
 
       Create a detailed scenario based on this prompt. The scenario should:
       1. Be vivid and immersive with specific details about the setting, atmosphere, and situation
@@ -149,10 +256,11 @@ class CharactersController < ApplicationController
       4. Set up the situation and dynamic that the character will be part of
       5. Be appropriate for adult roleplay (18+)
       6. Match the tone and genre implied by the user's prompt
+      #{character_name.present? || character_description.present? ? "7. Incorporate and build upon the existing character information provided above" : ""}
 
       IMPORTANT: Focus on defining the CHARACTER and their context. Do NOT define the user's role - the scenario should be written from the perspective of "this is the character you'll be interacting with in this setting."
 
-      If the prompt mentions a specific character name or role, extract it. Otherwise, suggest an appropriate name/role.
+      #{character_name.present? ? "Use the character name '#{character_name}' in the scenario." : "If the prompt mentions a specific character name or role, extract it. Otherwise, suggest an appropriate name/role."}
 
       Format your response exactly like this:
       CHARACTER_NAME: [Name or role of the AI character]

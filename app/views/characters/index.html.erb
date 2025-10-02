@@ -19,18 +19,21 @@
   <!-- Auto Generate Form (Hidden by default) -->
   <div id="autoGenerateForm" class="hidden mb-6 bg-white rounded-lg shadow-md p-6">
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Auto Generate Character</h3>
-    <%= form_with url: auto_generate_characters_path, method: :post, local: true, class: "space-y-4" do |form| %>
+    <%= form_with url: auto_generate_characters_path, method: :post, local: true, class: "space-y-4",
+                  data: { 
+                    controller: "character-enhance",
+                    character_enhance_enhance_scenario_url_value: enhance_scenario_characters_path
+                  } do |form| %>
       <div>
         <%= form.label :scenario_context, "Scenario Context (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
         <div class="relative">
           <%= form.text_area :scenario_context,
                              rows: 3,
-                             id: "auto_scenario_context_field",
                              placeholder: "Describe the type of scenarios you plan to explore with this character (e.g., 'Medieval fantasy adventures', 'Modern detective mysteries', 'Sci-fi space exploration')",
+                             data: { character_enhance_target: "scenarioField" },
                              class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" %>
           <button type="button"
-                  id="auto_enhance_scenario_btn"
-                  onclick="enhanceAutoScenario()"
+                  data: { character_enhance_target: "scenarioButton", action: "click->character-enhance#enhanceScenario" }
                   class="absolute bottom-2 right-2 px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Use AI to enhance and expand your scenario description">
             ✨ Enhance with AI
@@ -58,54 +61,6 @@
     function toggleAutoGenerateForm() {
       const form = document.getElementById('autoGenerateForm');
       form.classList.toggle('hidden');
-    }
-    
-    async function enhanceAutoScenario() {
-      const textarea = document.getElementById('auto_scenario_context_field');
-      const button = document.getElementById('auto_enhance_scenario_btn');
-      const prompt = textarea.value.trim();
-      
-      if (!prompt) {
-        alert('Please enter a brief scenario idea first (e.g., "a spicy rooftop romance")');
-        return;
-      }
-      
-      // Disable button and show loading state
-      button.disabled = true;
-      const originalText = button.innerHTML;
-      button.innerHTML = '⏳ Enhancing...';
-      
-      try {
-        const response = await fetch('<%= enhance_scenario_characters_path %>', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-          },
-          body: JSON.stringify({ prompt: prompt })
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to enhance scenario');
-        }
-        
-        const data = await response.json();
-        
-        // Update the scenario field with the enhanced version
-        textarea.value = data.scenario;
-        
-        // Auto-resize textarea if needed
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-        
-      } catch (error) {
-        console.error('Error enhancing scenario:', error);
-        alert('Failed to enhance scenario. Please try again.');
-      } finally {
-        // Re-enable button
-        button.disabled = false;
-        button.innerHTML = originalText;
-      }
     }
   </script>
 

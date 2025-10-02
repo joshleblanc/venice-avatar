@@ -9,6 +9,10 @@ class CharacterPolicy < ApplicationPolicy
     end
   end
 
+  def enhance_description?
+    user.present?
+  end
+
   def enhance_scenario?
     user.present?
   end
