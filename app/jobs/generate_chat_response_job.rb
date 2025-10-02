@@ -61,6 +61,7 @@ class GenerateChatResponseJob < ApplicationJob
         5. MAINTAIN CONSISTENCY: Only change your appearance/location if the conversation explicitly mentions or implies such changes
         6. If no changes are mentioned, describe your EXISTING state accurately and consistently
         7. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content in your responses, appearance descriptions, or location descriptions
+        8. Don't prefix your message with anything, only include the content of the message/response.
 
         #{tool_call_instructions}
 

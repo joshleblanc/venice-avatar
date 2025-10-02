@@ -1,6 +1,6 @@
 class MessagesController < ApplicationController
-  before_action :set_conversation, only: [:create]
-  before_action :set_message, only: [:edit, :update, :destroy, :regenerate]
+  before_action :set_conversation, only: [ :create ]
+  before_action :set_message, only: [ :edit, :update, :destroy, :regenerate ]
 
   def create
     @message = @conversation.messages.build(content: message_params[:content], role: "user", user: current_user)
@@ -19,8 +19,8 @@ class MessagesController < ApplicationController
         format.turbo_stream {
           render turbo_stream: [
                    turbo_stream.append("messages", partial: "messages/message", locals: {
-                                                     message: @message,
-                                                   }),
+                                                     message: @message
+                                                   })
                  ]
         }
       end
@@ -72,6 +72,8 @@ class MessagesController < ApplicationController
     # Generate a new reply
     if previous_user_message
       GenerateReplyJob.perform_later(@message.conversation, previous_user_message)
+    else
+      GenerateOpeningMessageJob.perform_later(@message.conversation)
     end
 
     respond_to do |format|

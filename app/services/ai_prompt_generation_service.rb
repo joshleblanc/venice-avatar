@@ -146,11 +146,11 @@ class AiPromptGenerationService
 
       Rails.logger.info "BEFORE: #{scene_response.content.strip}"
       # Filter out any child content
-      filtered_scene_response = filter_child_content(scene_response.content.strip)
-      Rails.logger.info "AFTER: #{filtered_scene_response}"
+      # filtered_scene_response = filter_child_content(scene_response.content.strip)
+      Rails.logger.info "AFTER: #{scene_response.content.strip}"
 
-      Rails.logger.info "Generated scene from character descriptions: #{filtered_scene_response[0..100]}..."
-      filtered_scene_response
+      Rails.logger.info "Generated scene from character descriptions: #{scene_response.content.strip[0..100]}..."
+      scene_response.content.strip
     rescue => e
       Rails.logger.error "Failed to generate scene from descriptions: #{e.message}"
       # Fallback to a basic scene
@@ -543,7 +543,7 @@ class AiPromptGenerationService
     end
 
     <<~PROMPT
-      You are creating an image generation prompt for a visual novel scene. You will receive:
+      You are creating an image generation prompt for an image generator. You will receive:
       1. A BASELINE appearance description (current stable appearance) - HIGHEST PRIORITY
       2. A BASELINE location description (current stable location) - HIGHEST PRIORITY
       3. Recent conversation messages that may indicate changes
@@ -592,6 +592,8 @@ class AiPromptGenerationService
       7. Is optimized for AI image generators with vivid, specific visual details
       8. Is under 1500 characters
       9. Does not include explanations, only the final prompt
+
+      Focus on the described character, but include anxilliary characters as neccessary to form a cohesive scene.
 
       Output ONLY the final image generation prompt:
     PROMPT

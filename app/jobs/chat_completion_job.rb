@@ -4,8 +4,14 @@ class ChatCompletionJob < ApplicationJob
     return unless client
 
     opts[:venice_parameters] ||= VeniceClient::ChatCompletionRequestVeniceParameters.new
-    opts[:venice_parameters].strip_thinking_response = true
-    opts[:venice_parameters].disable_thinking = true
+      opts[:venice_parameters].strip_thinking_response = true
+
+    # Configure reasoning based on user preference
+    if user.reasoning_enabled
+      opts[:venice_parameters].disable_thinking = false
+    else
+      opts[:venice_parameters].disable_thinking = true
+    end
 
     # Use model_override directly if provided, otherwise fall back to traits default
     if model_override.present?
