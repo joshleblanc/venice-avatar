@@ -1,6 +1,6 @@
 class AiPromptGenerationService
-  class FakeResponse 
-    attr_accessor :content 
+  class FakeResponse
+    attr_accessor :content
     def initialize(content)
       @content = content
     end
@@ -23,11 +23,11 @@ class AiPromptGenerationService
 
   def store_scene_prompt(prompt, trigger: "unknown")
     Rails.logger.info "Storing scene prompt: #{prompt}"
-    prompt = if prompt.respond_to? :content 
-               prompt.content.strip 
-             else 
-               prompt 
-             end
+    prompt = if prompt.respond_to? :content
+               prompt.content.strip
+    else
+               prompt
+    end
 
     # Store in conversation metadata for quick access
     metadata = @conversation.metadata || {}
@@ -163,9 +163,16 @@ class AiPromptGenerationService
   def build_initial_prompt_generation_request(character_appearance = nil)
     character_description = @character.description || "A character"
     character_name = @character.name || "Character"
+    scenario_context = @character.scenario_context
 
     appearance_context = if character_appearance
-      "\n\nCharacter's Current Appearance (use this information): #{character_appearance}"
+      "\n\nCharacter's Current Appearance (HIGHEST PRIORITY - use this information): #{character_appearance}"
+    else
+      ""
+    end
+
+    scenario_section = if scenario_context.present?
+      "\n\nScenario Context (use as additional context, but defer to appearance/location if they conflict): #{scenario_context}"
     else
       ""
     end
@@ -173,9 +180,14 @@ class AiPromptGenerationService
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.
       Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator.
-      
+
       Character Name: #{character_name}
-      Character Description: #{character_description}#{appearance_context}
+      Character Description: #{character_description}#{appearance_context}#{scenario_section}
+
+      PRIORITY ORDER (if there are conflicts):
+      1. HIGHEST: Character's Current Appearance (if provided) - this is the authoritative source
+      2. MEDIUM: Character Description - use for general context
+      3. LOWEST: Scenario Context - use for setting/atmosphere, but defer to appearance/location if they conflict
 
       Generate a detailed prompt that includes:
       1. Character appearance (physical features, clothing, expression, pose) - USE THE PROVIDED APPEARANCE DETAILS IF AVAILABLE. If appearance is not provided, infer a coherent appearance consistent with the character description.
@@ -212,7 +224,7 @@ class AiPromptGenerationService
 
       STRUCTURE: Generate the character's bodily appearance, followed by their clothes/accessories, then provide a DETAILED background description with specific architectural and environmental elements.
 
-      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific. 
+      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific.#{' '}
     PROMPT
   end
 
@@ -246,7 +258,7 @@ class AiPromptGenerationService
 
     <<~PROMPT
       You are a visual novel scene prompt evolution specialist. You need to update an existing scene prompt based on new story content, changing as little as possible,
-      but providing as much detail as possible. 
+      but providing as much detail as possible.#{' '}
 
       PREVIOUS SCENE PROMPT:
       #{previous_prompt}
@@ -267,7 +279,7 @@ class AiPromptGenerationService
         * All spatial layout and depth elements
         If there is no explicit location change, copy the background description word-for-word from the previous prompt.
       - Character pose or activity changes (based on their actions)
-      
+
 
       DO NOT INCORPORATE:
       - Environmental conditions mentioned by other people (weather, temperature, humidity, etc.)
@@ -282,7 +294,7 @@ class AiPromptGenerationService
       4. If no visual changes to the character are needed, return the previous prompt unchanged
       5. Make changes subtle and natural - avoid dramatic shifts
       5a. VERBATIM PRESERVATION: Copy unchanged parts of the PREVIOUS SCENE PROMPT exactly as written. Do NOT paraphrase unchanged elements.
-      5b. Elements that MUST remain verbatim unless explicitly contradicted by the new message: 
+      5b. Elements that MUST remain verbatim unless explicitly contradicted by the new message:#{' '}
          - Numbers (ages, measurements like 5'2")
          - Colors (for character, clothing, and environment)
          - Proper nouns/place names (e.g., El Dorado)
@@ -333,11 +345,11 @@ class AiPromptGenerationService
       }
     ]
     if previous_prompt.present?
-      messages << {role: "user", content: "PREVIOUS PROMPT (for preservation):\n#{previous_prompt}"}
+      messages << { role: "user", content: "PREVIOUS PROMPT (for preservation):\n#{previous_prompt}" }
     end
-    messages << {role: "user", content: "CURRENT DESCRIPTION TO REWRITE:\n#{description}"}
+    messages << { role: "user", content: "CURRENT DESCRIPTION TO REWRITE:\n#{description}" }
 
-    rewritten = ChatCompletionJob.perform_now(@conversation.user, messages, {temperature: 0.1})
+    rewritten = ChatCompletionJob.perform_now(@conversation.user, messages, { temperature: 0.1 })
     rewritten.content.strip
   rescue => e
     Rails.logger.error "Failed to enforce present-state rewrite: #{e.message}"
@@ -382,14 +394,14 @@ class AiPromptGenerationService
   def build_character_appearance_prompt
     <<~PROMPT
       Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
-      
+
       - What you're currently wearing (clothing, colors, style)
       - Your hair (color, length, style)
       - Your eye color
       - Any accessories you have on
       - Your current expression or mood
       - Your posture or pose
-      
+
       Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
     PROMPT
   end
@@ -446,8 +458,8 @@ class AiPromptGenerationService
     end
 
     <<~INSTRUCTIONS
-      You are the following character: 
-      
+      You are the following character:#{' '}
+
       <character_instructions>
         #{character_instructions}
       </character_instructions>
@@ -457,7 +469,7 @@ class AiPromptGenerationService
   def build_current_appearance_prompt
     <<~PROMPT
       Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
-      
+
       - What you're currently wearing (clothing, colors, style)
       - Your hair (color, length, style)
       - Your eye color
@@ -465,7 +477,7 @@ class AiPromptGenerationService
       - Your current expression or mood
       - Your posture or pose
       - Your body (height, bust, weight, etc)
-      
+
       Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
     PROMPT
   end
@@ -518,11 +530,29 @@ class AiPromptGenerationService
   end
 
   def build_scene_from_descriptions_prompt(current_appearance, current_location, context)
+    scenario_context = @character.scenario_context
+
+    scenario_section = if scenario_context.present?
+      <<~SCENARIO
+
+        SCENARIO CONTEXT (use for general atmosphere/setting, but ALWAYS defer to baseline appearance/location):
+        #{scenario_context}
+      SCENARIO
+    else
+      ""
+    end
+
     <<~PROMPT
       You are creating an image generation prompt for a visual novel scene. You will receive:
-      1. A BASELINE appearance description (current stable appearance)
-      2. A BASELINE location description (current stable location)
+      1. A BASELINE appearance description (current stable appearance) - HIGHEST PRIORITY
+      2. A BASELINE location description (current stable location) - HIGHEST PRIORITY
       3. Recent conversation messages that may indicate changes
+      4. Optional scenario context for general atmosphere
+
+      CRITICAL PRIORITY ORDER (if there are conflicts):
+      1. HIGHEST: BASELINE APPEARANCE and BASELINE LOCATION - these are authoritative and must be used exactly as written
+      2. MEDIUM: Recent messages - only use to update specific details explicitly mentioned
+      3. LOWEST: Scenario context - use for general atmosphere/mood, but NEVER override baseline appearance/location
 
       CRITICAL RULES FOR CONSISTENCY:
       - The appearance and location descriptions are your BASELINE - use them as-is unless the recent messages EXPLICITLY contradict them
@@ -537,12 +567,16 @@ class AiPromptGenerationService
       - If no changes are mentioned, use the baseline descriptions verbatim
       - NEVER include dialogue, speech, or quoted text in the prompt
       - ALWAYS include the full location/environment description - this is mandatory
+      - If scenario context conflicts with baseline appearance/location, IGNORE the conflicting parts of scenario context
 
-      BASELINE APPEARANCE (use exactly as written unless contradicted):
+      BASELINE APPEARANCE (HIGHEST PRIORITY - use exactly as written unless contradicted by recent messages):
       #{current_appearance}
 
-      BASELINE LOCATION (use exactly as written unless contradicted):
+      BASELINE LOCATION (HIGHEST PRIORITY - use exactly as written unless contradicted by recent messages):
       #{current_location}
+
+      SCENARIO CONTEXT
+      #{scenario_section}
 
       RECENT MESSAGES (only update details explicitly mentioned here):
       User: #{context.first}
@@ -594,7 +628,7 @@ class AiPromptGenerationService
     when "appearance"
       <<~SYSTEM
         Please describe your current appearance in detail. This will help create an accurate visual representation of you. Include:
-        
+
         - What you're currently wearing (clothing, colors, style)
         - Your hair (color, length, style)
         - Your eye color
@@ -602,7 +636,7 @@ class AiPromptGenerationService
         - Your current expression or mood
         - Your posture or pose
         - Your body (height, bust, weight, etc)
-        
+
         Be specific and detailed, as this information will be used to generate an image of you. Focus only on your physical appearance that would be visible to someone looking at you right now.
       SYSTEM
     when "location"
@@ -632,7 +666,7 @@ class AiPromptGenerationService
     # Extract background/environment information from the prompt for future consistency
 
     extraction_prompt = <<~EXTRACT
-      Extract ONLY the background/environment description from this scene prompt. 
+      Extract ONLY the background/environment description from this scene prompt.#{' '}
       Include all details about:
       - Location and setting
       - Architectural elements
@@ -640,9 +674,9 @@ class AiPromptGenerationService
       - Lighting conditions
       - Atmospheric elements
       - Colors and materials of the environment
-      
+
       Do not include character descriptions. Return only the environmental details as a concise description.
-      
+
       Scene prompt: #{prompt}
     EXTRACT
 
