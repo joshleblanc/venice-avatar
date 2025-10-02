@@ -13,6 +13,17 @@
 
     <%= yield :head %>
 
+    <!-- MathJax Configuration -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['$$', '$$'], ['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']],  // Only \[...\] for display math, NOT $$...$$
+        },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
