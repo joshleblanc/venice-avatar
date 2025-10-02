@@ -18,8 +18,25 @@
       window.MathJax = {
         tex: {
           inlineMath: [['$', '$'], ['$$', '$$'], ['\\(', '\\)']],
-          displayMath: [['\\[', '\\]']],  // Only \[...\] for display math, NOT $$...$$
+          displayMath: [['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
         },
+        chtml: {
+          displayAlign: 'left',
+          displayIndent: '0'
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process',
+          enableMenu: false,
+          menuOptions: {
+            settings: {
+              zoom: 'NoZoom'
+            }
+          }
+        }
       };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
@@ -35,8 +52,19 @@
     <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js" defer></script>
+    
+    <!-- Disable MathJax highlighting and interaction -->
+    <style>
+      mjx-container {
+        cursor: text !important;
+      }
+      mjx-container:focus {
+        outline: none !important;
+      }
+      mjx-container[jax="CHTML"][display="true"] {
+        cursor: text !important;
+      }
+    </style>
   </head>
 
   <body class="h-full">
