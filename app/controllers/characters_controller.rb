@@ -53,8 +53,7 @@ class CharactersController < ApplicationController
       enhanced_scenario = generate_enhanced_scenario(prompt_text)
       render json: { 
         scenario: enhanced_scenario[:scenario],
-        character_name: enhanced_scenario[:character_name],
-        user_role: enhanced_scenario[:user_role]
+        character_name: enhanced_scenario[:character_name]
       }
     rescue => e
       Rails.logger.error "Failed to enhance scenario: #{e.message}"
@@ -139,25 +138,29 @@ class CharactersController < ApplicationController
 
   def generate_enhanced_scenario(prompt_text)
     enhancement_prompt = <<~PROMPT
-      You are a creative scenario generator for roleplay AI characters. The user has provided a brief prompt, and you need to expand it into a detailed, engaging scenario.
+      You are a creative scenario generator for roleplay AI characters. The user has provided a brief prompt, and you need to expand it into a detailed scenario description that will be used to create a character.
 
       User's prompt: "#{prompt_text}"
 
       Create a detailed scenario based on this prompt. The scenario should:
       1. Be vivid and immersive with specific details about the setting, atmosphere, and situation
-      2. Include clear character roles - identify who the AI character is and who the user is in this scenario
-      3. Set up an interesting dynamic or situation that invites interaction
-      4. Be appropriate for adult roleplay (18+)
-      5. Match the tone and genre implied by the user's prompt
+      2. Define the AI character's role, personality, and context within this scenario
+      3. Describe what makes this character interesting and engaging for this specific scenario
+      4. Set up the situation and dynamic that the character will be part of
+      5. Be appropriate for adult roleplay (18+)
+      6. Match the tone and genre implied by the user's prompt
 
-      IMPORTANT: If the prompt mentions specific characters or roles, clearly identify:
-      - CHARACTER_NAME: The name/role of the AI character in this scenario
-      - USER_ROLE: The name/role of the user in this scenario
+      IMPORTANT: Focus on defining the CHARACTER and their context. Do NOT define the user's role - the scenario should be written from the perspective of "this is the character you'll be interacting with in this setting."
+
+      If the prompt mentions a specific character name or role, extract it. Otherwise, suggest an appropriate name/role.
 
       Format your response exactly like this:
-      CHARACTER_NAME: [Name or role of the AI character, or "Not specified" if the scenario doesn't define specific characters]
-      USER_ROLE: [Name or role of the user, or "Not specified" if not defined]
-      SCENARIO: [The detailed scenario description]
+      CHARACTER_NAME: [Name or role of the AI character]
+      SCENARIO: [The detailed scenario description focused on the character and their context]
+
+      Example:
+      CHARACTER_NAME: Sofia
+      SCENARIO: Sofia is a charismatic bartender who runs the rooftop bar "Skyline" in the heart of the city. The setting is intimate and atmospheric - warm string lights cast a golden glow over the polished bar, and the city skyline stretches out behind her. She's known for her creative cocktails and her ability to make every patron feel like they're the only person in the room. Tonight, the air is warm with a hint of spice from her latest creation, and smooth jazz plays softly in the background. Sofia has a magnetic presence, confident and flirtatious, with a genuine warmth that draws people in.
 
       Make it engaging and true to the user's vision!
     PROMPT
@@ -172,7 +175,6 @@ class CharactersController < ApplicationController
     
     # Parse the response
     character_name = nil
-    user_role = nil
     scenario = nil
 
     lines = content.split("\n")
@@ -182,9 +184,6 @@ class CharactersController < ApplicationController
       if line.start_with?("CHARACTER_NAME:")
         character_name = line.sub("CHARACTER_NAME:", "").strip
         current_section = :character_name
-      elsif line.start_with?("USER_ROLE:")
-        user_role = line.sub("USER_ROLE:", "").strip
-        current_section = :user_role
       elsif line.start_with?("SCENARIO:")
         scenario = line.sub("SCENARIO:", "").strip
         current_section = :scenario
@@ -193,14 +192,9 @@ class CharactersController < ApplicationController
       end
     end
 
-    # Clean up "Not specified" values
-    character_name = nil if character_name&.downcase&.include?("not specified")
-    user_role = nil if user_role&.downcase&.include?("not specified")
-
     {
       scenario: scenario&.strip || content,
-      character_name: character_name,
-      user_role: user_role
+      character_name: character_name
     }
   end
 end

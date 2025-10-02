@@ -135,15 +135,10 @@
       // Update the scenario field with the enhanced version
       textarea.value = data.scenario;
       
-      // If character name or user role were identified, we could show a notification
-      if (data.character_name || data.user_role) {
-        let roleInfo = 'AI detected roles in your scenario:\n';
-        if (data.character_name) roleInfo += `Character: ${data.character_name}\n`;
-        if (data.user_role) roleInfo += `Your role: ${data.user_role}\n`;
-        roleInfo += '\nThe character generator will use this information appropriately.';
-        
-        // Show a subtle notification
-        showNotification(roleInfo, 'info');
+      // If character name was identified, show a notification
+      if (data.character_name) {
+        let info = `AI enhanced your scenario for character: ${data.character_name}\n\nThe character generator will use this detailed scenario to create an appropriate character.`;
+        showNotification(info, 'info');
       }
       
       // Auto-resize textarea if needed
