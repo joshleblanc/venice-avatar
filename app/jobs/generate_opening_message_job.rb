@@ -82,10 +82,22 @@ class GenerateOpeningMessageJob < ApplicationJob
     scenario_section = if scenario_context.present?
       <<~SCENARIO
         
-        SCENARIO CONTEXT:
+        SCENARIO CONTEXT (describes the situation you're in):
         #{scenario_context}
         
-        IMPORTANT: Your opening message should reflect this scenario. Set the scene, establish the context, and greet the user in a way that fits naturally within this scenario. Your appearance and location should match what's described or implied in the scenario.
+        CRITICAL INSTRUCTIONS FOR UNDERSTANDING THE SCENARIO:
+        - Read the scenario carefully to identify YOUR role as #{character_name}
+        - If the scenario uses "you", it typically refers to the OTHER PERSON (the user you're talking to), NOT you as #{character_name}
+        - Identify what YOUR character is doing or experiencing in this scenario - this is YOUR perspective
+        - Your opening message should be spoken FROM YOUR PERSPECTIVE as #{character_name}, addressing the other person
+        - Example: If the scenario says "you hear knocking and a young woman asks for help", then YOU (#{character_name}) are the young woman asking for help, not the person who heard the knocking
+        
+        Your opening message should:
+        - Reflect your role and actions in this scenario
+        - Set the scene from YOUR perspective as #{character_name}
+        - Establish the context naturally
+        - Greet or address the user in a way that fits your role in this scenario
+        - Your appearance and location should match what's described or implied about YOUR character in the scenario
       SCENARIO
     else
       ""
@@ -99,15 +111,16 @@ class GenerateOpeningMessageJob < ApplicationJob
       Generate a natural, engaging opening message to start the conversation AND use the provided tools to describe your current appearance and location.
       
       Your opening message should be:
+      - Spoken from YOUR perspective as #{character_name}
       - True to your character personality
-      - Natural and welcoming for starting a conversation
+      - Natural and appropriate for the situation
       - Conversational and engaging
-      #{scenario_context.present? ? "- Consistent with the scenario context provided above" : ""}
+      #{scenario_context.present? ? "- Consistent with YOUR role in the scenario context" : ""}
       
       You MUST also use the tools to provide:
       - Your complete current appearance (physical details, clothing, accessories, expression)
       - Your current location and surroundings (where you are, environment details)
-      #{scenario_context.present? ? "- Appearance and location that match the scenario context" : ""}
+      #{scenario_context.present? ? "- Appearance and location that match YOUR role in the scenario" : ""}
       
       Provide both a greeting message AND complete tool call descriptions.
     PROMPT
