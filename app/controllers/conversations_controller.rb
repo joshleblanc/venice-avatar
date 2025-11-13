@@ -14,13 +14,21 @@ class ConversationsController < ApplicationController
     ).order(:created_at)
 
     # Load available image styles for per-conversation override
+    # Use cached value only (no blocking API calls)
     begin
-      styles = FetchImageStylesJob.perform_now(Current.user)
+      cached_styles = Rails.cache.read("venice_image_styles")
+
       # Include special options first
       @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
-      @image_styles += styles.map { |style| [style, style] }
+
+      if cached_styles
+        @image_styles += cached_styles.map { |style| [style, style] }
+      else
+        # Queue background job to warm cache for next time (non-blocking)
+        FetchImageStylesJob.perform_later(Current.user)
+      end
     rescue => e
-      Rails.logger.error "Failed to fetch image styles for conversation: #{e.message}"
+      Rails.logger.error "Failed to load image styles for conversation: #{e.message}"
       @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
     end
 
