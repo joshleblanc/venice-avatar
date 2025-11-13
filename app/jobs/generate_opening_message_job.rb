@@ -10,7 +10,7 @@ class GenerateOpeningMessageJob < ApplicationJob
       current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
       options = {
-        temperature: 0.8
+        temperature: 1
       }
 
       if conversation.character.venice_created?
@@ -19,7 +19,7 @@ class GenerateOpeningMessageJob < ApplicationJob
 
       # Add tools for appearance and location updates
       options[:tools] = character_tools
-      options[:tool_choice] = "auto"
+      options[:tool_choice] = "required"
 
       opening_response = ChatCompletionJob.perform_now(conversation.user, [
         {
@@ -36,7 +36,7 @@ class GenerateOpeningMessageJob < ApplicationJob
             2. Use the provided tools to describe your complete current appearance and location (REQUIRED - both tools must be used)
             3. Both the greeting message AND the tool calls should be included in your response
             4. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content
-            
+
             #{tool_call_instructions}
 
             #{GenerateChatResponseJob::CHAT_GUIDELINES}
@@ -81,17 +81,17 @@ class GenerateOpeningMessageJob < ApplicationJob
 
     scenario_section = if scenario_context.present?
       <<~SCENARIO
-        
+
         SCENARIO CONTEXT (describes the situation you're in):
         #{scenario_context}
-        
+
         CRITICAL INSTRUCTIONS FOR UNDERSTANDING THE SCENARIO:
         - Read the scenario carefully to identify YOUR role as #{character_name}
         - If the scenario uses "you", it typically refers to the OTHER PERSON (the user you're talking to), NOT you as #{character_name}
         - Identify what YOUR character is doing or experiencing in this scenario - this is YOUR perspective
         - Your opening message should be spoken FROM YOUR PERSPECTIVE as #{character_name}, addressing the other person
         - Example: If the scenario says "you hear knocking and a young woman asks for help", then YOU (#{character_name}) are the young woman asking for help, not the person who heard the knocking
-        
+
         Your opening message should:
         - Reflect your role and actions in this scenario
         - Set the scene from YOUR perspective as #{character_name}
@@ -105,23 +105,23 @@ class GenerateOpeningMessageJob < ApplicationJob
 
     <<~PROMPT
       You are #{character_name}. #{character_description}#{scenario_section}
-      
-      You're initiating a conversation with someone new. 
-      
+
+      You're initiating a conversation with someone new.
+
       Generate a natural, engaging opening message to start the conversation AND use the provided tools to describe your current appearance and location.
-      
+
       Your opening message should be:
       - Spoken from YOUR perspective as #{character_name}
       - True to your character personality
       - Natural and appropriate for the situation
       - Conversational and engaging
       #{scenario_context.present? ? "- Consistent with YOUR role in the scenario context" : ""}
-      
+
       You MUST also use the tools to provide:
       - Your complete current appearance (physical details, clothing, accessories, expression)
       - Your current location and surroundings (where you are, environment details)
       #{scenario_context.present? ? "- Appearance and location that match YOUR role in the scenario" : ""}
-      
+
       Provide both a greeting message AND complete tool call descriptions.
     PROMPT
   end

@@ -80,35 +80,6 @@ class AiPromptGenerationService
     end
   end
 
-  # Evolve the scene prompt based on new message content
-  def evolve_scene_prompt(previous_prompt, new_message_content, message_timestamp = nil)
-    Rails.logger.info "Generating fresh scene based on character self-description"
-
-    begin
-      # Ask character for their current appearance and location
-      current_appearance = get_character_current_appearance
-      current_location = get_character_current_location
-
-      # Generate scene based on fresh character descriptions
-      scene_prompt = generate_scene_from_character_description(current_appearance, current_location, new_message_content)
-
-      debugger
-      Rails.logger.info "Generated fresh scene prompt: #{scene_prompt}"
-
-      # Filter out any child content before storing
-      # filtered_scene_prompt = filter_child_content(scene_prompt)
-
-      # Store the filtered prompt
-      store_scene_prompt(scene_response.content.strip, trigger: "character_description")
-
-      filtered_scene_prompt
-    rescue => e
-      Rails.logger.error "Failed to generate scene from character description: #{e.message}"
-      # Fallback to previous prompt or default
-      previous_prompt || get_default_scene_prompt
-    end
-  end
-
   # Get the current scene prompt for image generation
   def get_current_scene_prompt
     # Try to get from conversation metadata first
@@ -228,104 +199,7 @@ class AiPromptGenerationService
     PROMPT
   end
 
-  def build_prompt_evolution_request(previous_prompt, new_message_content, message_timestamp = nil, stored_background = nil)
-    # Calculate time context if timestamp is provided
-    time_context = ""
-    if message_timestamp
-      # Get the last scene prompt update time from conversation metadata
-      last_update_time = @conversation.metadata&.dig("scene_prompt_updated_at")
-      if last_update_time
-        last_time = Time.parse(last_update_time)
-        current_time = message_timestamp.is_a?(Time) ? message_timestamp : Time.parse(message_timestamp.to_s)
-        time_diff_hours = ((current_time - last_time) / 1.hour).round(1)
 
-        if time_diff_hours >= 1
-          time_context = "\n\nTIME CONTEXT: #{time_diff_hours} hours have passed since the last scene update. "
-          if time_diff_hours >= 8
-            time_context += "This is a significant time gap - the character may have changed clothes, location, or activities."
-          elsif time_diff_hours >= 2
-            time_context += "Some time has passed - minor changes to appearance or setting may be appropriate."
-          end
-        end
-      end
-    end
-
-    # Add stored background context if available
-    background_context = ""
-    if stored_background.present?
-      background_context = "\n\nSTORED BACKGROUND REFERENCE (use this to maintain consistency):\n#{stored_background}"
-    end
-
-    <<~PROMPT
-      You are a visual novel scene prompt evolution specialist. You need to update an existing scene prompt based on new story content, changing as little as possible,
-      but providing as much detail as possible.#{' '}
-
-      PREVIOUS SCENE PROMPT:
-      #{previous_prompt}
-
-      NEW MESSAGE CONTENT:
-      #{new_message_content} #{time_context}#{background_context}
-
-      Analyze the new message content and update the scene prompt with MINIMAL changes to reflect ONLY the character's own state and reactions:
-      - Character expression or emotion changes (based on their dialogue/reactions)
-      - Character clothing or appearance changes (if they mention changing clothes)
-      - Incorporate the outcome of actions. For example If the character removes their hat, describe their bare head.
-      - Character location changes (ONLY if they explicitly mention moving to a new place)
-      - CRITICAL: Preserve the ENTIRE environment/background from the previous prompt VERBATIM unless the character clearly changes location. This includes:
-        * All architectural details (walls, floors, ceilings, structures)
-        * All furniture and objects (tables, chairs, decorations, props)
-        * All lighting conditions and atmospheric elements
-        * All color descriptions for the environment
-        * All spatial layout and depth elements
-        If there is no explicit location change, copy the background description word-for-word from the previous prompt.
-      - Character pose or activity changes (based on their actions)
-
-
-      DO NOT INCORPORATE:
-      - Environmental conditions mentioned by other people (weather, temperature, humidity, etc.)
-      - Background elements described by others unless the character explicitly reacts to them
-      - Physical effects on the character caused by conditions others mention (sweating, shivering, etc.)
-      - Any changes to lighting, furniture, or environmental details unless the character explicitly mentions them
-
-      IMPORTANT RULES:
-      1. Keep the character's core appearance consistent (don't change fundamental features)
-      2. Only modify elements that represent the CHARACTER'S OWN state, actions, or explicit mentions
-      3. Maintain the same art style and quality specifications
-      4. If no visual changes to the character are needed, return the previous prompt unchanged
-      5. Make changes subtle and natural - avoid dramatic shifts
-      5a. VERBATIM PRESERVATION: Copy unchanged parts of the PREVIOUS SCENE PROMPT exactly as written. Do NOT paraphrase unchanged elements.
-      5b. Elements that MUST remain verbatim unless explicitly contradicted by the new message:#{' '}
-         - Numbers (ages, measurements like 5'2")
-         - Colors (for character, clothing, and environment)
-         - Proper nouns/place names (e.g., El Dorado)
-         - Clothing items and accessories with their colors
-         - Face/body descriptors (e.g., "heart-shaped face", "full pink lips", "thick thighs")
-         - BACKGROUND DESCRIPTORS: All environmental elements including:
-           * Room types and architectural features (e.g., "marble columns", "vaulted ceiling", "hardwood floors")
-           * Furniture and objects (e.g., "mahogany desk", "crystal chandelier", "Persian rug")
-           * Lighting descriptions (e.g., "warm golden light", "soft morning sunlight", "flickering candlelight")
-           * Atmospheric elements (e.g., "misty air", "gentle breeze", "cozy atmosphere")
-           * Spatial descriptions (e.g., "spacious room", "narrow hallway", "corner by the window")
-      6. Changes to the character should replace the previous character description. For example, if the previous prompt says the character is sad, and the new message says she's screaming in rage, the description of her being sad should be replaced. The new emotion should not be appended.
-      7. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      8. Limit Verbosity and Emotional Verbs Ask the model to avoid:
-        - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
-        - Internal states or psychological exposition
-        Instead, lean on:
-        - Physical cues ("red eyes", "wet cheeks", "slumped posture")
-        - Static elements of the environment
-      9. If items are removed, do not mention them in the prompt. For example, if the previous prompt says the character is wearing a hat, and the new message says she's not wearing a hat, the hat should not be present in the prompt at all. (eg. not "the has is discarded on the floor"). Do NOT remove the environment/background unless the character explicitly changes location.
-      10. PRESENT-STATE ONLY: Never write about changes over time. Do not use temporal or comparative phrasing such as "no longer", "still", "now", "currently", "used to", "remains", "continues". Instead, state the resulting current state directly. Examples: "cheeks are no longer flushed" → "cheeks have a normal color"; "no longer wearing a jacket" → omit the jacket and describe the current outfit.
-      11. Always describe the character's appearance. if they're naked or missing clothing, state that it is missing.
-      12. Do not describe actions or sounds.
-      13. Do not use poetic language. Use simple, direct language.
-      14. Focus only on what the CHARACTER does, says, or explicitly mentions about themselves - ignore environmental descriptions from others. Keep the background from the previous prompt if unchanged.
-      15. BACKGROUND CONSISTENCY: If stored background reference is provided, ensure the final prompt maintains those exact environmental details unless the character explicitly changes location. The background should remain visually consistent across scenes.
-      16. Keep the response within #{@conversation.user.prompt_limit} characters
-
-      Return the updated prompt as a single, detailed image generation prompt in under 1500 characters. Ensure background elements remain consistent and detailed.
-    PROMPT
-  end
 
   # Ensure the final prompt expresses only present visual state (no temporal/negation phrasing)
   def enforce_present_state(description, previous_prompt = nil)

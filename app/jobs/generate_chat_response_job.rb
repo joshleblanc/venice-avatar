@@ -104,7 +104,7 @@ class GenerateChatResponseJob < ApplicationJob
 
     options = {
       tools: tools,
-      tool_choice: "auto"
+      tool_choice: "required"
     }
     if conversation.character.venice_created?
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
