@@ -1,6 +1,6 @@
 class ConversationsController < ApplicationController
-  before_action :set_conversation, only: [:show]
-  before_action :set_character, only: [:create]
+  before_action :set_conversation, only: [ :show ]
+  before_action :set_character, only: [ :create ]
 
   def index
     authorize Conversation
@@ -19,17 +19,17 @@ class ConversationsController < ApplicationController
       cached_styles = Rails.cache.read("venice_image_styles")
 
       # Include special options first
-      @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
+      @image_styles = [ [ "Default (Profile)", "__default__" ], [ "None", "__none__" ] ]
 
       if cached_styles
-        @image_styles += cached_styles.map { |style| [style, style] }
+        @image_styles += cached_styles.map { |style| [ style, style ] }
       else
         # Queue background job to warm cache for next time (non-blocking)
         FetchImageStylesJob.perform_later(Current.user)
       end
     rescue => e
       Rails.logger.error "Failed to load image styles for conversation: #{e.message}"
-      @image_styles = [["Default (Profile)", "__default__"], ["None", "__none__"]]
+      @image_styles = [ [ "Default (Profile)", "__default__" ], [ "None", "__none__" ] ]
     end
 
     override = @conversation.metadata&.dig("image_style_override")
@@ -61,10 +61,10 @@ class ConversationsController < ApplicationController
     style = params.require(:conversation).permit(:image_style)[:image_style]
     metadata = @conversation.metadata || {}
     metadata["image_style_override"] = case style
-                                        when "__default__" then nil
-                                        when "__none__" then "__none__"
-                                        else style.presence
-                                        end
+    when "__default__" then nil
+    when "__none__" then "__none__"
+    else style.presence
+    end
     @conversation.update!(metadata: metadata)
 
     respond_to do |format|

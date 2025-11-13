@@ -72,10 +72,15 @@ Rails.application.configure do
 
   # Allow connections from Gitpod URLs
   config.hosts << /.*\.gitpod\.dev/
+  config.hosts << /.*\.github\.dev/
 
   # Update mailer host for Gitpod environment
   if ENV["GITPOD_WORKSPACE_URL"]
     gitpod_host = ENV["GITPOD_WORKSPACE_URL"].gsub("https://", "").gsub("http://", "")
     config.action_mailer.default_url_options = { host: "3000-#{gitpod_host}" }
+  end
+
+  if ENV["CODESPACES"]
+    config.action_controller.forgery_protection_origin_check = false
   end
 end
