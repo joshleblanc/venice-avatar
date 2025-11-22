@@ -177,19 +177,20 @@ class AiPromptGenerationService
       7. Do not include the character name
       8. Do not state you're generating an image in the prompt
       9. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      10. Limit Verbosity and Emotional Verbs. Avoid:
+      10. Use concise Midjourney-style phrasing: a single line of comma-separated visual descriptors (subject, clothing, environment, lighting, camera framing). EXCLUDE non-visual senses (smell, taste, sound), metadata, tool instructions, or storytelling.
+      11. Limit Verbosity and Emotional Verbs. Avoid:
         - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
         - Internal states or psychological exposition
         Instead, lean on:
         - Physical cues ("red eyes," "wet cheeks," "slumped posture")
         - Static elements of the environment
-      11. Present-state only: do NOT use temporal or comparative phrasing (e.g., "no longer", "still", "now", "currently", "used to", "remains"). Describe only the current visible state as facts.
-      12. Don't include tendencies. Only the current state of the character should be described.
-      13. State the character is an adult
-      14. Do not describe actions or sounds.
-      15. Do not use poetic language. Use simple, direct language.
-      16. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
-      17. Keep the response within #{@conversation.user.prompt_limit} characters
+      12. Present-state only: do NOT use temporal or comparative phrasing (e.g., "no longer", "still", "now", "currently", "used to", "remains"). Describe only the current visible state as facts.
+      13. Don't include tendencies. Only the current state of the character should be described.
+      14. State the character is an adult
+      15. Do not describe actions or sounds.
+      16. Do not use poetic language. Use simple, direct language.
+      17. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
+      18. Keep the response within #{@conversation.user.prompt_limit} characters
 
       The prompt should be comprehensive enough to generate a consistent character appearance AND establish a detailed, memorable background that can be maintained across future scenes. Focus on creating a strong visual foundation with rich environmental details.
 
@@ -462,10 +463,11 @@ class AiPromptGenerationService
       3. Maintains all stable visual elements (clothing, environment, etc.) exactly as described in the baseline
       4. MUST include complete location/environment details
       5. MUST NOT include any dialogue, speech, or quotes
-      6. Describes only visual elements (what can be seen in a still image)
-      7. Is optimized for AI image generators with vivid, specific visual details
-      8. Is under 1500 characters
-      9. Does not include explanations, only the final prompt
+      6. Describes only visual elements (what can be seen in a still image). EXCLUDE non-visual senses (smell, taste, sound), character names, metadata, or storytelling.
+      7. Use concise, Midjourney-style phrasing: a single line of comma-separated visual descriptors focusing on subject, setting, lighting, and camera framing.
+      8. Is optimized for AI image generators with vivid, specific visual details
+      9. Is under 1500 characters
+      10. Does not include explanations, only the final prompt
 
       Focus on the described character, but include anxilliary characters as neccessary to form a cohesive scene.
 
