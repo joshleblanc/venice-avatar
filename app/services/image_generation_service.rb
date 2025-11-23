@@ -79,6 +79,36 @@ class ImageGenerationService
     }
   end
 
+  def generate_scene_image_with_prompt(prompt, message_timestamp = nil)
+    return nil if prompt.blank?
+
+    Rails.logger.info "Generating scene image from provided prompt with length=#{prompt.length}"
+
+    style_override = @conversation.metadata&.dig("image_style_override")
+    opts = { width: 1024, height: 640, seed: @conversation.seed || 123671236 }
+    if style_override == "__none__"
+      opts[:style_preset] = ""
+    elsif style_override.present?
+      opts[:style_preset] = style_override
+    end
+
+    begin
+      base64_data = GenerateImageJob.perform_now(@conversation.user, prompt, opts)
+      if base64_data
+        Rails.logger.info "Received base64 image data from provided prompt, length: #{base64_data.length}"
+        attach_base64_image_to_conversation(base64_data, "scene.png")
+        @conversation.scene_image
+      else
+        Rails.logger.error "No base64 data received when generating image from provided prompt"
+        nil
+      end
+    rescue => e
+      Rails.logger.error "Failed to generate scene image from provided prompt: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      nil
+    end
+  end
+
   private
 
   # Content validation to ensure no child references in image generation prompts

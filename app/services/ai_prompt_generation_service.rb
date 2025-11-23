@@ -42,9 +42,6 @@ class AiPromptGenerationService
       trigger: trigger,
       character_count: prompt.length
     )
-
-    # Extract and store background information for consistency
-    extract_and_store_background_info(prompt)
   end
 
   # Generate initial scene prompt with provided appearance details
@@ -423,14 +420,31 @@ class AiPromptGenerationService
     STRICT RULES:
     • No first-person language or dialogue.
     • No emotional, psychological, or metaphorical wording.
-    • No cinematography terms (camera, shot, zoom, angle, frame, etc.).
-    • Describe only visible physical details or clearly visible absences. Do not infer anything unstated.
-    • The BASELINE ACTION must be explicitly included and visually described. Use the exact pose/action stated. Do NOT invent or replace it.
-    • Do NOT infer poses, gestures, or movements not stated in the baseline or recent messages.
+    • No cinematography terms (no “camera,” “shot,” “angle,” etc.).
+    • Describe only visible physical details or clearly visible absences.
     • BASELINE appearance/location/action are absolute unless RECENT MESSAGES explicitly change them.
-    • Scenario context may influence lighting or general environment aesthetics only.
-    • Output one paragraph describing: appearance → exact baseline action/pose → environment → lighting → notable visible details.
-    • Must read as a neutral visual description, not a story.
+
+    APPEARANCE REQUIREMENTS:
+    • You MUST restate ALL visual appearance details exactly as provided, including:
+      - Clothing and outfit details (or explicit lack of clothing)
+      - Hair color, length, style
+      - Eye color
+      - Skin tone/material
+      - Body type/proportions
+    • You may NOT omit clothing, accessories, or hair color under any circumstances.
+    • If the baseline includes clothing, the final output MUST describe the clothing.
+    • NEVER summarize or reduce appearance details; repeat them fully.
+
+    ACTION REQUIREMENTS:
+    • The BASELINE ACTION must be explicitly included and visually described.
+    • Do NOT infer or invent poses.
+
+    LOCATION REQUIREMENTS:
+    • Must include the key elements of the baseline location.
+
+    STRUCTURE:
+    • Output ONE paragraph describing:
+      appearance → action → environment → lighting → other visible details.
 
     BASELINE APPEARANCE:
     #{current_appearance}
@@ -444,11 +458,8 @@ class AiPromptGenerationService
     SCENARIO CONTEXT:
     #{scenario_section}
 
-    RECENT MESSAGES:
-    User: #{context.first}
-    Character: #{context.second}
-
     Output: final visual description only, under 1500 characters.
+
     PROMPT
   end
 
@@ -515,50 +526,6 @@ class AiPromptGenerationService
   def get_default_scene_prompt
     prompt = "#{@character.name} sits comfortably in a pleasant, well-lit environment, engaged in friendly conversation with a warm, welcoming expression."
     filter_child_content(prompt)
-  end
-
-  def extract_and_store_background_info(prompt)
-    # Extract background/environment information from the prompt for future consistency
-
-    extraction_prompt = <<~EXTRACT
-      Extract ONLY the background/environment description from this scene prompt.#{' '}
-      Include all details about:
-      - Location and setting
-      - Architectural elements
-      - Furniture and objects
-      - Lighting conditions
-      - Atmospheric elements
-      - Colors and materials of the environment
-
-      Do not include character descriptions. Return only the environmental details as a concise description.
-
-      Scene prompt: #{prompt}
-    EXTRACT
-
-    background_info = ChatCompletionJob.perform_now(@conversation.user, [
-      {
-        role: "user",
-        content: extraction_prompt
-      }
-    ], {
-      temperature: 0.1  # Very low temperature for consistency
-    })
-
-    # Store the extracted background info in conversation metadata
-    metadata = @conversation.metadata || {}
-    metadata["extracted_background_info"] = background_info.content.strip
-    metadata["background_extracted_at"] = Time.current.iso8601
-
-    @conversation.update!(metadata: metadata)
-
-    Rails.logger.info "Extracted background info: #{background_info}"
-  rescue => e
-    Rails.logger.error "Failed to extract background info: #{e.message}"
-  end
-
-  def get_stored_background_info
-    # Retrieve previously stored background information
-    @conversation.metadata&.dig("extracted_background_info")
   end
 
   def fallback_initial_prompt

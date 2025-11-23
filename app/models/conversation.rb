@@ -11,15 +11,7 @@ class Conversation < ApplicationRecord
 
   validates :character_id, presence: true
 
-  store_accessor :metadata, :appearance, :location, :action
-
-  def current_scene_prompt
-    # Prefer stored metadata. If missing, use the prompt service's
-    # non-blocking getter which enqueues background generation and
-    # returns a lightweight fallback immediately (avoids blocking
-    # the web request with synchronous AI calls).
-    metadata&.dig("current_scene_prompt") || AiPromptGenerationService.new(self).get_current_scene_prompt
-  end
+  store_accessor :metadata, :appearance, :location, :action, :current_scene_prompt
 
   def last_scene_image
     # Scene images are now stored directly on the conversation

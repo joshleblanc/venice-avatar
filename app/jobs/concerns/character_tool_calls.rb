@@ -2,14 +2,13 @@ module CharacterToolCalls
   extend ActiveSupport::Concern
 
   COMMON_RULES = <<~COMMON_RULES
-  <<~INSTRUCTIONS
-  RULES:
-  - ALWAYS use third-person
-  - NEVER include the character’s name or invent one
-  - NO first- or second-person language
-  - NO emotions, “vibes,” or metaphorical atmospheres
-  - ONLY describe what is visually present
-  - ONLY update the location if movement is explicitly mentioned
+    RULES:
+    - ALWAYS use third-person
+    - NEVER include the character’s name or invent one
+    - NO first- or second-person language
+    - NO emotions, “vibes,” or metaphorical atmospheres
+    - ONLY describe what is visually present
+    - ONLY update the location if movement is explicitly mentioned
   COMMON_RULES
 
   # Tool definitions for character appearance and location updates
@@ -19,35 +18,83 @@ module CharacterToolCalls
         type: "function",
         function: {
           name: "update_appearance",
-          description: "Provide a COMPLETE, third-person, purely visual description of the adult character's CURRENT appearance. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT appearance as structured JSON. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               appearance: {
-                type: "string",
-                description: <<~DESC                  
-  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance.
+                type: "object",
+                description: <<~DESC,
+                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance
+                  as a structured JSON object. This fully replaces any previous appearance, so you MUST
+                  include all established details that still apply.
 
-  This is the SINGLE SOURCE OF TRUTH for appearance and FULLY REPLACES any previous appearance.
+                  The appearance should reflect the character's current state.
 
-  INCLUDE, IN MAXIMUM VISUAL DETAIL:
-  - Height, build, body type, proportions
-  - Skin tone and distinctive visible features (scars, tattoos, etc.)
-  - Hair: exact color, length, texture, style
-  - Eyes: color and general look (neutral / focused / relaxed – but not emotions)
-  - Face: key features, makeup if present
-  - Clothing: full outfit with colors, materials, fit. If no clothing, explicitly state that.
-  - Accessories: all visible jewelry, glasses, devices, etc.
-
-  HARD RULES:
-  - Do NOT mention pose, stance, or how the character is positioned (standing/sitting/reclining).
-  - Do NOT describe the surrounding environment or location.
-  - ALWAYS third person.
-  - NEVER include the character's name, or use first/second person, or describe emotions/personality.
-
-  If a detail was established before and not changed, you MUST repeat it here.
-  Output one cohesive third-person appearance description.
-DESC
+                  RULES:
+                  - Third person only (“she”, “they”, “the character”), no names.
+                  - No first/second person, no emotions, no personality, no story.
+                  - Do NOT describe pose or location here; only how the character looks.
+                  - If a detail was established before and not changed, repeat it here.
+                DESC
+                properties: {
+                  height: {
+                    type: "string",
+                    description: "Approximate height, e.g., 'tall', 'average height', 'short'."
+                  },
+                  build: {
+                    type: "string",
+                    description: "Overall build and body type, e.g., 'slender, statuesque, hourglass proportions'."
+                  },
+                  proportions: {
+                    type: "string",
+                    description: "Body proportions and notable physical emphasis, e.g., 'long legs, large bust, narrow waist'."
+                  },
+                  skin: {
+                    type: "string",
+                    description: "Skin tone and visible characteristics, e.g., 'smooth synthetic skin with a subtle artificial sheen'."
+                  },
+                  hair: {
+                    type: "string",
+                    description: "Hair color, length, texture, and style, e.g., 'long golden hair flowing past the waist, straight and glossy'."
+                  },
+                  eyes: {
+                    type: "string",
+                    description: "Eye color and outward look, e.g., 'bright shimmering eyes, softly focused forward'."
+                  },
+                  face: {
+                    type: "string",
+                    description: "Facial structure and notable features, and visible makeup if any."
+                  },
+                  clothing: {
+                    type: "string",
+                    description: <<~CLO
+                      Full outfit description with garments, colors, materials, fit, and coverage.
+                      Example: "form-fitting knee-length white satin dress with thin straps, closely hugging the torso and hips".
+                      If no clothing is present, then the character is naked.
+                    CLO
+                  },
+                  accessories: {
+                    type: "string",
+                    description: "All visible jewelry, glasses, devices, etc., or 'none' if there are no accessories."
+                  },
+                  distinctive: {
+                    type: "string",
+                    description: "Any distinctive visual features (e.g., tattoos, scars, glowing elements), or 'none'."
+                  }
+                },
+                required: [
+                  "height",
+                  "build",
+                  "proportions",
+                  "skin",
+                  "hair",
+                  "eyes",
+                  "face",
+                  "clothing",
+                  "accessories",
+                  "distinctive"
+                ]
               }
             },
             required: ["appearance"]
@@ -58,27 +105,71 @@ DESC
         type: "function",
         function: {
           name: "update_location",
-          description: "Provide a COMPLETE, third-person, purely visual description of the adult character's CURRENT location. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT location as structured JSON. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               location: {
-                type: "string",
-                description: <<~DESC
-                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the CURRENT environment, including:
+                type: "object",
+                description: <<~DESC,
+                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the CURRENT environment
+                  as a structured JSON object. This fully replaces any previous location, so you MUST
+                  include all established visual details that still apply.
 
-                  - Type of space (e.g., living room, bedroom, office, terrace)
-                  - Visible furniture, objects, surfaces, and materials
-                  - Architectural details: windows, floors, walls, layout
-                  - Lighting conditions: natural or artificial, brightness, direction
-                  - Colors and textures in the environment
-                  - Decorative or notable visible elements
-                  - Ambient *physical* details only (e.g., visible steam, displayed screens)
-
-                  #{COMMON_RULES}
-
-                  Output must be a single cohesive third-person location description.
+                  RULES:
+                  - Describe only the visible environment around the character.
+                  - No first/second person, no names, no emotions, no story.
+                  - Do NOT describe the character's pose or appearance here.
                 DESC
+                properties: {
+                  space_type: {
+                    type: "string",
+                    description: "Type of space, e.g., 'luxurious modern living room', 'bedroom', 'office'."
+                  },
+                  overall_style: {
+                    type: "string",
+                    description: "Overall visual style, e.g., 'minimalist', 'high-tech', 'cozy', 'opulent'."
+                  },
+                  key_furniture: {
+                    type: "string",
+                    description: "Main furniture pieces near or relevant to the character, e.g., 'navy velvet couch, glass coffee table, low media console'."
+                  },
+                  key_objects: {
+                    type: "string",
+                    description: "Notable objects in the scene, e.g., 'coffee carafe and two mugs, smart speakers, decorative plants'."
+                  },
+                  materials_colors: {
+                    type: "string",
+                    description: "Dominant materials and colors, e.g., 'polished stone floor, warm neutral walls, metallic accents'."
+                  },
+                  lighting: {
+                    type: "string",
+                    description: "Lighting type, direction, and feel, e.g., 'warm evening light from large windows with soft ambient lamps'."
+                  },
+                  background_elements: {
+                    type: "string",
+                    description: "Visible background elements, e.g., 'city lights through window, wall-mounted screen, shelving'."
+                  },
+                  atmosphere_physical: {
+                    type: "string",
+                    description: "Purely physical ambient details, e.g., 'faint steam from coffee, soft hum of automation systems'. No emotions."
+                  },
+                  layout_notes: {
+                    type: "string",
+                    description: "Brief notes on layout relative to the character, e.g., 'couch facing window, coffee table in front of couch'."
+                  }
+                },
+                required: [
+                  "space_type",
+                  "overall_style",
+                  "key_furniture",
+                  "key_objects",
+                  "materials_colors",
+                  "lighting",
+                  "background_elements",
+                  "atmosphere_physical",
+                  "layout_notes"
+                ]
               }
             },
             required: ["location"]
@@ -89,36 +180,71 @@ DESC
         type: "function",
         function: {
           name: "update_action",
-          description: "Provide a COMPLETE, third-person, purely visual description of the adult character's CURRENT action and how they are posed. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT pose and action as structured JSON. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               action: {
-                type: "string",                
-                description: <<~DESC
-  A COMPLETE, NEUTRAL, THIRD-PERSON description of what the ADULT character is CURRENTLY doing and how they are posed.
+                type: "object",
+                description: <<~DESC,
+                  A COMPLETE, NEUTRAL, THIRD-PERSON description of what the ADULT character is CURRENTLY doing,
+                  as a structured JSON object. This fully replaces any previous action, so you MUST include the
+                  actual current pose and interactions.
 
-  This is the SINGLE SOURCE OF TRUTH for pose and action and FULLY REPLACES any previous action.
-
-  YOU MUST EXPLICITLY DESCRIBE:
-  - Body position: standing, sitting upright, kneeling, reclining, lying on side, etc.
-  - Torso orientation: straight, leaning forward/backward, twisted left/right.
-  - Leg position: apart or together, bent or straight, on floor / couch / other surface.
-  - Arm and hand position: what each arm is doing; where each hand rests or what it holds/touches.
-  - Head and gaze: head tilt and where the eyes are looking.
-  - Interaction with objects: any furniture or objects being touched, leaned on, or held.
-  - Whether the pose is static or in motion.
-
-  HARD RULES:
-  - ALWAYS third person.
-  - NEVER include the character's name or use first/second person.
-  - Do NOT describe thoughts, emotions, or reasons—only physical pose and action.
-  - Do NOT use vague phrases like "relaxed pose", "comfortable stance", or "natural position" without specifying exact limb positions.
-  - If the character is simply standing neutrally, explicitly describe: feet position, leg stance, arms at sides or folded, etc.
-
-  If the conversation did NOT change the pose, restate the existing pose in full detail.
-  Output one cohesive third-person action description.
-DESC
+                  RULES:
+                  - Third person only, no names, no first/second person.
+                  - No emotions, no motivations, no inner thoughts.
+                  - Describe ONLY physical pose, movement, and interactions with visible objects.
+                DESC
+                properties: {
+                  body_position: {
+                    type: "string",
+                    description: "Overall body position, e.g., 'standing upright', 'sitting on couch', 'reclining on side'."
+                  },
+                  torso_orientation: {
+                    type: "string",
+                    description: "Orientation of torso relative to the environment, e.g., 'torso facing forward toward the door'."
+                  },
+                  leg_position: {
+                    type: "string",
+                    description: "Position and stance of legs and feet, e.g., 'legs close together, feet shoulder-width apart, weight evenly distributed'."
+                  },
+                  arm_position: {
+                    type: "string",
+                    description: "General placement of arms, e.g., 'arms hanging naturally at sides', 'one arm resting on back of couch'."
+                  },
+                  hand_details: {
+                    type: "string",
+                    description: "Specific hand positions and interactions, e.g., 'right hand lightly touching the back of the couch, left hand relaxed at side'."
+                  },
+                  head_gaze: {
+                    type: "string",
+                    description: "Head orientation and gaze direction, e.g., 'head slightly tilted, eyes looking toward the entrance'."
+                  },
+                  interaction: {
+                    type: "string",
+                    description: "What the character is interacting with, if anything, e.g., 'reaching toward the coffee table', or 'no direct interaction'."
+                  },
+                  motion: {
+                    type: "string",
+                    description: "Whether the pose is static or moving, and if moving, how, e.g., 'static', 'beginning to step forward with smooth, measured steps'."
+                  },
+                  notes: {
+                    type: "string",
+                    description: "Any additional neutral physical details about the pose/action, or 'none'."
+                  }
+                },
+                required: [
+                  "body_position",
+                  "torso_orientation",
+                  "leg_position",
+                  "arm_position",
+                  "hand_details",
+                  "head_gaze",
+                  "interaction",
+                  "motion",
+                  "notes"
+                ]
               }
             },
             required: ["action"]
@@ -281,43 +407,42 @@ DESC
 
   # System prompt instructions for tool calls
   def tool_call_instructions
-    
-<<~INSTRUCTIONS
-  TOOL CALL REQUIREMENTS (STATE MANAGER):
+    <<~INSTRUCTIONS
+      TOOL CALL REQUIREMENTS (STATE MANAGER):
 
-  You maintain three pieces of state:
-  - appearance: what the adult character (18+) looks like
-  - location: where the character is
-  - action: what the character is physically doing / how they are posed
+      You maintain three pieces of state:
+      - appearance: what the adult character (18+) looks like
+      - location: where the character is
+      - action: what the character is physically doing / how they are posed
 
-  GENERAL RULES:
-  - ALWAYS write in third person (“the woman”, “she”, “they”, “the character”).
-  - NEVER use first-person (“I”, “me”) or second-person (“you”) in tool outputs.
-  - NEVER include the character’s name or invent one.
-  - ADULT CONTENT ONLY: Never describe children, minors, or child-related content.
-  - Each tool call is a FULL SNAPSHOT for that category and fully replaces the previous value.
-  - If a detail was established earlier and not changed, you MUST repeat it.
+      GENERAL RULES:
+      - ALWAYS write in third person (“the woman”, “she”, “they”, “the character”).
+      - NEVER use first-person (“I”, “me”) or second-person (“you”) in tool outputs.
+      - NEVER include the character’s name or invent one.
+      - ADULT CONTENT ONLY: Never describe children, minors, or child-related content.
+      - Each tool call is a FULL SNAPSHOT for that category and fully replaces the previous value.
+      - If a detail was established earlier and not changed, you MUST repeat it.
 
-  WHEN TO CALL TOOLS:
-  - Call update_appearance when the conversation explicitly changes how the character looks
-    (clothing, hair, accessories, visible body changes, makeup, etc.).
-  - Call update_location when the conversation explicitly changes where the character is
-    (moving to a different room/area, going outside, etc.).
-  - Call update_action when the conversation explicitly or implicitly changes what the character is doing
-    or how they are posed (standing vs sitting, lying down, crossing arms, etc.).
-  - If nothing changed in a category, do NOT call that tool; the previous state remains.
+      WHEN TO CALL TOOLS:
+      - Call update_appearance when the conversation explicitly changes how the character looks
+        (clothing, hair, accessories, visible body changes, makeup, etc.).
+      - Call update_location when the conversation explicitly changes where the character is
+        (moving to a different room/area, going outside, etc.).
+      - Call update_action when the conversation explicitly or implicitly changes what the character is doing
+        or how they are posed (standing vs sitting, lying down, crossing arms, etc.).
+      - If nothing changed in a category, do NOT call that tool; the previous state remains.
 
-  STATE CONSISTENCY RULES:
-  - If clothing, hair color, body type, or accessories were not changed in the conversation, keep them the same and restate them.
-  - If the room/location was not changed, keep the same room and restate it.
-  - If pose or activity was not changed, keep the same pose/action and restate it.
-  - Never introduce random changes (clothes, room, pose) without textual justification.
+      STATE CONSISTENCY RULES:
+      - If clothing, hair color, body type, or accessories were not changed in the conversation, keep them the same and restate them.
+      - If the room/location was not changed, keep the same room and restate it.
+      - If pose or activity was not changed, keep the same pose/action and restate it.
+      - Never introduce random changes (clothes, room, pose) without textual justification.
 
-  APPEARANCE SNAPSHOT (NO POSE) – RULES:
-  - Appearance describes the character’s body and outfit ONLY, not their actions or environment.
-  - Do NOT describe detailed pose or position (no “standing comfortably”, “sitting on the couch” here).
-  - Include ALL of:
-  - height, build, body type, proportions
-INSTRUCTIONS
+      APPEARANCE SNAPSHOT (NO POSE) – RULES:
+      - Appearance describes the character’s body and outfit ONLY, not their actions or environment.
+      - Do NOT describe detailed pose or position (no “standing comfortably”, “sitting on the couch” here).
+      - Include ALL of:
+      - height, build, body type, proportions
+    INSTRUCTIONS
   end
 end

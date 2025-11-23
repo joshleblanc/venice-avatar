@@ -37,17 +37,6 @@ class GenerateInitialScenePromptJob < ApplicationJob
         trigger: "initial",
         character_count: generated_prompt.content.strip.length
       )
-
-      # Now that we have the scene prompt, generate the initial scene image
-      # Enqueue only once per conversation start
-      metadata = conversation.metadata || {}
-      if !(metadata["initial_image_enqueued"] || conversation.scene_image.attached? || conversation.scene_generating?)
-        metadata["initial_image_enqueued"] = true
-        conversation.update!(metadata: metadata)
-        GenerateImagesJob.perform_now(conversation)
-      else
-        Rails.logger.info "Initial scene image already enqueued/present; skipping duplicate enqueue"
-      end
     rescue => e
       Rails.logger.error "Failed to generate initial scene prompt: #{e.message}"
       # Do NOT generate an image on fallback. We'll wait until a real prompt is available.
