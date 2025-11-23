@@ -33,9 +33,9 @@ class GenerateInitialScenePromptJob < ApplicationJob
 
       # Store in scene prompt history table
       conversation.scene_prompt_histories.create!(
-        prompt: generated_prompt,
+        prompt: generated_prompt.content.strip,
         trigger: "initial",
-        character_count: generated_prompt.length
+        character_count: generated_prompt.content.strip.length
       )
 
       # Now that we have the scene prompt, generate the initial scene image
@@ -70,7 +70,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.
       Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator.
-      
+
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}
 
@@ -102,7 +102,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
 
       Generate the character's bodily apperance, followed by their clothes/accessories. Finally the background.
 
-      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific. 
+      Format the response as a single, detailed image generation prompt (not structured sections). Do not exceed 1500 characters. Make it vivid and specific.
     PROMPT
   end
 

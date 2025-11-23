@@ -97,10 +97,10 @@ class AiPromptGenerationService
     fallback_initial_prompt
   end
 
-  def generate_scene_from_character_description(current_appearance, current_location, context)
+  def generate_scene_from_character_description(current_appearance, current_location, current_action, context)
     Rails.logger.info "Generating scene from fresh character descriptions"
 
-    scene_prompt = build_scene_from_descriptions_prompt(current_appearance, current_location, context)
+    scene_prompt = build_scene_from_descriptions_prompt(current_appearance, current_location, current_action, context)
 
     begin
       scene_response = ChatCompletionJob.perform_now(@conversation.user, [
@@ -404,13 +404,13 @@ class AiPromptGenerationService
     PROMPT
   end
 
-  def build_scene_from_descriptions_prompt(current_appearance, current_location, context)
+  def build_scene_from_descriptions_prompt(current_appearance, current_location, current_action, context)
     scenario_context = @character.scenario_context
 
     scenario_section = if scenario_context.present?
       <<~SCENARIO
 
-        SCENARIO CONTEXT (use for general atmosphere/setting, but ALWAYS defer to baseline appearance/location):
+        SCENARIO CONTEXT (use for general atmosphere/setting, but ALWAYS defer to baseline appearance/location/action):
         #{scenario_context}
       SCENARIO
     else
@@ -418,60 +418,37 @@ class AiPromptGenerationService
     end
 
     <<~PROMPT
-      You are creating an image generation prompt for an image generator. You will receive:
-      1. A BASELINE appearance description (current stable appearance) - HIGHEST PRIORITY
-      2. A BASELINE location description (current stable location) - HIGHEST PRIORITY
-      3. Recent conversation messages that may indicate changes
-      4. Optional scenario context for general atmosphere
+    You create a single third-person visual image prompt under 1500 characters.
 
-      CRITICAL PRIORITY ORDER (if there are conflicts):
-      1. HIGHEST: BASELINE APPEARANCE and BASELINE LOCATION - these are authoritative and must be used exactly as written
-      2. MEDIUM: Recent messages - only use to update specific details explicitly mentioned
-      3. LOWEST: Scenario context - use for general atmosphere/mood, but NEVER override baseline appearance/location
+    STRICT RULES:
+    • No first-person language or dialogue.
+    • No emotional, psychological, or metaphorical wording.
+    • No cinematography terms (camera, shot, zoom, angle, frame, etc.).
+    • Describe only visible physical details or clearly visible absences. Do not infer anything unstated.
+    • The BASELINE ACTION must be explicitly included and visually described. Use the exact pose/action stated. Do NOT invent or replace it.
+    • Do NOT infer poses, gestures, or movements not stated in the baseline or recent messages.
+    • BASELINE appearance/location/action are absolute unless RECENT MESSAGES explicitly change them.
+    • Scenario context may influence lighting or general environment aesthetics only.
+    • Output one paragraph describing: appearance → exact baseline action/pose → environment → lighting → notable visible details.
+    • Must read as a neutral visual description, not a story.
 
-      CRITICAL RULES FOR CONSISTENCY:
-      - The appearance and location descriptions are your BASELINE - use them as-is unless the recent messages EXPLICITLY contradict them
-      - PRESERVE ALL DETAILS from the baseline appearance/location that are not explicitly changed:
-        * Clothing items and their colors (e.g., "red dress", "leather jacket") - keep exactly as described unless the character mentions changing clothes
-        * Accessories (jewelry, glasses, hats, etc.) - keep unless explicitly removed/changed
-        * Hair style/color - keep exactly as described
-        * Physical features - keep exactly as described
-        * Environment details (furniture, lighting, decorations) - keep exactly as described unless location changes
-      - ONLY modify details if the recent messages explicitly indicate a change (e.g., "takes off jacket", "moves to the bedroom", "eyes widen in surprise")
-      - If messages mention emotion/expression changes, update ONLY the expression/pose, not clothing or environment
-      - If no changes are mentioned, use the baseline descriptions verbatim
-      - NEVER include dialogue, speech, or quoted text in the prompt
-      - ALWAYS include the full location/environment description - this is mandatory
-      - If scenario context conflicts with baseline appearance/location, IGNORE the conflicting parts of scenario context
+    BASELINE APPEARANCE:
+    #{current_appearance}
 
-      BASELINE APPEARANCE (HIGHEST PRIORITY - use exactly as written unless contradicted by recent messages):
-      #{current_appearance}
+    BASELINE LOCATION:
+    #{current_location}
 
-      BASELINE LOCATION (HIGHEST PRIORITY - use exactly as written unless contradicted by recent messages):
-      #{current_location}
+    BASELINE ACTION:
+    #{current_action}
 
-      SCENARIO CONTEXT
-      #{scenario_section}
+    SCENARIO CONTEXT:
+    #{scenario_section}
 
-      RECENT MESSAGES (only update details explicitly mentioned here):
-      User: #{context.first}
-      Character: #{context.second}
+    RECENT MESSAGES:
+    User: #{context.first}
+    Character: #{context.second}
 
-      Generate a single cohesive image generation prompt that:
-      1. Uses the baseline appearance/location descriptions as the foundation
-      2. Only modifies specific details that are explicitly changed in the recent messages
-      3. Maintains all stable visual elements (clothing, environment, etc.) exactly as described in the baseline
-      4. MUST include complete location/environment details
-      5. MUST NOT include any dialogue, speech, or quotes
-      6. Describes only visual elements (what can be seen in a still image). EXCLUDE non-visual senses (smell, taste, sound), character names, metadata, or storytelling.
-      7. Use concise, Midjourney-style phrasing: a single line of comma-separated visual descriptors focusing on subject, setting, lighting, and camera framing.
-      8. Is optimized for AI image generators with vivid, specific visual details
-      9. Is under 1500 characters
-      10. Does not include explanations, only the final prompt
-
-      Focus on the described character, but include anxilliary characters as neccessary to form a cohesive scene.
-
-      Output ONLY the final image generation prompt:
+    Output: final visual description only, under 1500 characters.
     PROMPT
   end
 

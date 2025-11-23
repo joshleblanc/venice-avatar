@@ -35,17 +35,18 @@ class GenerateImagesJob < ApplicationJob
   private
 
   def generate_fresh_scene_prompt(conversation, prompt_service)
-    Rails.logger.info "Generating scene from updated appearance: '#{conversation.appearance}' and location: '#{conversation.location}'"
+    Rails.logger.info "Generating scene from updated appearance: '#{conversation.appearance}', location: '#{conversation.location}', and action: '#{conversation.action}'"
 
-    # Use the updated appearance and location from the conversation
+    # Use the updated appearance, location, and action from the conversation
     current_appearance = conversation.appearance || conversation.character.appearance
     current_location = conversation.location || "A comfortable indoor setting"
+    current_action = conversation.action || "Standing comfortably, looking directly at the viewer with a warm, friendly expression"
 
     # Get the latest message for context
     context = conversation.messages.order(:created_at).last(2)&.map(&:content)
 
     # Generate scene using the updated character state
-    prompt_service.generate_scene_from_character_description(current_appearance, current_location, context)
+    prompt_service.generate_scene_from_character_description(current_appearance, current_location, current_action, context)
   rescue => e
     Rails.logger.error "Failed to generate fresh scene prompt: #{e.message}"
     nil

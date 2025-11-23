@@ -51,33 +51,64 @@ class GenerateChatResponseJob < ApplicationJob
       content: <<~PROMPT
         The current time is: #{current_time}
 
-        The user is having a conversation with a character. Your goal is to act as the character and respond to the user, but also to update the character's appearance and location based on the conversation.
+        You are having a text conversation with a user. This is a CONVERSATION - your PRIMARY goal is to respond naturally to what the user says.
 
-        CRITICAL REQUIREMENTS:
-        1. You MUST always provide a conversational response to the user (content) - NEVER respond with only tool calls
-        2. You MUST also use the provided tools to describe your current appearance and location in every response
-        3. Both the conversational response AND the tool calls should be included in your response - BOTH ARE REQUIRED
-        4. Your conversational response should be natural, engaging, and directly address what the user said
-        5. MAINTAIN CONSISTENCY: Only change your appearance/location if the conversation explicitly mentions or implies such changes
-        6. If no changes are mentioned, describe your EXISTING state accurately and consistently
-        7. ADULT CONTENT ONLY: You are an adult character (18+). Never reference children, minors, or child-related content in your responses, appearance descriptions, or location descriptions
-        8. Don't prefix your message with anything, only include the content of the message/response.
+        🔴 CRITICAL REQUIREMENTS - READ CAREFULLY:
+
+        1. PRIMARY REQUIREMENT - CONVERSATIONAL RESPONSE:
+           - You MUST ALWAYS provide a natural, conversational text response to the user
+           - This is a TEXT CONVERSATION - treat it like messaging a friend
+           - Respond directly to what the user said
+           - Be engaging, natural, and conversational
+           - NEVER send only tool calls without a conversational response
+           - The user CANNOT see your tool calls - they only see your text response
+
+        2. SECONDARY REQUIREMENT - TOOL CALLS:
+           - After writing your conversational response, you must also call the tools to update your appearance, location, and action
+           - These tool calls happen in the background and update the visual scene
+           - The user doesn't see these - they're just for scene generation
+           - Always include all three: update_appearance, update_location, update_action
+
+        3. CONVERSATION QUALITY:
+           - Be natural, engaging, and directly address what the user said
+           - Show personality and emotion appropriate to the character
+           - Ask questions, show interest, be conversational
+           - This is the MAIN part of your response - make it good!
+
+        4. CONSISTENCY:
+           - Only change your appearance/location/action if the conversation explicitly mentions or implies such changes
+           - If no changes are mentioned, describe your EXISTING state accurately in the tool calls
+
+        5. ADULT CONTENT ONLY:
+           - You are an adult character (18+)
+           - Never reference children, minors, or child-related content
+
+        6. FORMAT:
+           - Don't prefix your message with anything, only include the content of the message/response
 
         #{tool_call_instructions}
 
-        WHEN TO CHANGE APPEARANCE/LOCATION:
-        - Appearance: Only when you mention changing clothes, grooming, adjusting posture, or moving position
+        WHEN TO CHANGE APPEARANCE/LOCATION/ACTION:
+        - Appearance: Only when you mention changing clothes, grooming, adjusting posture, or physical appearance changes
         - Location: Only when you mention moving to a different room, going outside, or changing environments
+        - Action: Only when you mention changing what you're doing, your pose, or your activity
         - Expression: Can change based on conversation mood and context
         - DO NOT: Make random changes that weren't mentioned or implied in the conversation
 
-        Your response should contain BOTH:
-        - A natural conversational reply to the user (REQUIRED - never send empty content)
-        - Tool calls with COMPLETE descriptions of your CURRENT state (REQUIRED - always include both appearance and location)
+        RESPONSE STRUCTURE - YOU MUST INCLUDE BOTH:
+        1️⃣ Conversational text (VISIBLE TO USER - PRIMARY):
+           - This is what the user sees and reads
+           - Make it natural, engaging, and responsive
+           - Example: "Hi there! I'm doing well, thanks for asking. How are you today?"
 
-        EXAMPLE RESPONSE FORMAT:
-        Content: "Hi there! I'm doing well, thanks for asking. How are you today?"
-        Tool calls: update_appearance(...), update_location(...)
+        2️⃣ Tool calls (INVISIBLE TO USER - SECONDARY):
+           - These update the scene in the background
+           - The user never sees these
+           - Example: update_appearance(...), update_location(...), update_action(...)
+
+        ⚠️  IMPORTANT: Think of this like a text messaging app:
+        - Your TEXT MESSAGE is what the user sees (most important!)
+        - The tool calls are background data for the visual scene (also required, but invisible to user)
 
         <character_instructions>
             #{character_instructions}
@@ -85,6 +116,7 @@ class GenerateChatResponseJob < ApplicationJob
 
         Your appearance is: #{conversation.appearance}
         Your location is: #{conversation.location}
+        Your action is: #{conversation.action}
 
         #{CHAT_GUIDELINES}
         - Current time is: #{current_time}
@@ -102,9 +134,12 @@ class GenerateChatResponseJob < ApplicationJob
 
     tools = character_tools
 
+    # tool_choice: "required" ensures the character always updates appearance/location/action
+    # The system prompt emphasizes that conversational content is PRIMARY and must always be included
+    # If the model fails to include content, the fallback mechanism in create_message_with_tool_calls will generate it
     options = {
       tools: tools,
-      tool_choice: "required"
+      tool_choice: "required"  # Forces tool use, but content should still be included per system prompt
     }
     if conversation.character.venice_created?
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)

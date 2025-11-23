@@ -11,7 +11,7 @@ class Conversation < ApplicationRecord
 
   validates :character_id, presence: true
 
-  store_accessor :metadata, :appearance, :location
+  store_accessor :metadata, :appearance, :location, :action
 
   def current_scene_prompt
     # Prefer stored metadata. If missing, use the prompt service's
