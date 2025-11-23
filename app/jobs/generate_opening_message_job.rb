@@ -18,10 +18,12 @@ class GenerateOpeningMessageJob < ApplicationJob
         user: conversation.user
       )
 
+      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
       prompt = ScenePromptService.new(conversation).generate_prompt(
         opening_context,
         reply_text,
-        current_time: current_time
+        current_time: current_time,
+        previous_prompt: previous_prompt
       )
 
       if prompt.present?

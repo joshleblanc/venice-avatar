@@ -19,10 +19,12 @@ class GenerateChatResponseJob < ApplicationJob
         user: conversation.user
       )
 
+      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
       prompt = ScenePromptService.new(conversation).generate_prompt(
         user_message&.content.to_s,
         reply_text,
-        current_time: current_time
+        current_time: current_time,
+        previous_prompt: previous_prompt
       )
 
       if prompt.present?

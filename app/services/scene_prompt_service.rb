@@ -4,13 +4,13 @@ class ScenePromptService
     @character = conversation.character
   end
 
-  def generate_prompt(user_message_content, assistant_reply, current_time:)
+  def generate_prompt(user_message_content, assistant_reply, current_time:, previous_prompt: nil)
     options = base_options
     options[:temperature] = 0.25
 
     response = ChatCompletionJob.perform_now(
       @conversation.user,
-      build_messages(user_message_content, assistant_reply, current_time),
+      build_messages(user_message_content, assistant_reply, current_time, previous_prompt),
       options,
       @conversation.user.text_model
     )
@@ -37,11 +37,11 @@ class ScenePromptService
     opts
   end
 
-  def build_messages(user_message_content, assistant_reply, current_time)
+  def build_messages(user_message_content, assistant_reply, current_time, previous_prompt)
     [
       {
         role: "system",
-        content: system_prompt(current_time)
+        content: system_prompt(current_time, previous_prompt)
       },
       {
         role: "user",
@@ -50,7 +50,7 @@ class ScenePromptService
     ]
   end
 
-  def system_prompt(current_time)
+  def system_prompt(current_time, previous_prompt)
     <<~PROMPT
       You are #{@character.name}. Describe the current visible scene as a single Midjourney-style image prompt.
       - Present tense, static (freeze-frame), no motion verbs.
@@ -60,9 +60,7 @@ class ScenePromptService
       - Return plain text, no markdown/code fences.
 
       Current time: #{current_time}
-      Prior appearance: #{@conversation.appearance}
-      Prior location: #{@conversation.location}
-      Prior action: #{@conversation.action}
+      Previous scene prompt (for continuity, reuse elements that still apply): #{previous_prompt}
     PROMPT
   end
 
