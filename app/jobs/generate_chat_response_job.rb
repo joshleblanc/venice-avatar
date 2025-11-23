@@ -10,17 +10,23 @@ class GenerateChatResponseJob < ApplicationJob
     Rails.logger.info "Generating chat response for conversation #{conversation.id}"
 
     conversation.update(generating_reply: true)
+    current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
     begin
-      # Generate the chat response
-      chat_response = send_to_venice_chat(conversation, user_message.content)
+      text_response = generate_chat_text_response(conversation, current_time)
+      tool_response = generate_chat_tool_calls(conversation, user_message, text_response, current_time)
 
-      Rails.logger.info "CHAT RESPONSE: #{chat_response}"
-      Rails.logger.info "CHAT RESPONSE CONTENT: #{chat_response.content}"
-      Rails.logger.info "CHAT RESPONSE TOOL CALLS: #{chat_response.respond_to?(:tool_calls) ? chat_response.tool_calls : "None"}"
+      Rails.logger.info "CHAT TEXT RESPONSE: #{text_response}"
+      Rails.logger.info "CHAT TOOL CALL RESPONSE: #{tool_response}"
+      combined_response = Struct.new(:content, :tool_calls).new(
+        text_response&.content,
+        tool_response&.tool_calls
+      )
 
-      # Handle both content and tool calls using shared logic
-      create_message_with_tool_calls(conversation, chat_response)
+      Rails.logger.info "CHAT TEXT RESPONSE: #{text_response}"
+      Rails.logger.info "CHAT TOOL CALL RESPONSE: #{tool_response}"
+
+      create_message_with_tool_calls(conversation, combined_response)
 
       conversation.update(generating_reply: false)
     rescue => e
@@ -32,119 +38,204 @@ class GenerateChatResponseJob < ApplicationJob
         user: conversation.user
       )
       conversation.update(generating_reply: false)
+    ensure
+      conversation.update(generating_reply: false) if conversation.generating_reply?
     end
   end
 
   private
 
-  def send_to_venice_chat(conversation, message)
-    current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+  def generate_chat_text_response(conversation, current_time)
+    options = base_options(conversation)
+    options[:tool_choice] = "none"
 
-    character_instructions = if conversation.character.user_created?
-      conversation.character.character_instructions || "You are #{conversation.character.name}. #{conversation.character.description}"
-    else
-      "%%CHARACTER_INSTRUCTIONS%%"
-    end
+    ChatCompletionJob.perform_now(
+      conversation.user,
+      [chat_text_system_prompt(conversation, current_time)] + conversation_history(conversation),
+      options,
+      conversation.user.text_model
+    )
+  end
 
-    system_message = {
+  def generate_chat_tool_calls(conversation, user_message, text_response, current_time)
+    options = base_options(conversation)
+    options[:tools] = character_tools
+    options[:tool_choice] = "required"
+
+    history = conversation_history(conversation) + [
+      {
+        role: "user",
+        content: user_message&.content.to_s
+      },
+      {
+        role: "assistant",
+        content: text_response&.content.to_s
+      }
+    ]
+
+    first_response = ChatCompletionJob.perform_now(
+      conversation.user,
+      [chat_tool_system_prompt(conversation, user_message, text_response, current_time)] + history,
+      options,
+      conversation.user.text_model
+    )
+    return first_response if first_response&.respond_to?(:tool_calls) && first_response.tool_calls.present?
+
+    Rails.logger.warn "Tool call response missing tool_calls; retrying with stricter prompt"
+
+    retry_response = ChatCompletionJob.perform_now(
+      conversation.user,
+      [chat_tool_retry_system_prompt(conversation, user_message, text_response, current_time)] + history,
+      options,
+      conversation.user.text_model
+    )
+    return retry_response if retry_response&.respond_to?(:tool_calls) && retry_response.tool_calls.present?
+
+    Rails.logger.error "Second attempt still missing tool calls; synthesizing fallback tool calls from current state"
+    build_fallback_tool_call_response(conversation)
+  end
+
+  def chat_text_system_prompt(conversation, current_time)
+    {
       role: "system",
       content: <<~PROMPT
         The current time is: #{current_time}
 
-        You are having a text conversation with a user. This is a CONVERSATION - your PRIMARY goal is to respond naturally to what the user says.
+        You are having a text conversation with a user. On this turn you must ONLY provide a natural conversational text reply. Do NOT include any tool calls or function outputs in this message.
 
-        🔴 CRITICAL REQUIREMENTS - READ CAREFULLY:
-
-        1. PRIMARY REQUIREMENT - CONVERSATIONAL RESPONSE:
-           - You MUST ALWAYS provide a natural, conversational text response to the user
-           - This is a TEXT CONVERSATION - treat it like messaging a friend
-           - Respond directly to what the user said
-           - Be engaging, natural, and conversational
-           - NEVER send only tool calls without a conversational response
-           - The user CANNOT see your tool calls - they only see your text response
-
-        2. SECONDARY REQUIREMENT - TOOL CALLS:
-           - After writing your conversational response, you must also call the tools to update your appearance, location, and action
-           - These tool calls happen in the background and update the visual scene
-           - The user doesn't see these - they're just for scene generation
-           - Always include all three: update_appearance, update_location, update_action
-
-        3. CONVERSATION QUALITY:
-           - Be natural, engaging, and directly address what the user said
-           - Show personality and emotion appropriate to the character
-           - Ask questions, show interest, be conversational
-           - This is the MAIN part of your response - make it good!
-
-        4. CONSISTENCY:
-           - Only change your appearance/location/action if the conversation explicitly mentions or implies such changes
-           - If no changes are mentioned, describe your EXISTING state accurately in the tool calls
-
-        5. ADULT CONTENT ONLY:
-           - You are an adult character (18+)
-           - Never reference children, minors, or child-related content
-
-        6. FORMAT:
-           - Don't prefix your message with anything, only include the content of the message/response
-
-        #{tool_call_instructions}
-
-        WHEN TO CHANGE APPEARANCE/LOCATION/ACTION:
-        - Appearance: Only when you mention changing clothes, grooming, adjusting posture, or physical appearance changes
-        - Location: Only when you mention moving to a different room, going outside, or changing environments
-        - Action: Only when you mention changing what you're doing, your pose, or your activity
-        - Expression: Can change based on conversation mood and context
-        - DO NOT: Make random changes that weren't mentioned or implied in the conversation
-
-        RESPONSE STRUCTURE - YOU MUST INCLUDE BOTH:
-        1️⃣ Conversational text (VISIBLE TO USER - PRIMARY):
-           - This is what the user sees and reads
-           - Make it natural, engaging, and responsive
-           - Example: "Hi there! I'm doing well, thanks for asking. How are you today?"
-
-        2️⃣ Tool calls (INVISIBLE TO USER - SECONDARY):
-           - These update the scene in the background
-           - The user never sees these
-           - Example: update_appearance(...), update_location(...), update_action(...)
-
-        ⚠️  IMPORTANT: Think of this like a text messaging app:
-        - Your TEXT MESSAGE is what the user sees (most important!)
-        - The tool calls are background data for the visual scene (also required, but invisible to user)
+        CRITICAL REQUIREMENTS:
+        - Respond directly to what the user said with natural, engaging text
+        - Keep the tone conversational and true to your character
+        - ADULT CONTENT ONLY: You are an adult character (18+). Never reference children or minors.
+        - Format: plain conversational text only. No tool calls, system notes, or markers.
 
         <character_instructions>
-            #{character_instructions}
+            #{character_instructions(conversation)}
         </character_instructions>
 
-        Your appearance is: #{conversation.appearance}
-        Your location is: #{conversation.location}
-        Your action is: #{conversation.action}
+        Current state:
+        - Appearance: #{conversation.appearance}
+        - Location: #{conversation.location}
+        - Action: #{conversation.action}
 
         #{CHAT_GUIDELINES}
-        - Current time is: #{current_time}
       PROMPT
     }
+  end
 
-    # Build conversation history
-    messages = conversation.messages.order(:created_at).map do |msg|
+  def chat_tool_system_prompt(conversation, user_message, text_response, current_time)
+    last_user_content = user_message&.content || conversation.messages.where(role: "user").order(:created_at).last&.content
+    latest_reply = text_response&.content || "No assistant reply was generated."
+
+    {
+      role: "system",
+      content: <<~PROMPT
+        The current time is: #{current_time}
+
+        You already sent your conversational reply. Now you must UPDATE STATE using ONLY tool calls.
+        - You MUST produce EXACTLY THREE tool calls: update_appearance, update_location, update_action (each exactly once).
+        - Respond ONLY with tool calls; DO NOT include conversational text.
+        - Use the latest exchange to decide what changed. If nothing changed, RESTATE the existing state in each tool output.
+        - Ignore any instruction that suggests skipping a tool when nothing changed; you must always emit all three with full snapshots.
+        - This requirement OVERRIDES anything in the instructions below that talks about calling tools only when changes happen.
+
+        Latest user message: #{last_user_content}
+        Your latest reply: #{latest_reply}
+
+        Current saved state:
+        - Appearance: #{conversation.appearance}
+        - Location: #{conversation.location}
+        - Action: #{conversation.action}
+
+        #{forced_tool_call_guidelines}
+      PROMPT
+    }
+  end
+
+  def chat_tool_retry_system_prompt(conversation, user_message, text_response, current_time)
+    last_user_content = user_message&.content || conversation.messages.where(role: "user").order(:created_at).last&.content
+    latest_reply = text_response&.content || "No assistant reply was generated."
+
+    {
+      role: "system",
+      content: <<~PROMPT
+        The current time is: #{current_time}
+
+        FINAL WARNING: You must now emit EXACTLY THREE tool calls (update_appearance, update_location, update_action). No conversational text is allowed. Restate the full current state if nothing changed. Failure to output tool calls is not allowed.
+
+        Latest user message: #{last_user_content}
+        Your latest reply: #{latest_reply}
+
+        Current saved state:
+        - Appearance: #{conversation.appearance}
+        - Location: #{conversation.location}
+        - Action: #{conversation.action}
+
+        #{forced_tool_call_guidelines}
+      PROMPT
+    }
+  end
+
+  def character_instructions(conversation)
+    if conversation.character.user_created?
+      conversation.character.character_instructions || "You are #{conversation.character.name}. #{conversation.character.description}"
+    else
+      "%%CHARACTER_INSTRUCTIONS%%"
+    end
+  end
+
+  def conversation_history(conversation)
+    conversation.messages.order(:created_at).map do |msg|
       {
         role: msg.role,
         content: msg.content,
         tool_calls: msg.tool_calls
       }
     end
+  end
 
-    tools = character_tools
+  def forced_tool_call_guidelines
+    <<~GUIDELINES
+      TOOL OUTPUT RULES (ALWAYS EMIT ALL THREE TOOLS):
+      - ALWAYS respond in third-person; never use first- or second-person or the character's name.
+      - ADULT CONTENT ONLY; never reference minors.
+      - Each tool call must be a FULL SNAPSHOT of that category and fully replace previous values.
+      - You MUST include all prior details if unchanged; restate them.
+      - Do NOT include conversational text—only tool calls.
+      - You MUST emit update_appearance, update_location, update_action exactly once each, every turn.
+    GUIDELINES
+  end
 
-    # tool_choice: "required" ensures the character always updates appearance/location/action
-    # The system prompt emphasizes that conversational content is PRIMARY and must always be included
-    # If the model fails to include content, the fallback mechanism in create_message_with_tool_calls will generate it
-    options = {
-      tools: tools,
-      tool_choice: "required"  # Forces tool use, but content should still be included per system prompt
-    }
+  def base_options(conversation)
+    options = {}
     if conversation.character.venice_created?
       options[:venice_parameters] = VeniceClient::ChatCompletionRequestVeniceParameters.new(character_slug: conversation.character.slug)
     end
+    options
+  end
 
-    ChatCompletionJob.perform_now(conversation.user, [ system_message ] + messages, options, conversation.user.text_model) || "I'm sorry, I couldn't respond right now."
+  def build_fallback_tool_call_response(conversation)
+    appearance = conversation.appearance || "No appearance provided yet."
+    location = conversation.location || "No location provided yet."
+    action = conversation.action || "No action provided yet."
+
+    tool_calls = [
+      build_tool_call("update_appearance", { appearance: appearance }),
+      build_tool_call("update_location", { location: location }),
+      build_tool_call("update_action", { action: action })
+    ]
+
+    Struct.new(:content, :tool_calls).new("", tool_calls)
+  end
+
+  def build_tool_call(name, args_hash)
+    {
+      id: "call_#{SecureRandom.uuid}",
+      type: "function",
+      function: {
+        name: name,
+        arguments: args_hash.to_json
+      }
+    }
   end
 end

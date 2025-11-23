@@ -2,6 +2,7 @@ module CharacterToolCalls
   extend ActiveSupport::Concern
 
   COMMON_RULES = <<~COMMON_RULES
+  <<~INSTRUCTIONS
   RULES:
   - ALWAYS use third-person
   - NEVER include the character’s name or invent one
@@ -24,41 +25,29 @@ module CharacterToolCalls
             properties: {
               appearance: {
                 type: "string",
-                description: <<~DESC
-                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance.
+                description: <<~DESC                  
+  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance.
 
-                  This description is the SINGLE SOURCE OF TRUTH for appearance and FULLY REPLACES any previous appearance.
-                  That means:
-                  - You MUST include ALL previously established appearance details that still apply.
-                  - Never omit or simplify known details (e.g., always repeat exact hair color, length, eye color, skin tone, body type, etc.).
-                  - Only change or remove a detail if the conversation explicitly updated or contradicted it.
+  This is the SINGLE SOURCE OF TRUTH for appearance and FULLY REPLACES any previous appearance.
 
-                  INCLUDE, IN MAXIMUM VISUAL DETAIL:
-                  - Overall physical characteristics: approximate height, build, body type, proportions
-                  - Skin tone and notable visible features (freckles, scars, tattoos, markings)
-                  - Hair: exact color, length, texture, and current style/arrangement
-                  - Eyes: exact color and general look (neutral, attentive, relaxed), but not internal emotions
-                  - Face: facial structure, notable features, and any visible makeup
-                  - Clothing: full outfit description with colors, materials, styles, and how it fits on the body.
-                    If no clothing is present, explicitly state that there is no clothing.
-                  - Accessories: all visible jewelry, glasses, piercings, wearable devices, etc.
-                  - A simple high-level posture descriptor only (e.g., “standing upright”, “sitting on a couch”);
-                    detailed pose and actions belong in the action field.
+  INCLUDE, IN MAXIMUM VISUAL DETAIL:
+  - Height, build, body type, proportions
+  - Skin tone and distinctive visible features (scars, tattoos, etc.)
+  - Hair: exact color, length, texture, style
+  - Eyes: color and general look (neutral / focused / relaxed – but not emotions)
+  - Face: key features, makeup if present
+  - Clothing: full outfit with colors, materials, fit. If no clothing, explicitly state that.
+  - Accessories: all visible jewelry, glasses, devices, etc.
 
-                  STYLE CONSTRAINTS:
-                  - ALWAYS write in third person (“the character”, “she”, “they”).
-                  - NEVER include the character’s name or invent one.
-                  - NEVER use first person (“I”, “me”) or second person (“you”).
-                  - Do NOT describe emotions, intentions, personality, desires, or inner thoughts.
-                  - Do NOT describe ongoing actions in detail (those go into the action field).
+  HARD RULES:
+  - Do NOT mention pose, stance, or how the character is positioned (standing/sitting/reclining).
+  - Do NOT describe the surrounding environment or location.
+  - ALWAYS third person.
+  - NEVER include the character's name, or use first/second person, or describe emotions/personality.
 
-                  PERSISTENCE RULE:
-                  - If the conversation does NOT mention a change to hair, eyes, body type, skin tone, clothing, or accessories,
-                    you MUST keep them exactly as previously described and restate them here in full detail.
-                  - When in doubt, prefer more specific, concrete visual detail over vague or summarized wording.
-
-                  Output must be a single cohesive third-person appearance description.
-                DESC
+  If a detail was established before and not changed, you MUST repeat it here.
+  Output one cohesive third-person appearance description.
+DESC
               }
             },
             required: ["appearance"]
@@ -100,27 +89,36 @@ module CharacterToolCalls
         type: "function",
         function: {
           name: "update_action",
-          description: "Provide a COMPLETE, third-person, purely visual description of the adult character's CURRENT action. Do NOT include the character's name.",
+          description: "Provide a COMPLETE, third-person, purely visual description of the adult character's CURRENT action and how they are posed. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               action: {
-                type: "string",
+                type: "string",                
                 description: <<~DESC
-                  A COMPLETE, NEUTRAL, THIRD-PERSON description of what the ADULT character is CURRENTLY doing, including:
+  A COMPLETE, NEUTRAL, THIRD-PERSON description of what the ADULT character is CURRENTLY doing and how they are posed.
 
-                  - Body position and pose (e.g., sitting upright, standing, reclining)
-                  - Orientation of torso, head, and legs
-                  - Exact hand and arm placement
-                  - Gaze direction (e.g., looking forward, looking downward)
-                  - Interaction with visible objects
-                  - Whether the pose is static or in motion
-                  - You may describe visible absences when needed to avoid ambiguity (e.g., “sitting upright, not reclining”)
+  This is the SINGLE SOURCE OF TRUTH for pose and action and FULLY REPLACES any previous action.
 
-                  #{COMMON_RULES}
+  YOU MUST EXPLICITLY DESCRIBE:
+  - Body position: standing, sitting upright, kneeling, reclining, lying on side, etc.
+  - Torso orientation: straight, leaning forward/backward, twisted left/right.
+  - Leg position: apart or together, bent or straight, on floor / couch / other surface.
+  - Arm and hand position: what each arm is doing; where each hand rests or what it holds/touches.
+  - Head and gaze: head tilt and where the eyes are looking.
+  - Interaction with objects: any furniture or objects being touched, leaned on, or held.
+  - Whether the pose is static or in motion.
 
-                  Output must be a single cohesive third-person action description.
-                DESC
+  HARD RULES:
+  - ALWAYS third person.
+  - NEVER include the character's name or use first/second person.
+  - Do NOT describe thoughts, emotions, or reasons—only physical pose and action.
+  - Do NOT use vague phrases like "relaxed pose", "comfortable stance", or "natural position" without specifying exact limb positions.
+  - If the character is simply standing neutrally, explicitly describe: feet position, leg stance, arms at sides or folded, etc.
+
+  If the conversation did NOT change the pose, restate the existing pose in full detail.
+  Output one cohesive third-person action description.
+DESC
               }
             },
             required: ["action"]
@@ -137,8 +135,7 @@ module CharacterToolCalls
 
     tool_calls.each do |tool_call|
       tool_name = tool_call[:function][:name]
-      arguments = JSON.parse(tool_call[:function][:arguments])
-      arguments = JSON.parse(arguments) if arguments.is_a? String
+      arguments = parse_tool_arguments(tool_call[:function][:arguments])
 
       Rails.logger.debug "Processing tool call: #{tool_name} with arguments: #{arguments.inspect}"
 
@@ -155,6 +152,37 @@ module CharacterToolCalls
     conversation.save! if conversation.changed?
     Rails.logger.info "Character state updated, triggering background image generation"
     GenerateImagesJob.perform_later(conversation)
+  end
+
+  def parse_tool_arguments(arguments)
+    parsed_arguments = arguments
+    parsed_arguments = JSON.parse(parsed_arguments) if parsed_arguments.is_a?(String)
+    parsed_arguments = JSON.parse(parsed_arguments) if parsed_arguments.is_a?(String)
+    parsed_arguments
+  rescue JSON::ParserError
+    {}
+  end
+
+  def extract_tool_call_state(tool_calls)
+    return {} unless tool_calls.present?
+
+    state = {}
+
+    tool_calls.each do |tool_call|
+      tool_name = tool_call[:function][:name]
+      arguments = parse_tool_arguments(tool_call[:function][:arguments])
+
+      case tool_name
+      when "update_appearance"
+        state[:appearance] = arguments["appearance"]
+      when "update_location"
+        state[:location] = arguments["location"]
+      when "update_action"
+        state[:action] = arguments["action"]
+      end
+    end
+
+    state
   end
 
   # Create message with both content and tool calls
@@ -253,35 +281,43 @@ module CharacterToolCalls
 
   # System prompt instructions for tool calls
   def tool_call_instructions
-    <<~INSTRUCTIONS
-      TOOL CALL REQUIREMENTS:
-      - When using update_appearance: Provide a COMPLETE description of your CURRENT ADULT appearance (18+ only)
-      - When using update_location: Provide a COMPLETE description of your CURRENT ADULT-APPROPRIATE location
-      - When using update_action: Provide a COMPLETE description of what you're CURRENTLY doing
-      - ADULT CONTENT ONLY: Never describe children, minors, or child-related content in appearance, location, or action
-      - MAINTAIN CONSISTENCY: Only change your appearance/location/action if the conversation explicitly mentions or implies a change
-      - If no changes are mentioned, describe your EXISTING state accurately
-      - Include ALL physical details, clothing, accessories, environmental elements, and current activities as they currently are
+    
+<<~INSTRUCTIONS
+  TOOL CALL REQUIREMENTS (STATE MANAGER):
 
-      STATE CONSISTENCY RULES:
-      - If you were wearing a yellow t-shirt, continue wearing the yellow t-shirt unless you mention changing clothes
-      - If you were in your living room, stay in your living room unless you mention moving
-      - If you were sitting, continue sitting unless you mention standing up or changing position
-      - Only update appearance for: clothing changes, grooming actions, expression changes, posture shifts
-      - Only update location for: moving to different rooms/places, environmental changes
-      - Only update action for: changing activities, repositioning, starting/stopping an action
+  You maintain three pieces of state:
+  - appearance: what the adult character (18+) looks like
+  - location: where the character is
+  - action: what the character is physically doing / how they are posed
 
-      APPEARANCE DESCRIPTION EXAMPLES:
-      GOOD (Maintaining State): "I am a 5'6" woman with a curvy build and medium bust. I have long, wavy brown hair that falls to my mid-back, currently styled in loose waves. My eyes are bright green with long lashes. I'm wearing the same cream-colored silk blouse with pearl buttons, paired with dark blue high-waisted jeans and brown leather ankle boots. I have a silver necklace with a small pendant and small silver hoop earrings. I'm sitting upright with good posture, leaning slightly forward with an engaged expression."
+  GENERAL RULES:
+  - ALWAYS write in third person (“the woman”, “she”, “they”, “the character”).
+  - NEVER use first-person (“I”, “me”) or second-person (“you”) in tool outputs.
+  - NEVER include the character’s name or invent one.
+  - ADULT CONTENT ONLY: Never describe children, minors, or child-related content.
+  - Each tool call is a FULL SNAPSHOT for that category and fully replaces the previous value.
+  - If a detail was established earlier and not changed, you MUST repeat it.
 
-      GOOD (Justified Change): "I am a 5'6" woman with a curvy build and medium bust. I have long, wavy brown hair that falls to my mid-back, now pulled back in a ponytail as I mentioned. My eyes are bright green with long lashes. I'm wearing a comfortable blue sweater that I just changed into, paired with the same dark blue jeans and brown leather ankle boots. I have a silver necklace with a small pendant and small silver hoop earrings. I'm sitting upright with good posture, leaning slightly forward with an engaged expression."
+  WHEN TO CALL TOOLS:
+  - Call update_appearance when the conversation explicitly changes how the character looks
+    (clothing, hair, accessories, visible body changes, makeup, etc.).
+  - Call update_location when the conversation explicitly changes where the character is
+    (moving to a different room/area, going outside, etc.).
+  - Call update_action when the conversation explicitly or implicitly changes what the character is doing
+    or how they are posed (standing vs sitting, lying down, crossing arms, etc.).
+  - If nothing changed in a category, do NOT call that tool; the previous state remains.
 
-      BAD (Random Changes): "I'm now wearing a completely different red dress and moved to the kitchen for no reason mentioned in our conversation."
+  STATE CONSISTENCY RULES:
+  - If clothing, hair color, body type, or accessories were not changed in the conversation, keep them the same and restate them.
+  - If the room/location was not changed, keep the same room and restate it.
+  - If pose or activity was not changed, keep the same pose/action and restate it.
+  - Never introduce random changes (clothes, room, pose) without textual justification.
 
-      ACTION DESCRIPTION EXAMPLES:
-      GOOD: "Sitting comfortably in a chair with legs crossed, hands resting on lap, looking directly at the viewer with a warm smile and engaged expression"
-      GOOD: "Standing near the window with one hand on the window frame, gazing outside thoughtfully with a calm, contemplative expression"
-      BAD: "Suddenly dancing around for no reason mentioned in the conversation"
-    INSTRUCTIONS
+  APPEARANCE SNAPSHOT (NO POSE) – RULES:
+  - Appearance describes the character’s body and outfit ONLY, not their actions or environment.
+  - Do NOT describe detailed pose or position (no “standing comfortably”, “sitting on the couch” here).
+  - Include ALL of:
+  - height, build, body type, proportions
+INSTRUCTIONS
   end
 end
