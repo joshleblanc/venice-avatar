@@ -18,6 +18,23 @@ module CharacterToolCalls
       {
         type: "function",
         function: {
+          name: "reply",
+          description: "Send your in-character conversational reply to the user. This is REQUIRED on every turn.",
+          parameters: {
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+                description: "Your in-character conversational reply to the user. Stay in character, be natural and engaging. This is the text the user will see."
+              }
+            },
+            required: ["message"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
           name: "update_appearance",
           description: "Update the adult character's CURRENT appearance as a single plain-text snapshot. Do NOT include the character's name.",
           parameters: {
@@ -103,8 +120,12 @@ module CharacterToolCalls
   end
 
   # Process tool calls and update conversation state
+  # Returns the reply content if a reply tool call was found
   def process_character_tool_calls(conversation, tool_calls)
-    return unless tool_calls.present?
+    return nil unless tool_calls.present?
+
+    reply_content = nil
+    state_changed = false
 
     tool_calls.each do |tool_call|
       tool_name = tool_call[:function][:name]
@@ -113,21 +134,42 @@ module CharacterToolCalls
       Rails.logger.debug "Processing tool call: #{tool_name} with arguments: #{arguments.inspect}"
 
       case tool_name
+      when "reply"
+        reply_content = arguments.is_a?(Hash) ? arguments["message"] : arguments
+        Rails.logger.info "Extracted reply from tool call: #{reply_content&.first(100)}..."
       when "update_appearance"
         value = arguments.is_a?(Hash) ? arguments["appearance"] : arguments
-        conversation.appearance = value
+        if value.present? && value != conversation.appearance
+          conversation.appearance = value
+          state_changed = true
+        end
       when "update_location"
         value = arguments.is_a?(Hash) ? arguments["location"] : arguments
-        conversation.location = value
+        if value.present? && value != conversation.location
+          conversation.location = value
+          state_changed = true
+        end
       when "update_action"
         value = arguments.is_a?(Hash) ? arguments["action"] : arguments
-        conversation.action = value
+        if value.present? && value != conversation.action
+          conversation.action = value
+          state_changed = true
+        end
       end
     end
 
-    conversation.save! if conversation.changed?
-    Rails.logger.info "Character state updated, triggering background image generation"
-    GenerateImagesJob.perform_later(conversation)
+    if conversation.changed?
+      conversation.save!
+      Rails.logger.info "Character state updated (changed: #{state_changed})"
+    end
+
+    # Only trigger image generation if state actually changed
+    if state_changed
+      Rails.logger.info "State changed, triggering background image generation"
+      GenerateImagesJob.perform_later(conversation)
+    end
+
+    reply_content
   end
 
   def parse_tool_arguments(arguments)
@@ -148,6 +190,8 @@ module CharacterToolCalls
       arguments = parse_tool_arguments(tool_call[:function][:arguments])
 
       case tool_name
+      when "reply"
+        state[:reply] = arguments.is_a?(Hash) ? arguments["message"] : arguments
       when "update_appearance"
         state[:appearance] = arguments.is_a?(Hash) ? arguments["appearance"] : arguments
       when "update_location"
@@ -163,37 +207,38 @@ module CharacterToolCalls
   # Create message with both content and tool calls
   def create_message_with_tool_calls(conversation, response)
     # Handle nil or plain-text responses gracefully
-    return conversation.messages.create!(
-      content: "I'm here and ready to chat! How can I help you today?",
-      role: "assistant",
-      user: conversation.user
-    ) if response.nil?
+    if response.nil?
+      Rails.logger.error "Response was nil, using fallback"
+      return conversation.messages.create!(
+        content: generate_fallback_content(conversation, []),
+        role: "assistant",
+        user: conversation.user
+      )
+    end
 
     unless response.respond_to?(:content)
       return conversation.messages.create!(
-        content: response.to_s.presence || "I'm here and ready to chat! How can I help you today?",
+        content: response.to_s.presence || generate_fallback_content(conversation, []),
         role: "assistant",
         user: conversation.user
       )
     end
 
     if response.respond_to?(:tool_calls) && response.tool_calls.present?
-      # Process tool calls first
-      process_character_tool_calls(conversation, response.tool_calls)
+      # Process tool calls and extract reply content
+      reply_from_tool = process_character_tool_calls(conversation, response.tool_calls)
 
-      # Ensure we have content - generate fallback if needed
-      content = response.content&.strip
+      # Priority: 1) reply tool content, 2) response.content, 3) fallback
+      content = reply_from_tool.presence || response.content&.strip
+
       if content.blank?
-        Rails.logger.error "⚠️  MISSING CONTENT: Response had #{response.tool_calls.length} tool calls but NO conversational content!"
+        Rails.logger.error "⚠️  MISSING CONTENT: Response had #{response.tool_calls.length} tool calls but NO reply!"
         Rails.logger.error "Tool calls: #{response.tool_calls.map { |tc| tc[:function][:name] }.join(', ')}"
-        Rails.logger.error "Generating fallback content to ensure user receives a response"
-        content = "No conversational content generated #{response}"
+        content = generate_fallback_content(conversation, response.tool_calls)
       else
-        Rails.logger.info "✓ Response includes both content and #{response.tool_calls.length} tool calls"
+        Rails.logger.info "✓ Response includes content and #{response.tool_calls.length} tool calls"
       end
 
-      # Create message with both content and tool calls
-      Rails.logger.info "Saving message with content: '#{content[0..100]}...' and #{response.tool_calls.length} tool calls"
       message = conversation.messages.create!(
         content: content,
         tool_calls: response.tool_calls,
@@ -202,7 +247,7 @@ module CharacterToolCalls
       )
       return message
     elsif response.content.present?
-      # Create message with content only
+      # Content only (no tool calls) - still valid
       message = conversation.messages.create!(
         content: response.content&.strip,
         role: "assistant",
@@ -210,10 +255,10 @@ module CharacterToolCalls
       )
       return message
     else
-      # No content and no tool calls - this shouldn't happen, but handle it
-      Rails.logger.error "Response had neither content nor tool calls, creating fallback message"
+      # No content and no tool calls
+      Rails.logger.error "Response had neither content nor tool calls"
       message = conversation.messages.create!(
-        content: "I'm here and ready to chat! How can I help you today?",
+        content: generate_fallback_content(conversation, []),
         role: "assistant",
         user: conversation.user
       )
@@ -275,36 +320,52 @@ module CharacterToolCalls
   # System prompt instructions for tool calls
   def tool_call_instructions
     <<~INSTRUCTIONS
-      TOOL CALL REQUIREMENTS (STATE MANAGER):
+      TOOL CALL REQUIREMENTS:
 
-      You maintain three pieces of state:
-      - appearance: what the adult character (18+) looks like
-      - location: where the character is
-      - action: what the character is physically doing / how they are posed
+      You MUST call the `reply` tool on EVERY turn with your conversational response.
 
-      GENERAL RULES:
-      - ALWAYS write in third person ("the woman", "she", "they", "the character").
-      - NEVER use first-person ("I", "me") or second-person ("you") in tool outputs.
-      - NEVER include the character's name or invent one.
+      You also maintain three pieces of visual state via optional tools:
+      - update_appearance: what the adult character (18+) looks like
+      - update_location: where the character is
+      - update_action: what the character is physically doing / how they are posed
+
+      REQUIRED EVERY TURN:
+      - Call `reply` with your in-character message to the user. This is MANDATORY.
+
+      STATE UPDATE TOOLS - WHEN TO CALL:
+      These tools update the visual scene. Call them whenever the scene should change.
+
+      `update_location` - Call when:
+      - User suggests going somewhere AND you agree ("Let's go to the kitchen" → call update_location with kitchen description)
+      - Character decides to move ("I'll head to the bedroom" → call update_location)
+      - Scene transitions ("We arrive at the park" → call update_location)
+      - ANY movement to a new place, even within the same building
+
+      `update_appearance` - Call when:
+      - Clothing changes (putting on, taking off, getting wet, etc.)
+      - Hair/makeup changes
+      - Accessories added/removed
+      - Any visible physical change
+
+      `update_action` - Call when:
+      - Pose changes (standing → sitting, arms crossed → hands on hips)
+      - Starting/stopping an activity
+      - Interacting with objects differently
+
+      IMPORTANT: If your reply implies a scene change, you MUST call the corresponding tool.
+      Example: If you say "Sure, let's go to the kitchen!" you MUST also call update_location.
+      
+      If nothing changed in a category, do NOT call that tool; the previous state remains.
+
+      TOOL OUTPUT RULES:
+      - ALWAYS write state updates in third person ("the woman", "she", "they").
+      - NEVER use first-person ("I", "me") in state tool outputs (but DO use first-person in the reply tool).
+      - NEVER include the character's name in state outputs.
       - ADULT CONTENT ONLY: Never describe children, minors, or child-related content.
-      - Each tool call is a FULL SNAPSHOT for that category and fully replaces the previous value.
-      - If a detail was established earlier and not changed, you MUST repeat it.
-      - EVERY assistant turn must emit three tool calls: update_appearance, update_location, update_action. One call per category.
-      - If a category did not change, repeat the last known snapshot exactly for that tool call.
-      - Use separate tool calls (no bundling) and keep them in the same turn as the conversational reply.
-      - ALWAYS include a brief, in-character conversational reply along with the tool calls (never return tool calls alone).
-      - Tool call outputs must be single plain-text strings (no JSON objects, no keys/values).
-      - BE SPECIFIC: list concrete garments, objects, layout, and pose details instead of generic phrases.
-      - PUT POSE FIRST in the action snapshot so the image model locks stance before body emphasis.
-
-      WHEN TO CALL TOOLS:
-      - Call update_appearance when the conversation explicitly changes how the character looks
-        (clothing, hair, accessories, visible body changes, makeup, etc.).
-      - Call update_location when the conversation explicitly changes where the character is
-        (moving to a different room/area, going outside, etc.).
-      - Call update_action when the conversation explicitly or implicitly changes what the character is doing
-        or how they are posed (standing vs sitting, lying down, crossing arms, etc.).
-      - If nothing changed in a category, do NOT call that tool; the previous state remains.
+      - Each state tool call is a FULL SNAPSHOT that replaces the previous value.
+      - If a detail was established earlier and not changed, you MUST repeat it in the snapshot.
+      - Tool call outputs must be single plain-text strings (no JSON objects).
+      - BE SPECIFIC: list concrete garments, objects, layout, and pose details.
 
       STATE CONSISTENCY RULES:
       - If clothing, hair color, body type, or accessories were not changed in the conversation, keep them the same and restate them.
