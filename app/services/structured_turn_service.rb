@@ -1,4 +1,6 @@
 class StructuredTurnService
+  include CharacterToolCalls
+
   def initialize(conversation)
     @conversation = conversation
     @character = conversation.character
@@ -8,6 +10,8 @@ class StructuredTurnService
   def generate_reply(user_message_content, current_time:, opening: false)
     options = base_options
     options[:temperature] = 0.7
+    options[:tools] = character_tools
+    options[:tool_choice] = "required"
 
     ChatCompletionJob.perform_now(
       @conversation.user,
@@ -58,6 +62,8 @@ class StructuredTurnService
       #{conversation_history_snippet}
 
       Reply as the character only.
+
+      #{tool_call_instructions}
     PROMPT
   end
 

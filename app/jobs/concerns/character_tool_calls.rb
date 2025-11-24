@@ -1,15 +1,16 @@
 module CharacterToolCalls
   extend ActiveSupport::Concern
 
-  COMMON_RULES = <<~COMMON_RULES
-    RULES:
-    - ALWAYS use third-person
-    - NEVER include the character’s name or invent one
-    - NO first- or second-person language
-    - NO emotions, “vibes,” or metaphorical atmospheres
-    - ONLY describe what is visually present
-    - ONLY update the location if movement is explicitly mentioned
-  COMMON_RULES
+    COMMON_RULES = <<~COMMON_RULES
+      RULES:
+      - ALWAYS use third-person
+      - NEVER include the character’s name or invent one
+      - NO first- or second-person language
+      - NO emotions, “vibes,” or metaphorical atmospheres
+      - NO figurative language or non-physical effects (no "inner fire", "glowing aura")—only literal, visible traits
+      - ONLY describe what is visually present
+      - ONLY update the location if movement is explicitly mentioned
+    COMMON_RULES
 
   # Tool definitions for character appearance and location updates
   def character_tools
@@ -18,83 +19,24 @@ module CharacterToolCalls
         type: "function",
         function: {
           name: "update_appearance",
-          description: "Update the adult character's CURRENT appearance as structured JSON. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT appearance as a single plain-text snapshot. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               appearance: {
-                type: "object",
-                description: <<~DESC,
-                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance
-                  as a structured JSON object. This fully replaces any previous appearance, so you MUST
-                  include all established details that still apply.
-
-                  The appearance should reflect the character's current state.
+                type: "string",
+                description: <<~DESC
+                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the ADULT character's CURRENT appearance as one plain-text string.
+                  This fully replaces any previous appearance, so you MUST include all established details that still apply.
 
                   RULES:
-                  - Third person only (“she”, “they”, “the character”), no names.
+                  - Third person only ("she", "they", "the character"), no names.
                   - No first/second person, no emotions, no personality, no story.
                   - Do NOT describe pose or location here; only how the character looks.
-                  - If a detail was established before and not changed, repeat it here.
+                  - Use only literal, physical descriptors (no metaphors/effects). Skin must stay realistic human tones unless explicitly stated otherwise.
+                  - CLOTHING MUST BE EXPLICIT: list each garment with type, color, material, coverage, fit (e.g., "soaked long-sleeved dark-grey cotton t-shirt, fully covering her chest and arms"; "high-waisted black denim jeans, soaked and form-clinging to her ankles"; "dark waterproof boots").
+                  - Never say generic "clothes" or "outfit"—always specify the actual garments present.
                 DESC
-                properties: {
-                  height: {
-                    type: "string",
-                    description: "Approximate height, e.g., 'tall', 'average height', 'short'."
-                  },
-                  build: {
-                    type: "string",
-                    description: "Overall build and body type, e.g., 'slender, statuesque, hourglass proportions'."
-                  },
-                  proportions: {
-                    type: "string",
-                    description: "Body proportions and notable physical emphasis, e.g., 'long legs, large bust, narrow waist'."
-                  },
-                  skin: {
-                    type: "string",
-                    description: "Skin tone and visible characteristics, e.g., 'smooth synthetic skin with a subtle artificial sheen'."
-                  },
-                  hair: {
-                    type: "string",
-                    description: "Hair color, length, texture, and style, e.g., 'long golden hair flowing past the waist, straight and glossy'."
-                  },
-                  eyes: {
-                    type: "string",
-                    description: "Eye color and outward look, e.g., 'bright shimmering eyes, softly focused forward'."
-                  },
-                  face: {
-                    type: "string",
-                    description: "Facial structure and notable features, and visible makeup if any."
-                  },
-                  clothing: {
-                    type: "string",
-                    description: <<~CLO
-                      Full outfit description with garments, colors, materials, fit, and coverage.
-                      Example: "form-fitting knee-length white satin dress with thin straps, closely hugging the torso and hips".
-                      If no clothing is present, then the character is naked.
-                    CLO
-                  },
-                  accessories: {
-                    type: "string",
-                    description: "All visible jewelry, glasses, devices, etc., or 'none' if there are no accessories."
-                  },
-                  distinctive: {
-                    type: "string",
-                    description: "Any distinctive visual features (e.g., tattoos, scars, glowing elements), or 'none'."
-                  }
-                },
-                required: [
-                  "height",
-                  "build",
-                  "proportions",
-                  "skin",
-                  "hair",
-                  "eyes",
-                  "face",
-                  "clothing",
-                  "accessories",
-                  "distinctive"
-                ]
               }
             },
             required: ["appearance"]
@@ -105,71 +47,22 @@ module CharacterToolCalls
         type: "function",
         function: {
           name: "update_location",
-          description: "Update the adult character's CURRENT location as structured JSON. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT location as a single plain-text snapshot. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               location: {
-                type: "object",
-                description: <<~DESC,
-                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the CURRENT environment
-                  as a structured JSON object. This fully replaces any previous location, so you MUST
-                  include all established visual details that still apply.
+                type: "string",
+                description: <<~DESC
+                  A COMPLETE, NEUTRAL, THIRD-PERSON description of the CURRENT environment as a single plain-text snapshot.
+                  This fully replaces any previous location, so you MUST include all established visual details that still apply.
 
                   RULES:
                   - Describe only the visible environment around the character.
                   - No first/second person, no names, no emotions, no story.
                   - Do NOT describe the character's pose or appearance here.
+                  - LOCATION MUST BE SPECIFIC: state space type/style, key furniture, notable objects, materials/colors, lighting sources and direction, background elements, physical atmosphere, and layout relative to the character (no generic "room" or "space").
                 DESC
-                properties: {
-                  space_type: {
-                    type: "string",
-                    description: "Type of space, e.g., 'luxurious modern living room', 'bedroom', 'office'."
-                  },
-                  overall_style: {
-                    type: "string",
-                    description: "Overall visual style, e.g., 'minimalist', 'high-tech', 'cozy', 'opulent'."
-                  },
-                  key_furniture: {
-                    type: "string",
-                    description: "Main furniture pieces near or relevant to the character, e.g., 'navy velvet couch, glass coffee table, low media console'."
-                  },
-                  key_objects: {
-                    type: "string",
-                    description: "Notable objects in the scene, e.g., 'coffee carafe and two mugs, smart speakers, decorative plants'."
-                  },
-                  materials_colors: {
-                    type: "string",
-                    description: "Dominant materials and colors, e.g., 'polished stone floor, warm neutral walls, metallic accents'."
-                  },
-                  lighting: {
-                    type: "string",
-                    description: "Lighting type, direction, and feel, e.g., 'warm evening light from large windows with soft ambient lamps'."
-                  },
-                  background_elements: {
-                    type: "string",
-                    description: "Visible background elements, e.g., 'city lights through window, wall-mounted screen, shelving'."
-                  },
-                  atmosphere_physical: {
-                    type: "string",
-                    description: "Purely physical ambient details, e.g., 'faint steam from coffee, soft hum of automation systems'. No emotions."
-                  },
-                  layout_notes: {
-                    type: "string",
-                    description: "Brief notes on layout relative to the character, e.g., 'couch facing window, coffee table in front of couch'."
-                  }
-                },
-                required: [
-                  "space_type",
-                  "overall_style",
-                  "key_furniture",
-                  "key_objects",
-                  "materials_colors",
-                  "lighting",
-                  "background_elements",
-                  "atmosphere_physical",
-                  "layout_notes"
-                ]
               }
             },
             required: ["location"]
@@ -180,71 +73,25 @@ module CharacterToolCalls
         type: "function",
         function: {
           name: "update_action",
-          description: "Update the adult character's CURRENT pose and action as structured JSON. Do NOT include the character's name.",
+          description: "Update the adult character's CURRENT pose and action as a single plain-text snapshot. Do NOT include the character's name.",
           parameters: {
             type: "object",
             properties: {
               action: {
-                type: "object",
-                description: <<~DESC,
+                type: "string",
+                description: <<~DESC
                   A COMPLETE, NEUTRAL, THIRD-PERSON description of what the ADULT character is CURRENTLY doing,
-                  as a structured JSON object. This fully replaces any previous action, so you MUST include the
+                  as a single plain-text snapshot. This fully replaces any previous action, so you MUST include the
                   actual current pose and interactions.
 
                   RULES:
                   - Third person only, no names, no first/second person.
                   - No emotions, no motivations, no inner thoughts.
                   - Describe ONLY physical pose, movement, and interactions with visible objects.
+                  - INCLUDE POSE LOCK: fully upright, standing on both feet, NOT sitting, NOT kneeling, NOT crouching, NOT lying down.
+                  - ACTION MUST BE SPECIFIC: body position, torso orientation, leg/foot stance (shoulder-width, feet flat, weight evenly distributed), arm/hand placement, head/gaze direction, object contact/interaction, motion state, and any neutral physical notes.
+                  - INCLUDE NEGATIVES inline: "NOT sitting, NOT kneeling, NOT lying, NOT reclining."
                 DESC
-                properties: {
-                  body_position: {
-                    type: "string",
-                    description: "Overall body position, e.g., 'standing upright', 'sitting on couch', 'reclining on side'."
-                  },
-                  torso_orientation: {
-                    type: "string",
-                    description: "Orientation of torso relative to the environment, e.g., 'torso facing forward toward the door'."
-                  },
-                  leg_position: {
-                    type: "string",
-                    description: "Position and stance of legs and feet, e.g., 'legs close together, feet shoulder-width apart, weight evenly distributed'."
-                  },
-                  arm_position: {
-                    type: "string",
-                    description: "General placement of arms, e.g., 'arms hanging naturally at sides', 'one arm resting on back of couch'."
-                  },
-                  hand_details: {
-                    type: "string",
-                    description: "Specific hand positions and interactions, e.g., 'right hand lightly touching the back of the couch, left hand relaxed at side'."
-                  },
-                  head_gaze: {
-                    type: "string",
-                    description: "Head orientation and gaze direction, e.g., 'head slightly tilted, eyes looking toward the entrance'."
-                  },
-                  interaction: {
-                    type: "string",
-                    description: "What the character is interacting with, if anything, e.g., 'reaching toward the coffee table', or 'no direct interaction'."
-                  },
-                  motion: {
-                    type: "string",
-                    description: "Whether the pose is static or moving, and if moving, how, e.g., 'static', 'beginning to step forward with smooth, measured steps'."
-                  },
-                  notes: {
-                    type: "string",
-                    description: "Any additional neutral physical details about the pose/action, or 'none'."
-                  }
-                },
-                required: [
-                  "body_position",
-                  "torso_orientation",
-                  "leg_position",
-                  "arm_position",
-                  "hand_details",
-                  "head_gaze",
-                  "interaction",
-                  "motion",
-                  "notes"
-                ]
               }
             },
             required: ["action"]
@@ -267,11 +114,14 @@ module CharacterToolCalls
 
       case tool_name
       when "update_appearance"
-        conversation.appearance = arguments["appearance"]
+        value = arguments.is_a?(Hash) ? arguments["appearance"] : arguments
+        conversation.appearance = value
       when "update_location"
-        conversation.location = arguments["location"]
+        value = arguments.is_a?(Hash) ? arguments["location"] : arguments
+        conversation.location = value
       when "update_action"
-        conversation.action = arguments["action"]
+        value = arguments.is_a?(Hash) ? arguments["action"] : arguments
+        conversation.action = value
       end
     end
 
@@ -281,12 +131,11 @@ module CharacterToolCalls
   end
 
   def parse_tool_arguments(arguments)
-    parsed_arguments = arguments
-    parsed_arguments = JSON.parse(parsed_arguments) if parsed_arguments.is_a?(String)
-    parsed_arguments = JSON.parse(parsed_arguments) if parsed_arguments.is_a?(String)
-    parsed_arguments
+    return arguments unless arguments.is_a?(String)
+
+    JSON.parse(arguments)
   rescue JSON::ParserError
-    {}
+    arguments
   end
 
   def extract_tool_call_state(tool_calls)
@@ -300,11 +149,11 @@ module CharacterToolCalls
 
       case tool_name
       when "update_appearance"
-        state[:appearance] = arguments["appearance"]
+        state[:appearance] = arguments.is_a?(Hash) ? arguments["appearance"] : arguments
       when "update_location"
-        state[:location] = arguments["location"]
+        state[:location] = arguments.is_a?(Hash) ? arguments["location"] : arguments
       when "update_action"
-        state[:action] = arguments["action"]
+        state[:action] = arguments.is_a?(Hash) ? arguments["action"] : arguments
       end
     end
 
@@ -313,6 +162,21 @@ module CharacterToolCalls
 
   # Create message with both content and tool calls
   def create_message_with_tool_calls(conversation, response)
+    # Handle nil or plain-text responses gracefully
+    return conversation.messages.create!(
+      content: "I'm here and ready to chat! How can I help you today?",
+      role: "assistant",
+      user: conversation.user
+    ) if response.nil?
+
+    unless response.respond_to?(:content)
+      return conversation.messages.create!(
+        content: response.to_s.presence || "I'm here and ready to chat! How can I help you today?",
+        role: "assistant",
+        user: conversation.user
+      )
+    end
+
     if response.respond_to?(:tool_calls) && response.tool_calls.present?
       # Process tool calls first
       process_character_tool_calls(conversation, response.tool_calls)
@@ -323,34 +187,37 @@ module CharacterToolCalls
         Rails.logger.error "⚠️  MISSING CONTENT: Response had #{response.tool_calls.length} tool calls but NO conversational content!"
         Rails.logger.error "Tool calls: #{response.tool_calls.map { |tc| tc[:function][:name] }.join(', ')}"
         Rails.logger.error "Generating fallback content to ensure user receives a response"
-        content = generate_fallback_content(conversation, response.tool_calls)
+        content = "No conversational content generated #{response}"
       else
         Rails.logger.info "✓ Response includes both content and #{response.tool_calls.length} tool calls"
       end
 
       # Create message with both content and tool calls
       Rails.logger.info "Saving message with content: '#{content[0..100]}...' and #{response.tool_calls.length} tool calls"
-      conversation.messages.create!(
+      message = conversation.messages.create!(
         content: content,
         tool_calls: response.tool_calls,
         role: "assistant",
         user: conversation.user
       )
+      return message
     elsif response.content.present?
       # Create message with content only
-      conversation.messages.create!(
+      message = conversation.messages.create!(
         content: response.content&.strip,
         role: "assistant",
         user: conversation.user
       )
+      return message
     else
       # No content and no tool calls - this shouldn't happen, but handle it
       Rails.logger.error "Response had neither content nor tool calls, creating fallback message"
-      conversation.messages.create!(
+      message = conversation.messages.create!(
         content: "I'm here and ready to chat! How can I help you today?",
         role: "assistant",
         user: conversation.user
       )
+      return message
     end
   end
 
@@ -416,12 +283,19 @@ module CharacterToolCalls
       - action: what the character is physically doing / how they are posed
 
       GENERAL RULES:
-      - ALWAYS write in third person (“the woman”, “she”, “they”, “the character”).
-      - NEVER use first-person (“I”, “me”) or second-person (“you”) in tool outputs.
-      - NEVER include the character’s name or invent one.
+      - ALWAYS write in third person ("the woman", "she", "they", "the character").
+      - NEVER use first-person ("I", "me") or second-person ("you") in tool outputs.
+      - NEVER include the character's name or invent one.
       - ADULT CONTENT ONLY: Never describe children, minors, or child-related content.
       - Each tool call is a FULL SNAPSHOT for that category and fully replaces the previous value.
       - If a detail was established earlier and not changed, you MUST repeat it.
+      - EVERY assistant turn must emit three tool calls: update_appearance, update_location, update_action. One call per category.
+      - If a category did not change, repeat the last known snapshot exactly for that tool call.
+      - Use separate tool calls (no bundling) and keep them in the same turn as the conversational reply.
+      - ALWAYS include a brief, in-character conversational reply along with the tool calls (never return tool calls alone).
+      - Tool call outputs must be single plain-text strings (no JSON objects, no keys/values).
+      - BE SPECIFIC: list concrete garments, objects, layout, and pose details instead of generic phrases.
+      - PUT POSE FIRST in the action snapshot so the image model locks stance before body emphasis.
 
       WHEN TO CALL TOOLS:
       - Call update_appearance when the conversation explicitly changes how the character looks
@@ -439,10 +313,24 @@ module CharacterToolCalls
       - Never introduce random changes (clothes, room, pose) without textual justification.
 
       APPEARANCE SNAPSHOT (NO POSE) – RULES:
-      - Appearance describes the character’s body and outfit ONLY, not their actions or environment.
-      - Do NOT describe detailed pose or position (no “standing comfortably”, “sitting on the couch” here).
-      - Include ALL of:
-      - height, build, body type, proportions
+      - Appearance describes the character's body and outfit ONLY, not their actions or environment.
+      - Do NOT describe detailed pose or position (no "standing comfortably", "sitting on the couch" here).
+      - Use only literal, physical descriptors—no metaphors, effects, or figurative language (e.g., no "burning eyes", "ethereal glow").
+      - Skin must use realistic human tones unless the story explicitly specifies a non-human color/material; never output metallic/gold skin unless given verbatim.
+      - CLOTHING MUST BE SPECIFIC: list each garment with type, color, material, coverage, and fit (e.g., "soaked long-sleeved dark-grey cotton t-shirt fully covering chest and arms"; "high-waisted black denim jeans, soaked and form-clinging to ankles"; "dark waterproof boots"). Never use generic "clothes" or "outfit".
+      - Cover height/build/proportions, skin tone/texture, hair, eye color, face features, specific clothing items, accessories, distinctive marks in one concise paragraph.
+
+      LOCATION SNAPSHOT – RULES:
+      - Describe only the visible environment around the character.
+      - Do NOT describe the character's pose or appearance here.
+      - LOCATION MUST BE SPECIFIC: name the space type, style, major furniture and objects, materials/colors, lighting sources/direction, background elements, physical atmosphere, and layout cues in one concise paragraph (no generic "room" or "space").
+
+      ACTION SNAPSHOT – RULES:
+      - Describe ONLY the physical pose/action; no emotions or story.
+      - Keep it neutral and literal.
+      - Start with a POSE LOCK: fully upright, standing on both feet, NOT sitting, NOT kneeling, NOT crouching, NOT lying down.
+      - ACTION MUST BE SPECIFIC: spell out body position, torso orientation, legs/feet stance (shoulder-width, straight, feet flat, weight evenly distributed), arms and hand placement, head/gaze direction, what (if anything) is being touched/held, motion state, and neutral physical notes in one concise paragraph (no generic "standing casually").
+      - Include explicit negatives inline: "NOT sitting, NOT kneeling, NOT lying, NOT reclining."
     INSTRUCTIONS
   end
 end

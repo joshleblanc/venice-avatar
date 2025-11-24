@@ -42,7 +42,7 @@ class GenerateFollowupMessageJob < ApplicationJob
 
       # Create a simple follow-up message as fallback
       conversation.messages.create!(
-        content: "I'm back! Sorry for the delay.",
+        content: "Error generating follow-up message: #{e.message}",
         role: "assistant",
         user: conversation.user
       )

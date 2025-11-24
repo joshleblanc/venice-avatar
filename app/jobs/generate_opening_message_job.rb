@@ -1,4 +1,6 @@
 class GenerateOpeningMessageJob < ApplicationJob
+  include CharacterToolCalls
+
   queue_as :default
 
   def perform(conversation)
@@ -10,37 +12,34 @@ class GenerateOpeningMessageJob < ApplicationJob
       opening_context = build_opening_context(conversation)
       service = StructuredTurnService.new(conversation)
       reply_message = service.generate_reply(opening_context, current_time: current_time, opening: true)
-      reply_text = reply_message&.content.to_s.strip
+      assistant_message = create_message_with_tool_calls(conversation, reply_message)
+      reply_text = assistant_message&.content.to_s.strip
 
-      assistant_message = conversation.messages.create!(
-        content: reply_text.presence || "Hey there! 😊",
-        role: "assistant",
-        user: conversation.user
-      )
+      unless reply_message.respond_to?(:tool_calls) && reply_message.tool_calls.present?
+        previous_prompt = conversation.metadata&.dig("current_scene_prompt")
+        prompt = ScenePromptService.new(conversation).generate_prompt(
+          opening_context,
+          reply_text,
+          current_time: current_time,
+          previous_prompt: previous_prompt
+        )
 
-      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
-      prompt = ScenePromptService.new(conversation).generate_prompt(
-        opening_context,
-        reply_text,
-        current_time: current_time,
-        previous_prompt: previous_prompt
-      )
-
-      if prompt.present?
-        prompt_service = AiPromptGenerationService.new(conversation)
-        prompt_service.store_scene_prompt(prompt, trigger: "opening_json_turn")
-        GenerateImagesJob.perform_later(conversation, reply_text, assistant_message.created_at, prompt)
+        if prompt.present?
+          prompt_service = AiPromptGenerationService.new(conversation)
+          prompt_service.store_scene_prompt(prompt, trigger: "opening_json_turn")
+          GenerateImagesJob.perform_later(conversation, reply_text, assistant_message&.created_at, prompt)
+        end
       end
-    rescue => e
-      Rails.logger.error "Failed to generate character opening message: #{e.message}"
-      fallback_message = "Hey there! 😊"
-      conversation.messages.create!(
-        content: fallback_message,
-        role: "assistant",
-        user: conversation.user
-      )
-      conversation.update(generating_reply: false)
     end
+  rescue => e
+    Rails.logger.error "Failed to generate character opening message: #{e.message}"
+    fallback_message = "Error generating opening message: #{e.message} #{e.backtrace.join("\n")}"
+    conversation.messages.create!(
+      content: fallback_message,
+      role: "assistant",
+      user: conversation.user
+    )
+    conversation.update(generating_reply: false)
   end
 
   private

@@ -147,7 +147,7 @@ class AiPromptGenerationService
 
     <<~PROMPT
       You are a visual novel scene prompt generator. Create a detailed, comprehensive image generation prompt for the initial scene featuring this character.
-      Your goal is to describe what is visually observable in the scene, using concise, image-centric language suitable for an art generator.
+      Your goal is to describe what is visually observable in the scene, using rich, image-centric language suitable for an art generator.
 
       Character Name: #{character_name}
       Character Description: #{character_description}#{appearance_context}#{scenario_section}
@@ -169,13 +169,13 @@ class AiPromptGenerationService
          - Spatial layout and depth elements
       3. Atmosphere and mood that complements the environment
       4. Grounding in the character description: translate relevant elements of the description into visual cues (e.g., clothing style, accessories/props, environment choices). Do not restate the description verbatim; incorporate it visually.
-      5. NO Art style specifications
+      5. Avoid named art styles, but DO include quality keywords (e.g., "masterpiece", "best quality", "ultra-detailed", "HDR", "4k", "8k", "RAW photo", "sharp focus", "depth of field", "volumetric lighting", "photorealistic") to make it Civitai/Midjourney-esque.
       6. Do not include any superfluous or unimportant descriptions
       7. Do not include the character name
       8. Do not state you're generating an image in the prompt
       9. Describe the visual elements only. Do not include inner thoughts or emotional backstories.
-      10. Use concise Midjourney-style phrasing: a single line of comma-separated visual descriptors (subject, clothing, environment, lighting, camera framing). EXCLUDE non-visual senses (smell, taste, sound), metadata, tool instructions, or storytelling.
-      11. Limit Verbosity and Emotional Verbs. Avoid:
+      10. Use rich Civitai/Midjourney-style phrasing: a single line of comma-separated visual descriptors (subject, clothing, environment, lighting). EXCLUDE non-visual senses (smell, taste, sound), metadata, tool instructions, or storytelling. Include quality tags like "masterpiece", "best quality", "ultra-detailed", "HDR", "4k", "8k", "RAW photo", "sharp focus", "depth of field", "volumetric lighting", "photorealistic".
+      11. Limit Emotional Verbs. Avoid:
         - Overuse of verbs like "sob," "cry," "feel," "reflect," "struggle"
         - Internal states or psychological exposition
         Instead, lean on:
@@ -415,37 +415,50 @@ class AiPromptGenerationService
     end
 
     <<~PROMPT
-    You create a single third-person visual image prompt under 1500 characters.
+    You create a single third-person visual image prompt under 1500 characters, Civita style.
+
+    CORE PRINCIPLES:
+    • You do NOT rewrite or reinterpret appearance details.
+    • You do NOT remove, simplify, or downplay clothing.
+    • You do NOT substitute your own wording for any appearance element.
+    • You MUST include all provided appearance details EXACTLY and COMPLETELY.
 
     STRICT RULES:
-    • No first-person language or dialogue.
-    • No emotional, psychological, or metaphorical wording.
-    • No cinematography terms (no “camera,” “shot,” “angle,” etc.).
-    • Describe only visible physical details or clearly visible absences.
-    • BASELINE appearance/location/action are absolute unless RECENT MESSAGES explicitly change them.
+    • No first-person language. No dialogue.
+    • No emotions, psychology, or metaphorical descriptions.
+    • No cinematography terms (camera, zoom, angle, shot).
+    • Describe ONLY visible physical details and clearly visible absences.
+    • BASELINE APPEARANCE, LOCATION, and ACTION are absolute unless RECENT MESSAGES explicitly modify them.
+    • You may NOT add, remove, or alter any clothing, garments, or coverage unless RECENT MESSAGES change them.
 
-    APPEARANCE REQUIREMENTS:
-    • You MUST restate ALL visual appearance details exactly as provided, including:
-      - Clothing and outfit details (or explicit lack of clothing)
-      - Hair color, length, style
-      - Eye color
-      - Skin tone/material
-      - Body type/proportions
-    • You may NOT omit clothing, accessories, or hair color under any circumstances.
-    • If the baseline includes clothing, the final output MUST describe the clothing.
-    • NEVER summarize or reduce appearance details; repeat them fully.
+    APPEARANCE REQUIREMENTS (MANDATORY):
+    • You MUST include ALL clothing details from BASELINE APPEARANCE, word-for-word if possible.
+    • You MUST include hair color, hair length, and hair style EXACTLY.
+    • You MUST include eye color EXACTLY.
+    • You MUST include skin tone/material EXACTLY.
+    • You MUST include body type/proportions EXACTLY.
+    • You MUST include accessories EXACTLY.
+    • You may NOT summarize appearance; you must restate it fully.
+    • You may NOT omit clothing or generalize it (e.g., “clothed”, “wearing clothes” is forbidden).
+    • If baseline states clothing, you MUST describe garments, colors, materials, and coverage.
 
     ACTION REQUIREMENTS:
-    • The BASELINE ACTION must be explicitly included and visually described.
-    • Do NOT infer or invent poses.
+    • The BASELINE ACTION must be included in the prompt exactly as written.
+    • Do NOT infer or invent poses, gestures, or movement.
+    • Only describe the pose and action explicitly given.
 
     LOCATION REQUIREMENTS:
-    • Must include the key elements of the baseline location.
+    • Must include the essential visual elements of the BASELINE LOCATION.
+    • Must not add new elements beyond what is provided.
 
-    STRUCTURE:
-    • Output ONE paragraph describing:
-      appearance → action → environment → lighting → other visible details.
+    STRUCTURE (MANDATORY):
+    • Output ONE paragraph containing:
+      1) Full appearance description (must include ALL garments and visual details)
+      2) Exact action description
+      3) Location/environment details
+      4) Lighting and other visible physical details
 
+    INPUT:
     BASELINE APPEARANCE:
     #{current_appearance}
 
@@ -458,7 +471,8 @@ class AiPromptGenerationService
     SCENARIO CONTEXT:
     #{scenario_section}
 
-    Output: final visual description only, under 1500 characters.
+    OUTPUT:
+    A single third-person visual description under 1500 characters, complying with ALL rules above.
 
     PROMPT
   end

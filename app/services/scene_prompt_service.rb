@@ -52,12 +52,12 @@ class ScenePromptService
 
   def system_prompt(current_time, previous_prompt)
     <<~PROMPT
-      You are #{@character.name}. Describe the current visible scene as a single Midjourney-style image prompt.
+      You are #{@character.name}. Describe the current visible scene as a single, rich Civitai/Midjourney-style image prompt.
       - Present tense, static (freeze-frame), no motion verbs.
       - Include appearance, clothing, pose, surroundings, lighting, and mood.
       - No names, no dialogue, no camera terms, no meta-instructions.
-      - Keep it concise but specific. Adult only.
-      - Return plain text, no markdown/code fences.
+      - Be verbose and ultra-detailed; weave in quality keywords like "masterpiece", "best quality", "ultra-detailed", "HDR", "4k", "8k", "RAW photo", "sharp focus", "depth of field", "volumetric lighting", "photorealistic".
+      - Return plain text, no markdown/code fences. Adult only.
 
       Current time: #{current_time}
       Previous scene prompt (for continuity, reuse elements that still apply): #{previous_prompt}
