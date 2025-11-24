@@ -2,6 +2,7 @@ class ImageGenerationService
   def initialize(conversation)
     @conversation = conversation
     @character = conversation.character
+    @prompt_builder = ConsistentPromptBuilderService.new(conversation)
   end
 
   def generate_scene_image(new_message_content = nil, message_timestamp = nil)
@@ -17,36 +18,34 @@ class ImageGenerationService
   end
 
   def generate_full_scene_image
-    Rails.logger.info "Generating full scene image from scratch"
+    Rails.logger.info "Generating full scene image with consistency service"
 
     # Determine if we have a real scene prompt yet
     has_real_prompt = @conversation.metadata.present? && @conversation.metadata["current_scene_prompt"].present?
 
-    # Check if character is away and generate appropriate prompt
-    prompt = build_unified_scene_prompt
+    # Use the new consistent prompt builder for better character consistency
+    prompt_data = @prompt_builder.build(trigger: "full_scene")
+    prompt = prompt_data[:prompt]
+    negative_prompt = prompt_data[:negative_prompt]
+    seed = prompt_data[:seed]
 
-    models = [
-      "venice-sd35",
-      "hidream",
-      "fluently-xl",
-      "flux-dev", # higher prompt length
-      "flux-dev-uncensored-11", # higher prompt length
-      "flux-dev-uncensored", # higher prompt length
-      "lustify-sdxl",
-      "pony-realism",
-      "stable-diffusion-3.5"
-    ]
     begin
       mode = has_real_prompt ? "full" : "fast-first"
       width, height = has_real_prompt ? [1024, 640] : [320, 512]
-      Rails.logger.info "Generating unified scene image (mode=#{mode}, #{width}x#{height}) with prompt length=#{prompt.length}"
+      Rails.logger.info "Generating unified scene image (mode=#{mode}, #{width}x#{height}) with prompt length=#{prompt.length}, seed=#{seed}"
 
       # Conversation-specific style override
       style_override = @conversation.metadata&.dig("image_style_override")
 
       Rails.logger.debug "Style override: #{style_override.inspect}"
 
-      opts = {width: width, height: height, seed: @conversation.seed || 123671236}
+      opts = {
+        width: width,
+        height: height,
+        seed: seed,
+        negative_prompt: negative_prompt
+      }
+
       if style_override == "__none__"
         # Explicitly disable style preset
         opts[:style_preset] = ""
@@ -84,8 +83,19 @@ class ImageGenerationService
 
     Rails.logger.info "Generating scene image from provided prompt with length=#{prompt.length}"
 
+    # Get negative prompt and seed from consistency service
+    prompt_data = @prompt_builder.build(trigger: "provided_prompt")
+    negative_prompt = prompt_data[:negative_prompt]
+    seed = prompt_data[:seed]
+
     style_override = @conversation.metadata&.dig("image_style_override")
-    opts = { width: 1024, height: 640, seed: @conversation.seed || 123671236 }
+    opts = {
+      width: 1024,
+      height: 640,
+      seed: seed,
+      negative_prompt: negative_prompt
+    }
+
     if style_override == "__none__"
       opts[:style_preset] = ""
     elsif style_override.present?
@@ -163,14 +173,24 @@ class ImageGenerationService
   end
 
   def should_use_image_editing?
-    # Use image editing if:
+    # Use image editing for minor changes to preserve character consistency
+    # Requirements:
     # 1. A scene image already exists
-    # 2. Character is not away (we can't edit background-only scenes effectively)
+    # 2. Character is not away (we can't edit background-only scenes)
     # 3. Conversation has messages (not the initial scene)
-    # @conversation.scene_image.attached? &&
-    #   !@conversation.character_away? &&
-    #   @conversation.messages.exists?
-    false # doesn't really work yet
+    # 4. The change type is suitable for editing
+    return false unless @conversation.scene_image.attached?
+    return false if @conversation.character_away?
+    return false unless @conversation.messages.exists?
+
+    # Use the edit service to determine if the change is suitable
+    edit_service = ImageEditService.new(@conversation)
+    change_type = edit_service.detect_change_type
+
+    Rails.logger.info "Detected change type: #{change_type}"
+
+    # Only use editing for minor changes
+    ImageEditService::EDIT_SUITABLE_CHANGES.include?(change_type)
   end
 
   def build_unified_scene_prompt
