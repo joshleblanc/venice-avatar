@@ -26,7 +26,6 @@ class EditImageJob < ApplicationJob
       nil
     end
   rescue => e
-    debugger
     Rails.logger.error "Image edit job failed: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     nil
