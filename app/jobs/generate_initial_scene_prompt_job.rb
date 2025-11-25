@@ -25,17 +25,20 @@ class GenerateInitialScenePromptJob < ApplicationJob
 
       Rails.logger.info "Generated initial scene prompt: #{generated_prompt}"
 
+      # Filter out any child-related content
+      filtered_prompt = filter_child_content(generated_prompt.content.strip)
+
       # Store the prompt in conversation metadata
       metadata = conversation.metadata || {}
-      metadata["current_scene_prompt"] = generated_prompt.content.strip
+      metadata["current_scene_prompt"] = filtered_prompt
       metadata["scene_prompt_updated_at"] = Time.current.iso8601
       conversation.update!(metadata: metadata)
 
       # Store in scene prompt history table
       conversation.scene_prompt_histories.create!(
-        prompt: generated_prompt.content.strip,
+        prompt: filtered_prompt,
         trigger: "initial",
-        character_count: generated_prompt.content.strip.length
+        character_count: filtered_prompt.length
       )
     rescue => e
       Rails.logger.error "Failed to generate initial scene prompt: #{e.message}"
@@ -86,6 +89,7 @@ class GenerateInitialScenePromptJob < ApplicationJob
       15. Do not use poetic language. Use simple, direct language.
       16. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
       17. Keep the response within #{conversation.user.prompt_limit} characters
+      18. NEVER include references to children, minors, toys, children's items, nurseries, playrooms, cribs, strollers, or any child-related objects or settings. Use only adult-appropriate environment details (books, plants, art, furniture).
 
       The prompt should be comprehensive enough to generate a consistent character appearance that can be evolved in future scenes. Focus on establishing a strong visual foundation.
 
@@ -100,5 +104,46 @@ class GenerateInitialScenePromptJob < ApplicationJob
     character_desc = conversation.character.description || "a person"
 
     "Anime style illustration of #{character_name}, #{character_desc}, standing in a cozy indoor setting, soft lighting, detailed character design, warm atmosphere"
+  end
+
+  # Content filtering to ensure no child references in prompts
+  def filter_child_content(content)
+    return content if content.blank?
+
+    # Problematic phrases to replace with neutral alternatives
+    phrase_replacements = {
+      /children'?s? toys?/i => "decorative objects",
+      /kids'? toys?/i => "decorative objects",
+      /baby toys?/i => "soft furnishings",
+      /toys? on the floor/i => "items on the floor",
+      /scattered toys?/i => "scattered books",
+      /toy(?:s)?\b/i => "objects"
+    }
+
+    # List of child-related terms to filter out
+    child_terms = [
+      "child", "children", "children's", "child's",
+      "kid", "kids", "kid's", "kids'",
+      "baby", "babies", "baby's", "babies'",
+      "toddler", "toddlers", "infant", "infants",
+      "minor", "minors", "nursery", "playroom", "crib", "stroller"
+    ]
+
+    filtered_content = content.dup
+
+    # First, replace problematic phrases
+    phrase_replacements.each do |pattern, replacement|
+      filtered_content.gsub!(pattern, replacement)
+    end
+
+    # Remove sentences containing child-related terms
+    sentences = filtered_content.split(/[.!?]+/)
+    filtered_sentences = sentences.reject do |sentence|
+      child_terms.any? { |term| sentence.downcase.include?(term.downcase) }
+    end
+
+    return "An adult character in a comfortable indoor setting with warm lighting." if filtered_sentences.empty?
+
+    filtered_sentences.join(". ").strip + "."
   end
 end

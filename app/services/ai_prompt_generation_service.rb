@@ -114,11 +114,11 @@ class AiPromptGenerationService
 
       Rails.logger.info "BEFORE: #{scene_response.content.strip}"
       # Filter out any child content
-      # filtered_scene_response = filter_child_content(scene_response.content.strip)
-      Rails.logger.info "AFTER: #{scene_response.content.strip}"
+      filtered_scene_response = filter_child_content(scene_response.content.strip)
+      Rails.logger.info "AFTER: #{filtered_scene_response}"
 
-      Rails.logger.info "Generated scene from character descriptions: #{scene_response.content.strip[0..100]}..."
-      scene_response.content.strip
+      Rails.logger.info "Generated scene from character descriptions: #{filtered_scene_response[0..100]}..."
+      filtered_scene_response
     rescue => e
       Rails.logger.error "Failed to generate scene from descriptions: #{e.message}"
       # Fallback to a basic scene
@@ -188,6 +188,7 @@ class AiPromptGenerationService
       16. Do not use poetic language. Use simple, direct language.
       17. When things change, replace the old description with the new one. Do not state what's happening over the passage of time. Only the new state.
       18. Keep the response within #{@conversation.user.prompt_limit} characters
+      19. NEVER include references to children, minors, toys, children's items, nurseries, playrooms, cribs, strollers, or any child-related objects or settings. Use only adult-appropriate environment details.
 
       The prompt should be comprehensive enough to generate a consistent character appearance AND establish a detailed, memorable background that can be maintained across future scenes. Focus on creating a strong visual foundation with rich environmental details.
 
@@ -430,6 +431,7 @@ class AiPromptGenerationService
     • Describe ONLY visible physical details and clearly visible absences.
     • BASELINE APPEARANCE, LOCATION, and ACTION are absolute unless RECENT MESSAGES explicitly modify them.
     • You may NOT add, remove, or alter any clothing, garments, or coverage unless RECENT MESSAGES change them.
+    • NEVER include children, minors, toys, children's items, nurseries, playrooms, cribs, strollers, or any child-related objects. Use only adult-appropriate environment details (books, plants, art, furniture).
 
     APPEARANCE REQUIREMENTS (MANDATORY):
     • You MUST include ALL clothing details from BASELINE APPEARANCE, word-for-word if possible.
@@ -558,17 +560,39 @@ class AiPromptGenerationService
   def filter_child_content(content)
     return content if content.blank?
 
-    # List of child-related terms to filter out
+    # List of child-related terms to filter out (including possessive forms)
     child_terms = [
-      "child", "children", "kid", "kids", "baby", "babies", "toddler", "toddlers",
-      "infant", "infants", "minor", "minors", "boy", "boys", "girl", "girls",
-      "son", "daughter", "nephew", "niece", "student", "students",
-      "schoolchild", "schoolchildren", "youngster", "youngsters", "youth", "youths",
-      "juvenile", "juveniles", "adolescent", "adolescents", "teen", "teens",
-      "teenager", "teenagers", "preteen", "preteens", "tween", "tweens"
+      "child", "children", "children's", "child's",
+      "kid", "kids", "kid's", "kids'",
+      "baby", "babies", "baby's", "babies'",
+      "toddler", "toddlers", "toddler's", "toddlers'",
+      "infant", "infants", "infant's", "infants'",
+      "minor", "minors",
+      "son", "daughter", "nephew", "niece",
+      "schoolchild", "schoolchildren",
+      "youngster", "youngsters",
+      "juvenile", "juveniles",
+      "adolescent", "adolescents",
+      "teen", "teens", "teenager", "teenagers",
+      "preteen", "preteens", "tween", "tweens"
     ]
 
+    # Problematic phrases to replace with neutral alternatives
+    phrase_replacements = {
+      /children'?s? toys?/i => "decorative objects",
+      /kids'? toys?/i => "decorative objects",
+      /baby toys?/i => "soft furnishings",
+      /toys? on the floor/i => "items on the floor",
+      /scattered toys?/i => "scattered books",
+      /toy(?:s)?\b/i => "objects"
+    }
+
     filtered_content = content.dup
+
+    # First, replace problematic phrases with neutral alternatives
+    phrase_replacements.each do |pattern, replacement|
+      filtered_content.gsub!(pattern, replacement)
+    end
 
     # Remove sentences containing child-related terms
     sentences = filtered_content.split(/[.!?]+/)

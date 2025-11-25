@@ -79,6 +79,7 @@ module CharacterToolCalls
                   - No first/second person, no names, no emotions, no story.
                   - Do NOT describe the character's pose or appearance here.
                   - LOCATION MUST BE SPECIFIC: state space type/style, key furniture, notable objects, materials/colors, lighting sources and direction, background elements, physical atmosphere, and layout relative to the character (no generic "room" or "space").
+                  - NEVER include children's items, toys, nurseries, playrooms, cribs, strollers, or any child-related objects. Use adult-appropriate details only (books, plants, art, adult furniture).
                 DESC
               }
             },
@@ -385,6 +386,7 @@ module CharacterToolCalls
       - Describe only the visible environment around the character.
       - Do NOT describe the character's pose or appearance here.
       - LOCATION MUST BE SPECIFIC: name the space type, style, major furniture and objects, materials/colors, lighting sources/direction, background elements, physical atmosphere, and layout cues in one concise paragraph (no generic "room" or "space").
+      - NEVER include children's items, toys, nurseries, playrooms, cribs, strollers, or any child-related objects. Use adult-appropriate details only (books, plants, art, adult furniture).
 
       ACTION SNAPSHOT – RULES:
       - Describe ONLY the physical pose/action; no emotions or story.
