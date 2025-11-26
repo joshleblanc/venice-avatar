@@ -1,110 +1,110 @@
-<div class="max-w-2xl mx-auto p-6">
-  <div class="bg-white shadow-sm rounded-lg border border-gray-200">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h1 class="text-2xl font-semibold text-gray-900">Edit Profile</h1>
-      <p class="mt-1 text-sm text-gray-600">Update your account preferences and settings.</p>
+<div class="max-w-2xl mx-auto w-full">
+  <div class="glass rounded-2xl glow-violet overflow-hidden">
+    <div class="px-8 py-6 border-b border-slate-700/50">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-white">Edit Profile</h1>
+          <p class="text-slate-400">Update your account preferences</p>
+        </div>
+      </div>
     </div>
     
     <%= form_with model: @user, url: profile_path, method: :patch, local: true, class: "space-y-6" do |form| %>
-      <div class="px-6 py-4 space-y-6">
+      <div class="px-8 py-6 space-y-6">
         <% if @user.errors.any? %>
-          <div class="rounded-md bg-red-50 p-4">
-            <div class="flex">
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">There were errors with your submission:</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  <ul class="list-disc pl-5 space-y-1">
-                    <% @user.errors.full_messages.each do |message| %>
-                      <li><%= message %></li>
-                    <% end %>
-                  </ul>
-                </div>
+          <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h3 class="text-sm font-medium text-red-400">There were errors with your submission:</h3>
+                <ul class="mt-2 text-sm text-red-400/80 list-disc list-inside space-y-1">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
               </div>
             </div>
           </div>
         <% end %>
         
         <div>
-          <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-slate-300 mb-2" %>
           <%= form.select :timezone,
                           options_for_select(ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }, @user.timezone),
                           { prompt: "Select your timezone" },
-                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">This helps us show you accurate timestamps in conversations.</p>
+                          { class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" } %>
+          <p class="mt-2 text-sm text-slate-500">This helps us show you accurate timestamps in conversations.</p>
         </div>
 
         <div>
-          <%= form.label :venice_key, "Venice Key", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.password_field :venice_key, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-          <p class="mt-2 text-sm text-gray-500">This is your Venice API key. You can get it from <a href="https://venice.ai" target="_blank">Venice.ai</a>.</p>
+          <%= form.label :venice_key, "Venice Key", class: "block text-sm font-medium text-slate-300 mb-2" %>
+          <%= form.password_field :venice_key, class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200", placeholder: "Enter your Venice API key" %>
+          <p class="mt-2 text-sm text-slate-500">Get your key from <a href="https://venice.ai" target="_blank" class="text-violet-400 hover:text-violet-300">Venice.ai</a></p>
           <% if @user.venice_key.present? %>
-            <p class="mt-2 text-xs text-gray-500">Your Venice API key is <%= @user.obfuscated_venice_key %></p>
+            <p class="mt-2 text-xs text-slate-500 font-mono">Current: <%= @user.obfuscated_venice_key %></p>
           <% end %>
         </div>
         
         <div>
-          <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_text_model, "Preferred Text Model", class: "block text-sm font-medium text-slate-300 mb-2" %>
           <%= form.select :preferred_text_model,
                           options_for_select(@text_models, @selected_text_model),
                           { prompt: "Use default text trait" },
-                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>
+                          { class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" } %>
+          <p class="mt-2 text-sm text-slate-500">Pick a trait; we'll resolve the best model automatically.</p>
         </div>
         
         <div>
-          <%= form.label :preferred_image_model, "Preferred Image Model", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_image_model, "Preferred Image Model", class: "block text-sm font-medium text-slate-300 mb-2" %>
           <%= form.select :preferred_image_model,
                           options_for_select(@image_models, @selected_image_model),
                           { prompt: "Use default image trait" },
-                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">Pick a trait; we’ll resolve the best model for it automatically.</p>
+                          { class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" } %>
+          <p class="mt-2 text-sm text-slate-500">Pick a trait; we'll resolve the best model automatically.</p>
         </div>
 
         <div>
-          <%= form.label :preferred_image_style, "Preferred Image Style", class: "block text-sm font-medium text-gray-700" %>
+          <%= form.label :preferred_image_style, "Preferred Image Style", class: "block text-sm font-medium text-slate-300 mb-2" %>
           <%= form.select :preferred_image_style,
                           options_for_select(@image_styles, @user.image_style),
                           { prompt: "Use default image style" },
-                          { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-          <p class="mt-2 text-sm text-gray-500">Choose your preferred style for scene image generation.</p>
+                          { class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" } %>
+          <p class="mt-2 text-sm text-slate-500">Choose your preferred style for scene images.</p>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex items-start gap-4 p-4 glass-light rounded-xl">
           <div class="flex h-6 shrink-0 items-center">
-            <div class="group grid size-4 grid-cols-1">
-              <%= form.check_box :safe_mode, class: "col-start-1 row-start-1 appearance-none rounded-sm border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" %>
-              <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-disabled:stroke-gray-950/25" viewBox="0 0 14 14" fill="none">
-                <path class="opacity-0 group-has-checked:opacity-100" d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                <path class="opacity-0 group-has-indeterminate:opacity-100" d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </div>
+            <%= form.check_box :safe_mode, class: "w-5 h-5 rounded bg-slate-700 border-slate-600 text-violet-600 focus:ring-violet-500/50 focus:ring-offset-0 cursor-pointer" %>
           </div>
-          <div class="text-sm/6">
-            <%= form.label :safe_mode, "Safe Mode", class: "font-medium text-gray-900" %>
-            <p id="comments-description" class="text-gray-500">Removes explicit content from image generation.</p>
+          <div>
+            <%= form.label :safe_mode, "Safe Mode", class: "font-medium text-white cursor-pointer" %>
+            <p class="text-sm text-slate-400 mt-1">Removes explicit content from image generation.</p>
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex items-start gap-4 p-4 glass-light rounded-xl">
           <div class="flex h-6 shrink-0 items-center">
-            <div class="group grid size-4 grid-cols-1">
-              <%= form.check_box :reasoning_enabled, class: "col-start-1 row-start-1 appearance-none rounded-sm border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" %>
-              <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-disabled:stroke-gray-950/25" viewBox="0 0 14 14" fill="none">
-                <path class="opacity-0 group-has-checked:opacity-100" d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                <path class="opacity-0 group-has-indeterminate:opacity-100" d="M3 7H11" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </div>
+            <%= form.check_box :reasoning_enabled, class: "w-5 h-5 rounded bg-slate-700 border-slate-600 text-violet-600 focus:ring-violet-500/50 focus:ring-offset-0 cursor-pointer" %>
           </div>
-          <div class="text-sm/6">
-            <%= form.label :reasoning_enabled, "Enable Reasoning", class: "font-medium text-gray-900" %>
-            <p id="reasoning-description" class="text-gray-500">Enable extended reasoning for AI responses (may increase response time).</p>
+          <div>
+            <%= form.label :reasoning_enabled, "Enable Reasoning", class: "font-medium text-white cursor-pointer" %>
+            <p class="text-sm text-slate-400 mt-1">Enable extended reasoning for AI responses (may increase response time).</p>
           </div>
         </div>
       </div>
             
-      <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
-        <%= link_to "Cancel", profile_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-        <%= form.submit "Save Changes", class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+      <div class="px-8 py-5 border-t border-slate-700/50 glass-light flex justify-between">
+        <%= link_to profile_path, class: "px-5 py-2.5 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600/50 rounded-xl hover:bg-slate-700 hover:border-slate-500 transition-all duration-200" do %>
+          Cancel
+        <% end %>
+        <%= form.submit "Save Changes", class: "px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 cursor-pointer" %>
       </div>
     <% end %>
   </div>

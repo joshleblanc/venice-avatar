@@ -1,29 +1,41 @@
 <%= turbo_stream_from @conversation %>
 
-<div class="min-h-screen md:h-screen flex flex-col md:flex-row flex-1 bg-gray-100" data-controller="messages" data-messages-container-target="container">
+<div class="min-h-screen md:h-screen flex flex-col md:flex-row flex-1 -mt-24 pt-16" data-controller="messages" data-messages-container-target="container">
   <!-- Chat Panel (Left Side) -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col bg-slate-900/50">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <%= link_to "← Back to Conversations", conversations_path,
-                  class: "text-blue-600 hover:text-blue-800" %>
-      <%= button_to "Delete Conversation",
-                    conversation_path(@conversation),
-                    method: :delete,
-                    form: { data: { turbo_confirm: "Delete this conversation?" } },
-                    class: "text-red-600 border border-red-200 px-3 py-1.5 rounded hover:bg-red-50" %>
-    </div>
-    <div class="bg-white shadow-sm p-4 border-b">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-semibold"><%= @conversation.character.name %></h1>
-          <div data-controller="hider">
-            <p class="text-gray-600 text-sm" data-hider-target="short"><%= truncate(@conversation.character.description) %></p>
-            <p class="text-gray-600 text-sm hidden" data-hider-target="full"><%= @conversation.character.description %></p>
-            <button data-action="click->hider#toggle" class="text-blue-600 hover:text-blue-800 text-xs" data-hider-target="shortButton">Show More</button>
-            <button data-action="click->hider#toggle" class="text-blue-600 hover:text-blue-800 text-xs hidden" data-hider-target="fullButton">Show Less</button>
+    <div class="glass border-b border-slate-700/50 px-4 py-3">
+      <div class="flex items-center justify-between gap-4">
+        <%= link_to conversations_path, class: "inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm" do %>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        <% end %>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+              <span class="text-white font-bold"><%= @conversation.character.name.first.upcase %></span>
+            </div>
+            <div>
+              <h1 class="text-lg font-semibold text-white"><%= @conversation.character.name %></h1>
+              <div data-controller="hider" class="max-w-md">
+                <p class="text-slate-400 text-xs line-clamp-1" data-hider-target="short"><%= truncate(@conversation.character.description, length: 60) %></p>
+                <p class="text-slate-400 text-xs hidden" data-hider-target="full"><%= @conversation.character.description %></p>
+                <button data-action="click->hider#toggle" class="text-violet-400 hover:text-violet-300 text-xs" data-hider-target="shortButton">More</button>
+                <button data-action="click->hider#toggle" class="text-violet-400 hover:text-violet-300 text-xs hidden" data-hider-target="fullButton">Less</button>
+              </div>
+            </div>
           </div>
         </div>
+        <%= button_to conversation_path(@conversation),
+                      method: :delete,
+                      form: { data: { turbo_confirm: "Delete this conversation?" } },
+                      class: "p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200" do %>
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        <% end %>
       </div>
     </div>
 
@@ -40,144 +52,150 @@
     </div>
 
     <!-- Message Input -->
-    <div class="bg-white border-t p-4">
+    <div class="glass border-t border-slate-700/50 p-4">
       <%= form_with url: conversation_messages_path(@conversation),
                     method: :post,
-                    class: "flex gap-2",
+                    class: "flex gap-3",
                     data: { messages_target: "form", action: "submit->messages#submitMessage" } do |form| %>
         <%= form.text_area "message[content]",
                            placeholder: "Type your message...",
                            rows: 2,
-                           class: "flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500",
+                           class: "flex-1 bg-slate-800/50 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200",
                            required: true,
                            data: { messages_target: "input", turbo_permanent: true, action: "keydown.enter->messages#submitForm" } %>
         <%= form.submit "Send",
                         data: { messages_target: "submit" },
-                        class: "bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors self-end" %>
+                        class: "px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 self-end cursor-pointer" %>
       <% end %>
     </div>
   </div>
 
   <!-- Character Display Panel (Right Side) -->
-  <div class="w-full md:w-[50vw] lg:w-[600px] xl:w-[1024px] bg-white shadow-lg mt-4 md:mt-0" id="character-display">
+  <div class="w-full md:w-[50vw] lg:w-[600px] xl:w-[1024px] glass border-l border-slate-700/50 mt-4 md:mt-0" id="character-display">
     <%= render "character_display", conversation: @conversation %>
   </div>
 </div>
 
 <!-- Admin Debug Section -->
     <% if current_user&.admin? %>
-      <div class="border-t mt-4 p-4 bg-gray-50 w-full mt-8">
-        <h3 class="text-sm font-semibold text-gray-700 mb-2">🔧 Admin Debug</h3>
+      <div class="glass border-t border-slate-700/50 mt-4 p-6 w-full">
+        <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Admin Debug
+        </h3>
 
         <% if @conversation.scene_prompt_diff %>
-          <div class="bg-white border rounded p-3 text-xs">
-            <h4 class="font-semibold mb-2">Scene Prompt Diff</h4>
+          <div class="glass-light rounded-xl p-4 text-xs">
+            <h4 class="font-semibold mb-3 text-slate-200">Scene Prompt Diff</h4>
             <div class="space-y-2">
               <div>
-                <span class="text-gray-600">Last Change:</span>
-                <span class="font-mono text-xs"><%= @conversation.scene_prompt_diff[:old_trigger] %></span>
-                →
-                <span class="font-mono text-xs"><%= @conversation.scene_prompt_diff[:new_trigger] %></span>
+                <span class="text-slate-400">Last Change:</span>
+                <span class="font-mono text-xs text-slate-300"><%= @conversation.scene_prompt_diff[:old_trigger] %></span>
+                <span class="text-slate-500">→</span>
+                <span class="font-mono text-xs text-slate-300"><%= @conversation.scene_prompt_diff[:new_trigger] %></span>
               </div>
 
               <% if @conversation.scene_prompt_diff[:changes][:added].any? %>
                 <div>
-                  <span class="text-green-600">+ Added:</span>
-                  <span class="font-mono text-xs"><%= @conversation.scene_prompt_diff[:changes][:added].join(", ") %></span>
+                  <span class="text-emerald-400">+ Added:</span>
+                  <span class="font-mono text-xs text-slate-300"><%= @conversation.scene_prompt_diff[:changes][:added].join(", ") %></span>
                 </div>
               <% end %>
 
               <% if @conversation.scene_prompt_diff[:changes][:removed].any? %>
                 <div>
-                  <span class="text-red-600">- Removed:</span>
-                  <span class="font-mono text-xs"><%= @conversation.scene_prompt_diff[:changes][:removed].join(", ") %></span>
+                  <span class="text-red-400">- Removed:</span>
+                  <span class="font-mono text-xs text-slate-300"><%= @conversation.scene_prompt_diff[:changes][:removed].join(", ") %></span>
                 </div>
               <% end %>
 
               <div>
-                <span class="text-gray-600">Word Count:</span>
-                <span class="font-mono text-xs">
+                <span class="text-slate-400">Word Count:</span>
+                <span class="font-mono text-xs text-slate-300">
                   <%= @conversation.scene_prompt_diff[:changes][:word_count_change] > 0 ? "+" : "" %><%= @conversation.scene_prompt_diff[:changes][:word_count_change] %>
                 </span>
               </div>
 
-              <details class="mt-2">
-                <summary class="cursor-pointer text-gray-600 hover:text-gray-800">View Full Prompts</summary>
-                <div class="mt-2 space-y-2">
-                  <div class="bg-red-50 border border-red-200 rounded p-2">
-                    <div class="text-xs text-red-700 font-semibold">Previous (<%= @conversation.scene_prompt_diff[:old_created_at].strftime("%H:%M") %>)</div>
-                    <div class="text-xs text-red-800 font-mono whitespace-pre-wrap"><%= @conversation.scene_prompt_diff[:old_prompt] %></div>
+              <details class="mt-3">
+                <summary class="cursor-pointer text-violet-400 hover:text-violet-300 text-xs">View Full Prompts</summary>
+                <div class="mt-3 space-y-3">
+                  <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <div class="text-xs text-red-400 font-semibold mb-1">Previous (<%= @conversation.scene_prompt_diff[:old_created_at].strftime("%H:%M") %>)</div>
+                    <div class="text-xs text-red-300/80 font-mono whitespace-pre-wrap"><%= @conversation.scene_prompt_diff[:old_prompt] %></div>
                   </div>
-                  <div class="bg-green-50 border border-green-200 rounded p-2">
-                    <div class="text-xs text-green-700 font-semibold">Current (<%= @conversation.scene_prompt_diff[:new_created_at].strftime("%H:%M") %>)</div>
-                    <div class="text-xs text-green-800 font-mono whitespace-pre-wrap"><%= @conversation.scene_prompt_diff[:new_prompt] %></div>
+                  <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                    <div class="text-xs text-emerald-400 font-semibold mb-1">Current (<%= @conversation.scene_prompt_diff[:new_created_at].strftime("%H:%M") %>)</div>
+                    <div class="text-xs text-emerald-300/80 font-mono whitespace-pre-wrap"><%= @conversation.scene_prompt_diff[:new_prompt] %></div>
                   </div>
                 </div>
               </details>
             </div>
           </div>
         <% else %>
-          <div class="text-xs text-gray-500">No scene prompt history available</div>
+          <div class="text-xs text-slate-500">No scene prompt history available</div>
         <% end %>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Current Background Prompt</h4>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Current Background Prompt</h4>
           <% if @conversation.character.character_instructions.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.character.character_instructions %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.character.character_instructions %></div>
           <% else %>
-            <div class="text-xs text-gray-500">Background not generated</div>
+            <div class="text-xs text-slate-500">Background not generated</div>
           <% end %>
         </div>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Current Scene Prompt</h4>
-          <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.current_scene_prompt %></div>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Current Scene Prompt</h4>
+          <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.current_scene_prompt %></div>
         </div>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Background-Only Prompt (when away)</h4>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Background-Only Prompt (when away)</h4>
           <% if @conversation.metadata&.dig("background_only_prompt") %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.metadata["background_only_prompt"] %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.metadata["background_only_prompt"] %></div>
           <% else %>
-            <div class="text-xs text-gray-500">No background-only prompt generated</div>
+            <div class="text-xs text-slate-500">No background-only prompt generated</div>
           <% end %>
         </div>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Appearance</h4>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Appearance</h4>
           <% if @conversation.appearance.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.appearance %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.appearance %></div>
           <% else %>
-            <div class="text-xs text-gray-500">No appearance set</div>
+            <div class="text-xs text-slate-500">No appearance set</div>
           <% end %>
         </div>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Location</h4>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Location</h4>
           <% if @conversation.location.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.location %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.location %></div>
           <% else %>
-            <div class="text-xs text-gray-500">No location set</div>
+            <div class="text-xs text-slate-500">No location set</div>
           <% end %>
         </div>
 
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Action</h4>
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Action</h4>
           <% if @conversation.action.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.action %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.action %></div>
           <% else %>
-            <div class="text-xs text-gray-500">No action set</div>
+            <div class="text-xs text-slate-500">No action set</div>
           <% end %>
         </div>
-        <div class="bg-white border rounded p-3 text-xs mt-4">
-          <h4 class="font-semibold mb-2">Scenario Context</h4>
+        
+        <div class="glass-light rounded-xl p-4 text-xs mt-4">
+          <h4 class="font-semibold mb-2 text-slate-200">Scenario Context</h4>
           <% if @conversation.character.scenario_context.present? %>
-            <div class="text-xs text-gray-500 whitespace-pre-wrap"><%= @conversation.character.scenario_context %></div>
+            <div class="text-xs text-slate-400 whitespace-pre-wrap"><%= @conversation.character.scenario_context %></div>
           <% else %>
-            <div class="text-xs text-gray-500">No scenario context set</div>
+            <div class="text-xs text-slate-500">No scenario context set</div>
           <% end %>
         </div>
-
 
       </div>
     <% end %>

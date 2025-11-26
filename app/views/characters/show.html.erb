@@ -1,99 +1,157 @@
 <%= turbo_stream_from @character %>
-<div class="max-w-4xl mx-auto p-6">
-  <div class="bg-white rounded-lg shadow-md p-8">
-    <div class="flex justify-between items-start mb-6 flex-wrap">
-    <div class="flex space-x-3 w-full justify-between">
-      <%= link_to "← Back to Characters", characters_path,
-                  class: "text-gray-600 hover:text-gray-800" %>
-      <div class="flex space-x-3">
-        <%= button_to "Start Chat", character_conversations_path(@character),
-                      method: :post, class: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50", disabled: !Current.user.venice_key_valid? || @character.generating? %>
-        <% if @character.user_created? %>
-          <%= link_to "Edit", edit_character_path(@character),
-                      class: "bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors" %>
-          <%= button_to "Delete", character_path(@character),
-                        method: :delete,
-                        class: "bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors",
-                        data: { 
-                          turbo_confirm: "Are you sure you want to delete \"#{@character.name}\"? This action cannot be undone and will also delete all conversations with this character." 
-                        },
-                        title: "Delete character" %>
-        <% end %>
-      </div>
-      </div>
-      <div>
-        <% if @character.generating? && @character.name.blank? %>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">What should we call you...</h1>
-        <% else %>
-          <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @character.name %></h1>
-        <% end %>
-        <div class="flex items-center space-x-2">
-          <% if @character.user_created? %>
-            <span class="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">Custom Character</span>
+<div class="max-w-4xl mx-auto w-full">
+  <div class="glass rounded-2xl p-8 glow-violet">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 flex-shrink-0">
+          <% if @character.generating? && @character.name.blank? %>
+            <svg class="animate-spin w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           <% else %>
-            <span class="bg-purple-100 text-purple-800 text-sm font-medium px-2.5 py-0.5 rounded">Venice Character</span>
+            <span class="text-white text-2xl font-bold"><%= @character.name.first.upcase %></span>
           <% end %>
+        </div>
+        <div>
+          <% if @character.generating? && @character.name.blank? %>
+            <h1 class="text-2xl font-bold text-white mb-2">Generating Character...</h1>
+          <% else %>
+            <h1 class="text-2xl font-bold text-white mb-2"><%= @character.name %></h1>
+          <% end %>
+          <div class="flex items-center gap-2">
+            <% if @character.user_created? %>
+              <span class="px-3 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Custom Character</span>
+            <% else %>
+              <span class="px-3 py-1 text-xs font-medium rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">Venice Character</span>
+            <% end %>
+          </div>
         </div>
       </div>
       
-      
+      <div class="flex flex-wrap gap-2">
+        <%= link_to characters_path, class: "inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm" do %>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        <% end %>
+      </div>
     </div>
 
-    <div class="space-y-6">
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap gap-3 mb-8">
+      <%= button_to character_conversations_path(@character), method: :post, class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed", disabled: !Current.user.venice_key_valid? || @character.generating? do %>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        Start Chat
+      <% end %>
+      <% if @character.user_created? %>
+        <%= link_to edit_character_path(@character), class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl text-slate-300 bg-slate-700/50 border border-slate-600/50 hover:bg-slate-700 hover:border-slate-500 transition-all duration-200" do %>
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit
+        <% end %>
+        <%= button_to character_path(@character), method: :delete, class: "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/30 transition-all duration-200", data: { turbo_confirm: "Are you sure you want to delete \"#{@character.name}\"? This action cannot be undone and will also delete all conversations with this character." }, title: "Delete character" do %>
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Delete
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="space-y-8">
+      <!-- Description -->
       <div>
-        <h2 class="text-xl font-semibold text-gray-800 mb-3">Description</h2>
+        <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+          Description
+        </h2>
         <% if @character.generating? && @character.description.blank? %> 
-        <p class="text-gray-600 leading-relaxed">Generating...</p>
-
+          <div class="flex items-center gap-2 text-slate-400">
+            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Generating...
+          </div>
         <% else %>
-        <p class="text-gray-600 leading-relaxed"><%= @character.description %></p>
-
+          <p class="text-slate-300 leading-relaxed"><%= @character.description %></p>
         <% end %>
       </div>
 
+      <!-- Generated Personality -->
       <% if @character.user_created? %>
         <div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-3">Generated Personality</h2>
+          <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            Generated Personality
+          </h2>
           <% if @character.character_instructions.present? %>
-            <div class="bg-gray-50 rounded-lg p-4">
-              <p class="text-gray-700 leading-relaxed whitespace-pre-wrap"><%= @character.character_instructions %></p>
+            <div class="glass-light rounded-xl p-5">
+              <p class="text-slate-300 leading-relaxed whitespace-pre-wrap text-sm"><%= @character.character_instructions %></p>
             </div>
           <% else %>
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div class="flex items-center">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div class="flex items-center gap-3">
+                <svg class="animate-spin w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="text-yellow-700">Personality is being generated... This may take a few moments.</span>
+                <div>
+                  <span class="text-amber-300 font-medium">Personality is being generated...</span>
+                  <p class="text-amber-400/70 text-sm mt-1">This page will update automatically when ready.</p>
+                </div>
               </div>
-              <p class="text-yellow-600 text-sm mt-2">
-                This page will update in a moment to show the generated personality instructions.
-              </p>
             </div>
           <% end %>
         </div>
       <% end %>
 
-      <div class="border-t pt-6">
-        <h2 class="text-xl font-semibold text-gray-800 mb-3">Character Details</h2>
-        <dl class="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-          <div>
-            <dt class="text-sm font-medium text-gray-500">Slug</dt>
-            <dd class="text-sm text-gray-900"><%= @character.slug %></dd>
+      <!-- Character Details -->
+      <div class="pt-6 border-t border-slate-700/50">
+        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Details
+        </h2>
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="glass-light rounded-xl p-4">
+            <dt class="text-xs font-medium text-slate-500 uppercase tracking-wider">Slug</dt>
+            <dd class="mt-1 text-sm text-white font-mono"><%= @character.slug %></dd>
           </div>
-          <div>
-            <dt class="text-sm font-medium text-gray-500">Created</dt>
-            <dd class="text-sm text-gray-900"><%= @character.created_at.strftime("%B %d, %Y") %></dd>
+          <div class="glass-light rounded-xl p-4">
+            <dt class="text-xs font-medium text-slate-500 uppercase tracking-wider">Created</dt>
+            <dd class="mt-1 text-sm text-white"><%= @character.created_at.strftime("%B %d, %Y") %></dd>
           </div>
           <% if @character.user_created? %>
-            <div>
-              <dt class="text-sm font-medium text-gray-500">Status</dt>
-              <dd class="text-sm text-gray-900">
+            <div class="glass-light rounded-xl p-4">
+              <dt class="text-xs font-medium text-slate-500 uppercase tracking-wider">Status</dt>
+              <dd class="mt-1 text-sm">
                 <% if @character.character_instructions.present? %>
-                  <span class="text-green-600">✓ Ready</span>
+                  <span class="inline-flex items-center gap-1.5 text-emerald-400">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Ready
+                  </span>
                 <% else %>
-                  <span class="text-yellow-600">⏳ Generating personality</span>
+                  <span class="inline-flex items-center gap-1.5 text-amber-400">
+                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating
+                  </span>
                 <% end %>
               </dd>
             </div>

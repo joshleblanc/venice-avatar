@@ -1,24 +1,22 @@
 <div class="flex justify-start mb-4" id="typing-indicator">
-  <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-white text-gray-800 shadow-sm border">
-    <div class="flex items-center mb-1">
-      <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mr-2">
+  <div class="max-w-xs lg:max-w-md px-4 py-3 rounded-2xl glass text-slate-100">
+    <div class="flex items-center mb-2">
+      <div class="w-6 h-6 rounded-lg mr-2 overflow-hidden bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
         <% if character.avatar.attached? %>
           <%= image_tag character.avatar, class: "w-full h-full object-cover" %>
         <% else %>
-          <div class="w-full h-full bg-purple-100 flex items-center justify-center">
-            <span class="text-purple-600 text-xs font-bold"><%= character.name.first %></span>
-          </div>
+          <span class="text-white text-xs font-bold"><%= character.name.first %></span>
         <% end %>      
       </div>
-      <span class="text-xs text-gray-500"><%= character.name %></span>
+      <span class="text-xs text-slate-400"><%= character.name %></span>
     </div>
     
     <div class="flex items-center">
-      <span class="text-sm text-gray-500 italic"><%= character.name %> is typing</span>
+      <span class="text-sm text-slate-400 italic"><%= character.name %> is typing</span>
       <div class="ml-2 flex space-x-1">
-        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+        <div class="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+        <div class="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+        <div class="w-2 h-2 bg-violet-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
       </div>
     </div>
   </div>

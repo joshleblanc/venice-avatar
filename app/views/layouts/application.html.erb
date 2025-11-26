@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="h-full bg-white">
+<html class="h-full">
   <head>
     <title><%= content_for(:title) || "Venice Avatar" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -53,7 +53,7 @@
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
     
-    <!-- Disable MathJax highlighting and interaction -->
+    <!-- Custom styles for modern dark theme -->
     <style>
       mjx-container {
         cursor: text !important;
@@ -64,44 +64,132 @@
       mjx-container[jax="CHTML"][display="true"] {
         cursor: text !important;
       }
+      
+      /* Modern glassmorphism and effects */
+      .glass {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      
+      .glass-light {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      
+      .gradient-border {
+        position: relative;
+      }
+      
+      .gradient-border::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.5));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+      }
+      
+      .glow-violet {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), 0 0 40px rgba(139, 92, 246, 0.1);
+      }
+      
+      .glow-blue {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.1);
+      }
+      
+      /* Smooth scrollbar for dark theme */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.5);
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(100, 116, 139, 0.7);
+      }
     </style>
   </head>
 
-  <body class="h-full">
-    <nav class="bg-white shadow-sm border-b border-gray-200 fixed top-0 w-full z-10">
+  <body class="h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+    <!-- Subtle background pattern -->
+    <div class="fixed inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%239C92AC\" fill-opacity=\"0.02\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] pointer-events-none -z-10"></div>
+    
+    <nav class="glass fixed top-0 w-full z-50 border-b border-slate-700/50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <%= link_to "Venice Avatar", root_path, class: "text-xl font-semibold text-gray-900" %>
+            <%= link_to root_path, class: "flex items-center space-x-3 group" do %>
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 group-hover:shadow-violet-500/40 transition-all duration-300">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                </svg>
+              </div>
+              <span class="text-xl font-bold bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">Venice Avatar</span>
+            <% end %>
           </div>
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-1">
             <% if Current.user %>
-              <%= link_to "Characters", characters_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
-              <%= link_to "Conversations", conversations_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
-              <%= link_to "Profile", profile_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
-              <%= button_to "Sign Out", session_path, method: :delete, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "Characters", characters_path, class: "text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+              <%= link_to "Conversations", conversations_path, class: "text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+              <%= link_to "Profile", profile_path, class: "text-slate-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" %>
+              <%= button_to "Sign Out", session_path, method: :delete, class: "ml-2 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-500 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/5" %>
             <% else %>
-              <%= link_to "Sign In", new_session_path, class: "text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium" %>
+              <%= link_to "Sign In", new_session_path, class: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300" %>
             <% end %>
           </div>
         </div>
       </div>
     </nav>
     
-    <main class="container mx-auto mt-28 px-5 flex justify-center flex-wrap">
+    <main class="container mx-auto mt-24 px-5 pb-8 flex justify-center flex-wrap">
       <% if Current.user && !Current.user.venice_key_valid? %>
-        <div class="w-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          Your venice key is invalid. Please update it in your profile.
+        <div class="w-full glass rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 mb-6 flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-red-300 font-medium">Invalid Venice Key</p>
+            <p class="text-red-400/80 text-sm">Please update your API key in your <%= link_to "profile settings", profile_path, class: "underline hover:text-red-300" %>.</p>
+          </div>
         </div>
       <% end %>
       <% if notice %>
-        <div class="fixed top-20 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 z-20">
-          <%= notice %>
+        <div class="fixed top-20 right-4 glass rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 z-50 flex items-center space-x-3 animate-fade-in">
+          <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <p class="text-emerald-300"><%= notice %></p>
         </div>
       <% end %>
       <% if alert %>
-        <div class="fixed top-20 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 z-20">
-          <%= alert %>
+        <div class="fixed top-20 right-4 glass rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 z-50 flex items-center space-x-3 animate-fade-in">
+          <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <p class="text-red-300"><%= alert %></p>
         </div>
       <% end %>
       <%= yield %>

@@ -1,39 +1,78 @@
-<div class="container mx-auto px-4 py-8">
-  <h1 class="text-3xl font-bold mb-8">Character Conversations</h1>
+<div class="max-w-4xl mx-auto w-full">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">Conversations</h1>
+    <p class="text-slate-400 mt-1">Continue chatting with your AI characters</p>
+  </div>
   
   <% if @conversations.any? %>
-    <div class="mt-12">
-      <div class="space-y-4">
-        <% @conversations.each do |conversation| %>
-          <%= turbo_stream_from conversation %>
-          <div id="<%= dom_id(conversation) %>" class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow">
-            <div class="flex justify-between items-start">
+    <div class="space-y-4">
+      <% @conversations.each do |conversation| %>
+        <%= turbo_stream_from conversation %>
+        <div id="<%= dom_id(conversation) %>" class="group glass rounded-2xl p-5 hover:bg-slate-700/50 transition-all duration-300 gradient-border">
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20 flex-shrink-0">
+                <span class="text-white font-bold text-lg"><%= conversation.character.name.first.upcase %></span>
+              </div>
               <div>
-                <h3 class="text-lg font-semibold"><%= conversation.character.name %></h3>
-                <p class="text-gray-600 text-sm">
-                  <%= pluralize(conversation.messages.count, "message") %> • 
-                  Last updated <%= time_ago_in_words(conversation.updated_at) %> ago
+                <h3 class="text-lg font-semibold text-white group-hover:text-violet-300 transition-colors"><%= conversation.character.name %></h3>
+                <p class="text-slate-400 text-sm flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <%= pluralize(conversation.messages.count, "message") %>
+                  </span>
+                  <span class="text-slate-600">•</span>
+                  <span><%= time_ago_in_words(conversation.updated_at) %> ago</span>
                 </p>
               </div>
-              <div class="flex items-center gap-2">
-                <% if conversation.user.venice_key_valid? %>
-                  <%= link_to "Continue", conversation_path(conversation),
-                              class: "bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors disabled:opacity-50", disabled: !conversation.user.venice_key_valid? %>
-                <% else %>
-                  <span class="bg-red-600 text-white py-2 px-4 rounded transition-colors disabled:opacity-50">Invalid Venice Key</span>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <% if conversation.user.venice_key_valid? %>
+                <%= link_to conversation_path(conversation), class: "flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300" do %>
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Continue
                 <% end %>
-                <%= button_to "Delete",
-                              conversation_path(conversation),
-                              method: :delete,
-                              form: { data: { turbo_confirm: "Delete this conversation?" } },
-                              class: "bg-white text-red-600 border border-red-200 px-3 py-2 rounded hover:bg-red-50" %>
-              </div>
+              <% else %>
+                <span class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl bg-red-500/20 text-red-400 border border-red-500/30">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Invalid Key
+                </span>
+              <% end %>
+              <%= button_to conversation_path(conversation),
+                          method: :delete,
+                          form: { data: { turbo_confirm: "Delete this conversation?" } },
+                          class: "p-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-600/50 hover:border-red-500/30 transition-all duration-200" do %>
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              <% end %>
             </div>
           </div>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
     </div>
-    <% else %>
-      <p>No conversations found.</p>
-    <% end %>
+  <% else %>
+    <div class="text-center py-16">
+      <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+        <svg class="w-10 h-10 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-white mb-2">No conversations yet</h3>
+      <p class="text-slate-400 mb-8 max-w-md mx-auto">Start a conversation by chatting with one of your characters.</p>
+      <%= link_to characters_path, class: "inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300" do %>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Browse Characters
+      <% end %>
+    </div>
+  <% end %>
 </div>

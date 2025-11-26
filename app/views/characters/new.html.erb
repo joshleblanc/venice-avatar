@@ -1,10 +1,16 @@
-<div class="max-w-2xl mx-auto p-6">
-  <div class="bg-white rounded-lg shadow-md p-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Create Your Character</h1>
-    
-    <p class="text-gray-600 mb-8">
-      Describe your character and we'll generate their complete personality and behavior patterns using AI.
-    </p>
+<div class="max-w-2xl mx-auto w-full">
+  <div class="glass rounded-2xl p-8 glow-violet">
+    <div class="flex items-center gap-4 mb-8">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-white">Create Your Character</h1>
+        <p class="text-slate-400">Describe your character and we'll generate their personality using AI</p>
+      </div>
+    </div>
 
     <%= form_with model: @character, url: characters_path, local: true, class: "space-y-6", 
                   data: { 
@@ -13,105 +19,92 @@
                     character_enhance_enhance_scenario_url_value: enhance_scenario_characters_path
                   } do |form| %>
       <% if @character.errors.any? %>
-        <div class="bg-red-50 border border-red-200 rounded-md p-4">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-              </svg>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                There were some errors with your submission:
-              </h3>
-              <div class="mt-2 text-sm text-red-700">
-                <ul class="list-disc pl-5 space-y-1">
-                  <% @character.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
-              </div>
+        <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="text-sm font-medium text-red-400">There were some errors with your submission:</h3>
+              <ul class="mt-2 text-sm text-red-400/80 list-disc list-inside space-y-1">
+                <% @character.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
             </div>
           </div>
         </div>
       <% end %>
 
       <div>
-        <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.label :name, class: "block text-sm font-medium text-slate-300 mb-2" %>
         <%= form.text_field :name,
                             placeholder: "e.g., Sarah, Alex, Dr. Smith",
                             data: { character_enhance_target: "nameField" },
-                            class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
-        <p class="mt-1 text-sm text-gray-500">What should your character be called?</p>
+                            class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" %>
+        <p class="mt-2 text-sm text-slate-500">What should your character be called?</p>
       </div>
 
       <div>
-        <%= form.label :description, class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.label :description, class: "block text-sm font-medium text-slate-300 mb-2" %>
         <div class="relative">
           <%= form.text_area :description,
                              rows: 6,
-                             placeholder: "Describe your character's background, personality, interests, and any other details that define who they are. Be as detailed as you'd like - this will be used to generate their complete personality.",
+                             placeholder: "Describe your character's background, personality, interests, and any other details that define who they are...",
                              data: { character_enhance_target: "descriptionField" },
-                             class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+                             class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" %>
           <button type="button"
                   data-character-enhance-target="descriptionButton" data-action="click->character-enhance#enhanceDescription"
-                  class="absolute bottom-2 right-2 px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 rounded-lg hover:from-violet-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   title="Use AI to enhance and expand your character description">
-            ✨ Enhance with AI
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Enhance with AI
           </button>
         </div>
-        <p class="mt-1 text-sm text-gray-500">
-          The more detail you provide, the better we can generate their personality and behavior patterns.
-        </p>
-        <p class="mt-1 text-sm text-purple-600">
-          💡 Try the "Enhance with AI" button to expand a brief idea into a detailed character!
-        </p>
+        <p class="mt-2 text-sm text-slate-500">The more detail you provide, the better we can generate their personality.</p>
       </div>
 
       <div>
-        <%= form.label :scenario_context, "Scenario Context (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= form.label :scenario_context, "Scenario Context (Optional)", class: "block text-sm font-medium text-slate-300 mb-2" %>
         <div class="relative">
           <%= form.text_area :scenario_context,
                              rows: 4,
-                             placeholder: "Describe the type of scenarios, settings, or situations you plan to explore with this character. This helps ensure they're comfortable and appropriate for your intended roleplay scenarios.",
+                             placeholder: "Describe the type of scenarios, settings, or situations you plan to explore with this character...",
                              data: { character_enhance_target: "scenarioField" },
-                             class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+                             class: "w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all duration-200" %>
           <button type="button"
                   data-character-enhance-target="scenarioButton" data-action="click->character-enhance#enhanceScenario"
-                  class="absolute bottom-2 right-2 px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="absolute bottom-3 right-3 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-violet-600 to-purple-600 rounded-lg hover:from-violet-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   title="Use AI to enhance and expand your scenario description">
-            ✨ Enhance with AI
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Enhance with AI
           </button>
         </div>
-        <p class="mt-1 text-sm text-gray-500">
-          Examples: "Medieval fantasy adventures", "Modern detective mysteries", "Sci-fi space exploration", "Dark psychological thriller scenarios"
-        </p>
-        <p class="mt-1 text-sm text-purple-600">
-          💡 Try the "Enhance with AI" button to expand a brief idea into a detailed scenario!
-        </p>
+        <p class="mt-2 text-sm text-slate-500">Examples: Medieval fantasy, modern detective mysteries, sci-fi exploration</p>
       </div>
 
-      <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-blue-700">
-              <strong>How it works:</strong> After you create your character, our AI will analyze your description and generate detailed personality instructions, speech patterns, and behavioral traits. This process takes a few moments.
-            </p>
-          </div>
+      <div class="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p class="text-sm text-violet-300">
+            <strong>How it works:</strong> After you create your character, our AI will analyze your description and generate detailed personality instructions, speech patterns, and behavioral traits.
+          </p>
         </div>
       </div>
 
-      <div class="flex justify-between">
-        <%= link_to "Cancel", characters_path,
-                    class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+      <div class="flex justify-between pt-4">
+        <%= link_to characters_path, class: "px-5 py-2.5 text-sm font-medium text-slate-300 bg-slate-700/50 border border-slate-600/50 rounded-xl hover:bg-slate-700 hover:border-slate-500 transition-all duration-200" do %>
+          Cancel
+        <% end %>
         
         <%= form.submit "Create Character",
-                        class: "px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+                        class: "px-6 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 cursor-pointer" %>
       </div>
     <% end %>
   </div>
