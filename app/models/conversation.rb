@@ -5,6 +5,7 @@ class Conversation < ApplicationRecord
   belongs_to :user
   has_many :messages, dependent: :destroy
   has_many :scene_prompt_histories, dependent: :destroy
+  has_many :video_generations, dependent: :destroy
 
   # Scene images are now stored directly on conversations
   has_one_attached :scene_image

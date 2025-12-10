@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_02_152430) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_10_182706) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_02_152430) do
     t.text "appearance"
     t.text "location"
     t.text "scenario_context"
+    t.text "locked_appearance"
     t.index ["slug"], name: "index_characters_on_slug", unique: true
     t.index ["user_created"], name: "index_characters_on_user_created"
     t.index ["user_id"], name: "index_characters_on_user_id"
@@ -76,6 +77,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_02_152430) do
     t.boolean "character_away", default: false, null: false
     t.integer "user_id", null: false
     t.integer "seed"
+    t.text "clothing"
+    t.text "visual_dna"
     t.index ["character_away"], name: "index_conversations_on_character_away"
     t.index ["character_id"], name: "index_conversations_on_character_id"
     t.index ["updated_at"], name: "index_conversations_on_updated_at"
@@ -170,6 +173,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_02_152430) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "video_generations", force: :cascade do |t|
+    t.integer "conversation_id", null: false
+    t.string "queue_id"
+    t.string "model"
+    t.string "status", default: "pending"
+    t.text "prompt"
+    t.text "error"
+    t.string "duration", default: "5s"
+    t.string "resolution", default: "720p"
+    t.integer "average_execution_time"
+    t.integer "execution_duration"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id"], name: "index_video_generations_on_conversation_id"
+    t.index ["queue_id"], name: "index_video_generations_on_queue_id"
+    t.index ["status"], name: "index_video_generations_on_status"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "characters", "users"
@@ -180,4 +201,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_02_152430) do
   add_foreign_key "scene_prompt_histories", "conversations"
   add_foreign_key "sessions", "users"
   add_foreign_key "taggings", "tags"
+  add_foreign_key "video_generations", "conversations"
 end

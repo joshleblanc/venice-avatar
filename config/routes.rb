@@ -21,6 +21,14 @@ Rails.application.routes.draw do
         post :regenerate
       end
     end
+    resources :video_generations, only: [:create, :show] do
+      collection do
+        post :quote
+      end
+      member do
+        get :status
+      end
+    end
   end
 
   resource :session
