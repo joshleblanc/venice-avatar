@@ -40,10 +40,12 @@ class GenerateInitialScenePromptJob < ApplicationJob
         trigger: "initial",
         character_count: filtered_prompt.length
       )
+
+      # Generate image from the prompt
+      GenerateImagesJob.perform_later(conversation, filtered_prompt)
     rescue => e
       Rails.logger.error "Failed to generate initial scene prompt: #{e.message}"
-      # Do NOT generate an image on fallback. We'll wait until a real prompt is available.
-      # Optionally, a retry mechanism could be added here.
+      Rails.logger.error e.backtrace.first(5).join("\n")
     end
   end
 

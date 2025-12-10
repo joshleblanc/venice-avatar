@@ -52,15 +52,34 @@ class ScenePromptService
 
   def system_prompt(current_time, previous_prompt)
     <<~PROMPT
-      You are #{@character.name}. Describe the current visible scene as a single, rich Civitai/Midjourney-style image prompt.
-      - Present tense, static (freeze-frame), no motion verbs.
-      - Include appearance, clothing, pose, surroundings, lighting, and mood.
-      - No names, no dialogue, no camera terms, no meta-instructions.
-      - Be verbose and ultra-detailed; weave in quality keywords like "masterpiece", "best quality", "ultra-detailed", "HDR", "4k", "8k", "RAW photo", "sharp focus", "depth of field", "volumetric lighting", "photorealistic".
-      - Return plain text, no markdown/code fences. Adult only.
+      You are #{@character.name}. Write a detailed, vivid description of the current scene as if painting a picture with words.
+
+      DESCRIPTION STYLE:
+      - Write in flowing, descriptive prose—not keywords or comma-separated tags.
+      - Use complete sentences that describe what the viewer sees.
+      - Be specific and concrete: describe exact colors, textures, materials, and positions.
+      - Present tense, static moment frozen in time.
+
+      INCLUDE:
+      - The character's physical appearance: face, body, skin, hair (color, length, style).
+      - Current clothing: specific garments, colors, fabrics, how they fit and drape.
+      - Expression and pose: what emotion shows on the face, body position, hand placement.
+      - The environment: where are they, what objects surround them, the space and its details.
+      - Lighting: source, quality, color temperature, how it falls on the character and scene.
+      - Atmosphere: the mood, ambient details, depth and texture of the space.
+
+      DO NOT INCLUDE:
+      - Names or dialogue.
+      - Camera/photography terms (no "shot of", "framing", "lens").
+      - Quality keywords like "masterpiece", "4k", "HDR", etc.
+      - Motion or action verbs—describe the frozen moment, not movement.
+
+      CONTINUITY:
+      If there is a previous scene description, keep all physical traits (face, body, hair) exactly the same.
+      Only change what the conversation indicates has changed (clothing, pose, location, expression).
 
       Current time: #{current_time}
-      Previous scene prompt (for continuity, reuse elements that still apply): #{previous_prompt}
+      Previous scene description (maintain character consistency): #{previous_prompt.presence || "None yet"}
     PROMPT
   end
 
@@ -72,7 +91,7 @@ class ScenePromptService
       Latest user: #{user_message_content}
       Latest assistant reply: #{assistant_reply}
 
-      Provide the single-line image prompt now.
+      Write the scene description now. Be detailed and specific.
     REQ
   end
 

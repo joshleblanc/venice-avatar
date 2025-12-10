@@ -40,13 +40,21 @@ class CharacterReturnJob < ApplicationJob
       # Mark character as no longer away
       conversation.update!(character_away: false)
 
-      # Evolve the scene prompt based on what the character did while they were away
-      prompt_service = AiPromptGenerationService.new(conversation)
-      current_prompt = prompt_service.get_current_scene_prompt
-      EvolveScenePromptJob.perform_later(conversation, new_message, current_prompt)
-    end
+      # Generate new scene based on return message
+      current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
+      prompt = ScenePromptService.new(conversation).generate_prompt(
+        "",
+        return_message,
+        current_time: current_time,
+        previous_prompt: previous_prompt
+      )
 
-    GenerateImagesJob.perform_later(conversation)
+      if prompt.present?
+        AiPromptGenerationService.new(conversation).store_scene_prompt(prompt, trigger: "return")
+        GenerateImagesJob.perform_later(conversation, prompt)
+      end
+    end
   end
 
   private

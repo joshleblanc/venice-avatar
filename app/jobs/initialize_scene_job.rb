@@ -1,21 +1,24 @@
+# Initialize scene for a conversation.
+# If no scene prompt exists, generates one. Otherwise regenerates image from existing prompt.
 class InitializeSceneJob < ApplicationJob
-  def perform(conversation)
-    # Generate character's opening message (async)
-    #GenerateOpeningMessageJob.perform_later(conversation)
+  queue_as :default
 
-    # Generate initial scene prompt and image (async)
-    if conversation.metadata.blank? || conversation.metadata["current_scene_prompt"].blank?
+  def perform(conversation)
+    Rails.logger.info "Initializing scene for conversation #{conversation.id}"
+
+    prompt = conversation.metadata&.dig("current_scene_prompt")
+
+    if prompt.blank?
+      # No prompt yet - generate initial scene prompt
       metadata = conversation.metadata || {}
       unless metadata["initial_prompt_enqueued"]
         metadata["initial_prompt_enqueued"] = true
         conversation.update!(metadata: metadata)
         GenerateInitialScenePromptJob.perform_now(conversation)
-      else
-        Rails.logger.info "Initial scene prompt already enqueued for conversation #{conversation.id}; skipping"
       end
     else
-      # If we already have a scene prompt, generate images directly
-      GenerateImagesJob.perform_later(conversation)
+      # Already have a prompt - regenerate image
+      GenerateImagesJob.perform_later(conversation, prompt)
     end
   end
 end

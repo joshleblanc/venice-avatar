@@ -1,29 +1,26 @@
+# This job is deprecated - scene prompt evolution is now handled in GenerateChatResponseJob.
+# Keeping for backward compatibility with queued jobs.
 class EvolveScenePromptJob < ApplicationJob
   queue_as :default
 
   def perform(conversation, assistant_message, previous_prompt)
-    Rails.logger.info "Evolving scene prompt for conversation #{conversation.id}"
+    Rails.logger.info "EvolveScenePromptJob is deprecated, using ScenePromptService directly"
 
-    begin
-      # Evolve the scene prompt
-      prompt_service = AiPromptGenerationService.new(conversation)
-      evolved_prompt = prompt_service.evolve_scene_prompt(
-        previous_prompt, 
-        assistant_message.content, 
-        assistant_message.created_at
-      )
+    current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+    last_user_msg = conversation.messages.where(role: "user").order(:created_at).last
 
-      # Generate images if the prompt changed
-      if evolved_prompt != previous_prompt
-        Rails.logger.info "Scene prompt evolved, generating new images"
-        GenerateImagesJob.perform_later(conversation, assistant_message.content, assistant_message.created_at)
-      else
-        Rails.logger.info "Scene prompt unchanged, skipping image generation"
-      end
-    rescue => e
-      Rails.logger.error "Failed to evolve scene prompt: #{e.message}"
-      # Generate images with previous prompt as fallback
-      GenerateImagesJob.perform_later(conversation, assistant_message.content, assistant_message.created_at)
+    prompt = ScenePromptService.new(conversation).generate_prompt(
+      last_user_msg&.content.to_s,
+      assistant_message.content,
+      current_time: current_time,
+      previous_prompt: previous_prompt
+    )
+
+    if prompt.present? && prompt != previous_prompt
+      AiPromptGenerationService.new(conversation).store_scene_prompt(prompt, trigger: "evolve")
+      GenerateImagesJob.perform_later(conversation, prompt)
     end
+  rescue => e
+    Rails.logger.error "Failed to evolve scene prompt: #{e.message}"
   end
 end

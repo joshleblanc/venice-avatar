@@ -26,13 +26,18 @@ class GenerateFollowupMessageJob < ApplicationJob
       )
 
       # Evolve the scene prompt based on the follow-up message
-      prompt_service = AiPromptGenerationService.new(conversation)
-      first_prompt = prompt_service.get_current_scene_prompt
-      evolved_prompt = prompt_service.evolve_scene_prompt(chat_response, "assistant")
+      current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
+      prompt = ScenePromptService.new(conversation).generate_prompt(
+        "",
+        chat_response.content.strip,
+        current_time: current_time,
+        previous_prompt: previous_prompt
+      )
 
-      # Generate images if the scene prompt changed
-      if evolved_prompt != first_prompt
-        GenerateImagesJob.perform_later(conversation)
+      if prompt.present?
+        AiPromptGenerationService.new(conversation).store_scene_prompt(prompt, trigger: "followup")
+        GenerateImagesJob.perform_later(conversation, prompt)
       end
 
       # For now, we don't chain follow-ups from follow-up messages to keep it simple

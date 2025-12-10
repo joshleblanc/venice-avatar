@@ -1,40 +1,51 @@
+# Simplified chat response job:
+# 1. Generate plain text reply
+# 2. Evolve scene prompt minimally based on conversation
+# 3. Generate image from the evolved prompt
 class GenerateChatResponseJob < ApplicationJob
-  include CharacterToolCalls
-
-  CHAT_GUIDELINES = ""
   queue_as :default
 
   def perform(conversation, user_message)
-    Rails.logger.info "Generating chat response for conversation #{conversation.id} (reply + scene prompt)"
+    Rails.logger.info "Generating chat response for conversation #{conversation.id}"
 
     conversation.update(generating_reply: true)
     current_time = Time.current.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
     begin
+      # Step 1: Generate plain text reply
       reply_service = StructuredTurnService.new(conversation)
-      reply_message = reply_service.generate_reply(user_message&.content.to_s, current_time: current_time, opening: false)
-      assistant_message = create_message_with_tool_calls(conversation, reply_message)
-      reply_text = assistant_message&.content.to_s.strip
+      reply_text = reply_service.generate_reply(
+        user_message&.content.to_s,
+        current_time: current_time,
+        opening: false
+      )
 
-      unless reply_message.respond_to?(:tool_calls) && reply_message.tool_calls.present?
-        previous_prompt = conversation.metadata&.dig("current_scene_prompt")
-        prompt = ScenePromptService.new(conversation).generate_prompt(
-          user_message&.content.to_s,
-          reply_text,
-          current_time: current_time,
-          previous_prompt: previous_prompt
-        )
+      # Step 2: Save the assistant message
+      assistant_message = conversation.messages.create!(
+        content: reply_text.presence || "...",
+        role: "assistant",
+        user: conversation.user
+      )
 
-        if prompt.present?
-          prompt_service = AiPromptGenerationService.new(conversation)
-          prompt_service.store_scene_prompt(prompt, trigger: "reply")
-          GenerateImagesJob.perform_later(conversation, reply_text, assistant_message&.created_at, prompt)
-        end
+      # Step 3: Evolve scene prompt based on conversation
+      previous_prompt = conversation.metadata&.dig("current_scene_prompt")
+      prompt = ScenePromptService.new(conversation).generate_prompt(
+        user_message&.content.to_s,
+        reply_text,
+        current_time: current_time,
+        previous_prompt: previous_prompt
+      )
+
+      # Step 4: Store and generate image
+      if prompt.present?
+        AiPromptGenerationService.new(conversation).store_scene_prompt(prompt, trigger: "reply")
+        GenerateImagesJob.perform_later(conversation, prompt)
       end
     rescue => e
       Rails.logger.error "Failed to generate chat response: #{e.message}"
+      Rails.logger.error e.backtrace.first(5).join("\n")
       conversation.messages.create!(
-        content: "Error generating chat response: #{e.message}",
+        content: "I'm having trouble responding right now.",
         role: "assistant",
         user: conversation.user
       )
@@ -42,6 +53,4 @@ class GenerateChatResponseJob < ApplicationJob
       conversation.update(generating_reply: false)
     end
   end
-
-  private
 end

@@ -45,7 +45,13 @@ class ConversationsController < ApplicationController
     @conversation = Conversation.find(params[:id])
     authorize @conversation
 
-    GenerateImagesJob.perform_later(@conversation)
+    prompt = @conversation.metadata&.dig("current_scene_prompt")
+    if prompt.present?
+      GenerateImagesJob.perform_later(@conversation, prompt)
+    else
+      # No prompt exists, initialize the scene
+      InitializeSceneJob.perform_later(@conversation)
+    end
 
     respond_to do |format|
       format.html { redirect_to @conversation, notice: "Regenerating scene image" }
