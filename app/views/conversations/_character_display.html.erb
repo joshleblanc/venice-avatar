@@ -5,8 +5,10 @@
     <div class="md:flex-1 flex items-center justify-center relative min-h-[240px] p-4">
       <% scene_image = conversation.last_scene_image %>
       <% latest_video = conversation.video_generations.completed.order(created_at: :desc).first %>
+      <% scene_image_time = scene_image&.blob&.created_at %>
+      <% video_is_newer = latest_video&.video&.attached? && scene_image_time && latest_video.created_at > scene_image_time %>
       
-      <% if latest_video&.video&.attached? %>
+      <% if video_is_newer %>
         <video autoplay loop muted playsinline
                class="max-w-full max-h-full object-contain rounded-xl shadow-2xl shadow-violet-500/10">
           <%= tag.source src: url_for(latest_video.video), type: "video/mp4" %>
